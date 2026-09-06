@@ -21,10 +21,36 @@
     S = State.newGame();
     S.px += 400; S.py += 310;
     if (State.hasSave()) $('btnContinue').classList.remove('hidden');
+    // attract mode: the tagline turns over like a box quote; the Roll keeps the Order's dead in view
+    const tl = $('tagline');
+    let tli = (Math.random() * DATA.taglines.length) | 0;
+    tl.textContent = DATA.taglines[tli];
+    setInterval(() => { if ($('titleScreen').classList.contains('hidden')) return; tl.style.opacity = 0; setTimeout(() => { tli = (tli + 1) % DATA.taglines.length; tl.textContent = DATA.taglines[tli]; tl.style.opacity = 1; }, 500); }, 5200);
+    renderRoll();
+    // cheat codes: typed blind on the title screen, like it's 1996
+    let code = '';
+    addEventListener('keydown', e => {
+      if ($('titleScreen').classList.contains('hidden') || e.key.length !== 1 || e.ctrlKey || e.metaKey) return;
+      code = (code + e.key.toUpperCase()).slice(-12);
+      $('cheatEcho').textContent = code.replace(/./g, '•').slice(-8);
+      for (const [word, def] of Object.entries(DATA.cheats)) {
+        if (code.endsWith(word)) {
+          code = '';
+          pendingCheats.push(def.fx);
+          $('cheatEcho').textContent = word;
+          UI.toast(`<b>${U.pick(Math.random, DATA.dispatch.codeOk)}</b> ${def.note.replace('%%', '%')}`, 'gold', 5000);
+          Snd.sfx.accept();
+          setTimeout(() => { $('cheatEcho').textContent = ''; }, 2500);
+          return;
+        }
+      }
+      if (code.length >= 12) { UI.toast(U.pick(Math.random, DATA.dispatch.codeBad), 'rust', 2500); code = ''; setTimeout(() => { $('cheatEcho').textContent = ''; }, 1200); }
+    });
     startLoop();
   }
 
   function enterWorld(fresh) {
+    applyCheats();
     $('titleScreen').classList.add('hidden');
     $('introCard').classList.add('hidden');
     $('hud').classList.remove('hidden');
@@ -171,7 +197,8 @@
     input.ml = false;
     if (!canTravel()) return;
     updateMouseWorld();
-    Systems.moveTo(input.mouse.x, input.mouse.y);   // tap or release: keep going to the last place pointed at
+    if (e.shiftKey) Systems.queueMove(input.mouse.x, input.mouse.y);          // shift: string another mark onto the route
+    else { S.route = []; Systems.moveTo(input.mouse.x, input.mouse.y); }      // tap or release: keep going to the last place pointed at
   });
   addEventListener('blur', () => { input.ml = input.mr = false; });
 
@@ -205,7 +232,7 @@
     if (State.hasSave()) {
       if (!$('btnNew')._armed) {
         $('btnNew')._armed = true; $('btnNew').textContent = 'Overwrite save?';
-        setTimeout(() => { $('btnNew')._armed = false; $('btnNew').textContent = 'New porter'; }, 3000);
+        setTimeout(() => { $('btnNew')._armed = false; $('btnNew').textContent = 'New Waylighter'; }, 3000);
         return;
       }
       State.wipe();
@@ -215,6 +242,22 @@
     $('introCard').classList.remove('hidden');
   });
   $('btnBegin').addEventListener('click', () => { Snd.ctx(); startGame(true); });
+  const pendingCheats = [];
+  function renderRoll() {
+    const own = (State.peekLegacy ? State.peekLegacy() : []);
+    const rows = [...own.slice(-3).reverse().map(l => ({ ...l, yours: true })), ...DATA.rollSeed].slice(0, 5);
+    $('rollBody').innerHTML = rows.map(l => `<div class="rollRow"><div class="nm">${l.name}${l.cheated ? '<span class="cheat">WALKED WITH HELP</span>' : ''}</div><div class="ft"><b>${l.deliveries}</b> deliveries · <b>${l.km}</b> km · ${l.fate}</div></div>`).join('');
+  }
+  function applyCheats() {
+    for (const fx of pendingCheats) {
+      S.flags.cheated = true;
+      if (fx === 'provisions') S.banked.provisions += 50;
+      else if (fx === 'flares') S.gear.flares = Math.min(9, (S.gear.flares || 0) + 5);
+      else if (fx === 'legs') S.flags.effects.speed4 = true, S.flags.effects.cheatLegs = true;
+      else if (fx === 'lantern') S.flags.effects.bigLantern = true;
+    }
+    pendingCheats.length = 0;
+  }
   $('btnContinue').addEventListener('click', () => { Snd.ctx(); startGame(false); });
 
   /* ---------- loop ---------- */

@@ -605,11 +605,12 @@ const Render = (() => {
     cx.beginPath(); cx.arc(0, -22 - crouch + bob * 0.6, 4.2, Math.PI, 0); cx.fill();
     // headlamp glow in dark
     if (World.lightAt(x, y) < 0.3) {
+      const big = S.flags.effects.bigLantern ? 2.4 : 1;   // BIGLANTERN: exactly what it says
       cx.globalCompositeOperation = 'lighter';
-      const g = cx.createRadialGradient(0, -18, 1, 0, -18, 46);
-      g.addColorStop(0, 'rgba(255,230,180,0.30)'); g.addColorStop(1, 'rgba(255,230,180,0)');
+      const g = cx.createRadialGradient(0, -18, 1, 0, -18, 46 * big);
+      g.addColorStop(0, `rgba(255,230,180,${big > 1 ? 0.38 : 0.30})`); g.addColorStop(1, 'rgba(255,230,180,0)');
       cx.fillStyle = g;
-      cx.beginPath(); cx.arc(0, -18, 46, 0, 7); cx.fill();
+      cx.beginPath(); cx.arc(0, -18, 46 * big, 0, 7); cx.fill();
       cx.globalCompositeOperation = 'source-over';
     }
     cx.restore();
@@ -790,6 +791,22 @@ const Render = (() => {
     cx.beginPath(); cx.arc(m.x, m.y, r, 0, 7); cx.stroke();
     cx.fillStyle = m.act ? 'rgba(255,201,120,0.9)' : 'rgba(233,226,208,0.85)';
     cx.beginPath(); cx.arc(m.x, m.y, 2.2 / cam.z, 0, 7); cx.fill();
+    // the string of marks still to walk
+    if (S.route && S.route.length) {
+      cx.setLineDash([3 / cam.z, 10 / cam.z]);
+      cx.strokeStyle = 'rgba(255,201,120,0.4)'; cx.lineWidth = 1.4 / cam.z;
+      cx.beginPath(); cx.moveTo(m.x, m.y);
+      for (const [rx, ry] of S.route) cx.lineTo(rx, ry);
+      cx.stroke(); cx.setLineDash([]);
+      let n = 1;
+      for (const [rx, ry] of S.route) {
+        cx.fillStyle = 'rgba(255,201,120,0.85)';
+        cx.beginPath(); cx.arc(rx, ry, 4.5 / cam.z, 0, 7); cx.fill();
+        cx.fillStyle = '#0a0e14'; cx.font = `700 ${8 / cam.z}px sans-serif`; cx.textAlign = 'center'; cx.textBaseline = 'middle';
+        cx.fillText(String(++n), rx, ry + 0.5 / cam.z);
+      }
+      cx.textAlign = 'left'; cx.textBaseline = 'alphabetic';
+    }
     cx.restore();
   }
 
@@ -911,9 +928,29 @@ const Render = (() => {
         cx.strokeStyle = `rgba(255,214,150,${(1 - t) * 0.8})`;
         cx.lineWidth = 2.5;
         cx.beginPath(); cx.arc(f.x, f.y, t * 60, 0, 7); cx.stroke();
+      } else if (f.type === 'burst') {
+        const t = f.t / 0.45;
+        if (t >= 1) { fx.splice(i, 1); continue; }
+        cx.strokeStyle = `rgba(224,101,74,${(1 - t) * 0.9})`;
+        cx.lineWidth = 3 / cam.z;
+        cx.beginPath(); cx.arc(f.x, f.y, 6 + t * 34, 0, 7); cx.stroke();
+      } else if (f.type === 'say') {
+        const t = f.t / 2.4;
+        if (t >= 1) { fx.splice(i, 1); continue; }
+        const a = t < 0.12 ? t / 0.12 : 1 - Math.max(0, (t - 0.6) / 0.4);
+        cx.font = `italic 600 ${13.5 / cam.z}px Fraunces, Georgia, serif`;
+        cx.textAlign = 'center';
+        cx.fillStyle = `rgba(10,14,20,${a * 0.75})`;
+        cx.fillText(f.text, f.x + 1 / cam.z, f.y - t * 30 + 1 / cam.z);
+        cx.fillStyle = `rgba(${f.color || '255,224,170'},${a})`;
+        cx.fillText(f.text, f.x, f.y - t * 30);
+        cx.textAlign = 'left';
       }
     }
   }
+  /* a line spoken in the world — hangs over someone's head, then lets go */
+  function say(x, y, text, color) { fx.push({ type: 'say', x, y: y - 34, text, color, t: 0 }); while (fx.filter(f => f.type === 'say').length > 3) fx.splice(fx.findIndex(f => f.type === 'say'), 1); }
+  function burst(x, y) { fx.push({ type: 'burst', x, y, t: 0 }); }
   function drawLikes(dt) {
     for (let i = likes.length - 1; i >= 0; i--) {
       const p = likes[i];
@@ -928,6 +965,14 @@ const Render = (() => {
     }
   }
 
+  /* the Dispatch slams a line across the screen — NBA Jam booth, Order stationery */
+  function announce(text) {
+    const el = document.getElementById('announce');
+    if (!el) return;
+    el.classList.remove('slam'); void el.offsetWidth;
+    el.textContent = text;
+    el.classList.add('slam');
+  }
   function setFx(on) { fxOn = on; }
-  return { frame, shake, flare, buildFx, likeBurst, setFx, screenToWorld, get cam() { return cam; } };
+  return { frame, shake, flare, buildFx, likeBurst, say, burst, announce, setFx, screenToWorld, get cam() { return cam; } };
 })();

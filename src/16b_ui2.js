@@ -58,7 +58,7 @@ const UI2 = (() => {
     renderCG();
   });
   $('cgReName').addEventListener('click', () => { cg.name = Porter.randomName(); cg.seed = (Math.random() * 1e9) | 0; cg.line = U.pick(Math.random, CHAR.QUIRKS); renderCG(); });
-  $('cgName').addEventListener('input', () => { cg.name = $('cgName').value || 'Porter'; });
+  $('cgName').addEventListener('input', () => { cg.name = $('cgName').value || 'Walker'; });
   $('cgRoll').addEventListener('click', () => {
     cg = Porter.generate({});
     Snd.sfx.accept();
@@ -83,10 +83,11 @@ const UI2 = (() => {
     const days = Math.max(1, Math.round((Date.now() - (info.stats.bornAt || Date.now())) / 60000));
     $('deathStats').innerHTML =
       `${info.stats.deliveries} deliveries · ${(info.stats.km / 1000).toFixed(1)} km on foot · ${Math.round(info.stats.likes)} ◆ earned<br>` +
-      `${Math.round(S.cov * 100)}% of the valley holds its light because porters like this one walked`;
-    $('deathNote').textContent = info.wraith
-      ? 'The Grey kept them. They stand where they fell — carry light to them, and they will walk the network forever.'
-      : 'Their cairn holds everything they carried, and their name already moves along the wires. The valley remembers.';
+      `${Math.round(S.cov * 100)}% of the valley holds its light because Waylighters like this one walked`;
+    const epi = DATA.epitaphs[info.cause] || '';
+    $('deathNote').textContent = (epi ? epi + ' ' : '') + (info.wraith
+      ? 'The Grey kept them — carry light to where they stand, and they walk the network forever.'
+      : 'The cairn holds everything they carried, and their name already moves along the wires.');
   }
   $('deathContinue').addEventListener('click', () => {
     $('deathOv').classList.add('hidden');
@@ -131,7 +132,7 @@ const UI2 = (() => {
           <div class="xpbar"><i style="width:${need ? U.clamp(sk.xp / need * 100, 0, 100) : 100}%"></i></div>
         </div>
       </div>`;
-    }).join('') + `<p style="color:var(--bone-faint);font-size:12px;margin-top:10px">Skills grow from doing — and die with the porter. Your journal (transcribed at every terminal) lets the next porter recover 70% from your cairn. Manuals multiply learning through their levels.</p>`;
+    }).join('') + `<p style="color:var(--bone-faint);font-size:12px;margin-top:10px">Skills grow from doing — and die with the body. Your journal (transcribed at every terminal) lets the next Waylighter recover 70% from your cairn. Manuals multiply learning through their levels.</p>`;
   }
   $('skillsClose').addEventListener('click', () => toggleSkills(false));
 
@@ -160,9 +161,41 @@ const UI2 = (() => {
     const kg = n.carry.reduce((a, c) => a + c.kg, 0);
     const htm = `<img src="${Porter.portrait(n.seed, 36)}" width="36" height="36">
       <div><div class="nm">${n.name}</div>
-      <div class="st">${CLASSES[n.cls].name} · carrying ${U.fmtKg(kg)}/${NPC.capOf(n)} kg · ${n.hungry ? '<span class="hungry">HUNGRY</span>' : 'fed'}</div></div>`;
+      <div class="st">${CLASSES[n.cls].name} · carrying <b>${U.fmtKg(kg)}/${NPC.capOf(n)} kg</b> · ${n.hungry ? '<span class="hungry">HUNGRY</span>' : 'fed'} · <span style="color:var(--bone-faint)">click to hand over</span></div></div>`;
     if (chip._last !== htm) { chip._last = htm; chip.innerHTML = htm; }
   }
+  $('compChip') && $('compChip').addEventListener('click', () => { Snd.sfx.ui(); openTransfer(); });
+
+  /* ---------- the hand-over: your pack and theirs, side by side ---------- */
+  function openTransfer() {
+    const n = NPC.companion();
+    if (!n) { UI.toast('Nobody walks with you yet — hire a Waylighter at any station fire', '', 3500); return; }
+    $('packOv').classList.remove('hidden');
+    renderTransfer();
+  }
+  function renderTransfer() {
+    const n = NPC.companion();
+    if (!n) { $('packOv').classList.add('hidden'); return; }
+    $('txTitle').innerHTML = `You &nbsp;⇄&nbsp; ${n.name}`;
+    const yourKg = State.weight(), yourCap = State.cap();
+    const theirKg = n.carry.reduce((a, c) => a + c.kg, 0), theirCap = NPC.capOf(n);
+    $('txYouName').textContent = S.pName || 'You';
+    $('txThemName').textContent = `${n.name.split(' ')[0]} · ${CHAR.CLASSES[n.cls].name}${n.hungry ? ' · HUNGRY' : ''}`;
+    $('txYouKg').textContent = `${U.fmtKg(yourKg)} / ${yourCap} kg`;
+    $('txThemKg').textContent = `${U.fmtKg(theirKg)} / ${theirCap} kg`;
+    $('txYouFill').style.width = Math.min(100, yourKg / yourCap * 100) + '%';
+    $('txThemFill').style.width = Math.min(100, theirKg / theirCap * 100) + '%';
+    $('txYouFill').classList.toggle('over', yourKg > yourCap);
+    const row = (c, dir, stuck) => `<div class="txRow ${stuck ? 'stuck' : ''}" data-${dir}="${c.id}"><div><div class="nm">${c.name}</div><div class="sub">${U.fmtKg(c.kg)} kg${c.cat === 'goods' || c.cat === 'core' || c.lostTo ? ' · ' + Math.round(c.cond) + '%' : ''}${stuck ? ' · too heavy for them' : ''}</div></div><span class="arrow">${dir === 'txgive' ? '→' : '←'}</span></div>`;
+    $('txYou').innerHTML = S.cargo.map(c => row(c, 'txgive', theirKg + c.kg > theirCap)).join('') || '<div class="desc">Nothing but the pack straps.</div>';
+    $('txThem').innerHTML = n.carry.map(c => row(c, 'txtake', false)).join('') || `<div class="desc">${n.name.split(' ')[0]} carries nothing yet. Click a crate of yours.</div>`;
+  }
+  $('packOv') && $('packOv').addEventListener('click', e => {
+    const g = e.target.closest('[data-txgive]'), t = e.target.closest('[data-txtake]');
+    if (g && !g.classList.contains('stuck')) { const c = S.cargo.find(x => x.id === +g.getAttribute('data-txgive')); if (c && NPC.give(c)) { Snd.sfx.pickup(); renderTransfer(); UI.updateHUD(); } }
+    else if (t) { if (NPC.take(+t.getAttribute('data-txtake'))) { Snd.sfx.pickup(); renderTransfer(); UI.updateHUD(); } }
+  });
+  $('txClose') && $('txClose').addEventListener('click', () => { Snd.sfx.ui(); $('packOv').classList.add('hidden'); });
 
   /* ---------- loot panel ---------- */
   let lootItems = [], lootCb = null;
@@ -207,7 +240,7 @@ const UI2 = (() => {
       return `<div class="rowline"><div class="grow"><h4>${o.item.name}</h4><div class="flavor">${d.flavor || ''}</div></div>
         <span class="costs">${Systems.fmtCost(o.cost)}</span>
         <button class="btn ${State.canAfford(o.cost) ? '' : 'quiet'}" data-buy="${i}">Trade</button></div>`;
-    }).join('') + `<p class="flavor" style="margin-top:8px">The Peddler hums a tune you almost remember. Their cart is heavier than any porter could pull. You don't ask.</p>`;
+    }).join('') + `<p class="flavor" style="margin-top:8px">The Peddler hums a tune you almost remember. Their cart is heavier than anything one back could pull. You don't ask.</p>`;
   }
   $('traderBody').addEventListener('click', e => {
     const i = e.target.getAttribute('data-buy');
@@ -229,7 +262,7 @@ const UI2 = (() => {
     const comp = NPC.companion();
     const routes = S.npcs.filter(n => n.state === 'route');
     const connected = DATA.stationOrder.filter(id => S.stations[id].connected && id !== stId);
-    let htm = `<p style="color:var(--bone-dim); font-size:13px; margin-bottom:10px">Waylighters walk for hire — one fee, then food. Companions carry and steady; route porters keep a corridor alive on their own. Charters open with coverage: <b class="num">${NPC.routesActive()}/${NPC.routeSlots()}</b> in use. Provisions banked: <b class="num">${Math.floor(S.banked.provisions)}</b>.</p>`;
+    let htm = `<p style="color:var(--bone-dim); font-size:13px; margin-bottom:10px">Waylighters walk for hire — one fee, then food. Companions carry, steady you, and meet trouble head-on; route walkers keep a corridor alive on their own. Charters open with coverage: <b class="num">${NPC.routesActive()}/${NPC.routeSlots()}</b> in use. Provisions banked: <b class="num">${Math.floor(S.banked.provisions)}</b>.</p>`;
     if (comp) {
       const kg = comp.carry.reduce((a, c) => a + c.kg, 0);
       htm += `<div class="orderCard prio"><div class="top"><h4><img src="${Porter.portrait(comp.seed, 28)}" width="28" height="28" style="vertical-align:-8px;border-radius:3px"> ${comp.name} — walking with you</h4><span class="tag">${CLASSES[comp.cls].name}</span></div>
@@ -291,5 +324,5 @@ const UI2 = (() => {
     h._t = setTimeout(() => h.classList.add('hidden'), seconds * 1000);
   }
 
-  return { openCharGen, showDeath, toggleSkills, updateMoodles, openLoot, openTrader, renderWaylighters, updateCompChip, showBriefing, showHint };
+  return { openCharGen, showDeath, toggleSkills, updateMoodles, openLoot, openTrader, renderWaylighters, updateCompChip, showBriefing, showHint, openTransfer, renderTransfer };
 })();

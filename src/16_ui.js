@@ -271,8 +271,18 @@ const UI = (() => {
   }
 
   /* ---------- station terminal ---------- */
+  function keeperGreet(stId) {
+    const k = DATA.keepers[stId], st = S.stations[stId];
+    if (!k) return '';
+    let line;
+    if (!st.met) line = k.voice.hello;
+    else if (st.relitAt && S.time - st.relitAt < 300) line = k.voice.relit;
+    else line = k.voice[Economy.stationMood(stId)] || k.voice.steady;
+    return `<b>${k.name} · ${k.role}</b>“${line}”`;
+  }
   function openStation(stId) {
     Snd.sfx.ui();
+    $('keeperLine').innerHTML = keeperGreet(stId);   // read before met flips: the hello is for strangers
     S.stations[stId].met = true;
     const { results, connect } = Systems.handleDelivery(stId);
     if (connect) {
@@ -448,7 +458,7 @@ const UI = (() => {
     if (st.stars < 5 && rewards[st.stars + 1]) next = `<div class="rowline"><div class="grow"><h4>Next star unlocks</h4><div class="desc">${rewards[st.stars + 1].note}</div></div></div>`;
     const stats = S.stats;
     const wire = DATA.stationOrder.filter(id => S.stations[id].connected && (S.wireLog || {})[id] > 0.5).map(id => `${stations[id].name} +${Math.round(S.wireLog[id])}`);
-    next += `<div class="rowline"><div class="grow"><h4>The wire</h4><div class="desc">${wire.length ? 'Stock carried between connected stations without a porter: ' + wire.join(' · ') + '. Roads and chartered routes carry more.' : 'Nothing moves on its own yet — connect a second station and it will.'}</div></div></div>`;
+    next += `<div class="rowline"><div class="grow"><h4>The wire</h4><div class="desc">${wire.length ? 'Stock carried between connected stations on its own: ' + wire.join(' · ') + '. Roads and chartered routes carry more.' : 'Nothing moves on its own yet — connect a second station and it will.'}</div></div></div>`;
     body.innerHTML = next +
       `<div class="rowline"><div class="grow"><h4>Your record</h4>
       <div class="desc num">${stats.delivered} delivered · ${stats.sranks} S-ranks · ${(stats.distance / 1000).toFixed(1)} km walked · ${stats.built} built · ${stats.paved} road segments</div></div></div>
@@ -478,8 +488,10 @@ const UI = (() => {
         const b = board[+acc];
         if (b) Systems.acceptOrder(b.def, b.def.premium);
       }
-      renderStation();
-      updateObjective();
+      const card = e.target.closest('.orderCard');   // the card flashes gold and slides off before the board redraws
+      if (card) { card.classList.add('taken'); setTimeout(() => { renderStation(); updateObjective(); }, 240); }
+      else { renderStation(); updateObjective(); }
+      return;
     }
     if (fab !== null && fab !== undefined) {
       const f = Systems.fabList(curStation)[+fab];
@@ -516,6 +528,7 @@ const UI = (() => {
       (r.needMood ? `<div class="rowline"><span>${stations[o.to].name} ${r.needMood === 'critical' ? 'was out of this' : r.needMood === 'wanting' ? 'was running short' : r.needMood === 'thriving' ? 'had plenty already' : 'needed this'}</span><span class="num mult ${r.needMood}">×${r.needMul}</span></div>` : '') +
       (r.chainN > 1 ? `<div class="rowline"><span>Stop ${r.chainN} of one trip</span><span class="num gold">×${r.chain.toFixed(2)}</span></div>` : '') +
       (r.letter ? `<div class="rowline letter"><span>Read aloud at the terminal: <i>“${r.letter}”</i></span></div>` : '') +
+      ((r.needMood === 'critical' || r.needMood === 'wanting') && DATA.keepers[o.to] && DATA.keepers[o.to].react ? `<div class="rowline keeperSay"><span><b>${DATA.keepers[o.to].name}</b> “${DATA.keepers[o.to].react[r.needMood]}”</span></div>` : '') +
       (r.late ? `<div class="rowline"><span class="rust">Express deadline missed</span><span class="rust">−50% ◆</span></div>` : '') +
       (Object.values(r.donate).some(v => v) ? `<div class="rowline"><span>Station donates</span><span class="num">${Object.entries(r.donate).filter(([, v]) => v).map(([k, v]) => `${v} ${k}`).join(' · ')}</span></div>` : '');
     const su = $('starUpNote');
@@ -526,10 +539,12 @@ const UI = (() => {
     animateGrade(r.grade, r.likes);
   }
   function animateGrade(grade, likes) {
-    const stamp = $('gradeStamp'), ring = $('gradeRing');
-    stamp.classList.remove('slam'); ring.classList.remove('slam');
+    const stamp = $('gradeStamp'), ring = $('gradeRing'), gl = $('gradeLine');
+    stamp.classList.remove('slam'); ring.classList.remove('slam'); gl.classList.remove('slam');
     void stamp.offsetWidth;
     stamp.classList.add('slam'); ring.classList.add('slam');
+    gl.textContent = DATA.gradeLines[grade] ? DATA.gradeLines[grade][(Math.random() * DATA.gradeLines[grade].length) | 0] : '';
+    gl.classList.add('slam');
     Snd.sfx.grade(grade);
     // likes count-up
     const el = $('likesTotal');
@@ -692,6 +707,25 @@ const UI = (() => {
         ctx.fillText(`${mood === 'critical' ? 'out of' : 'short of'} ${short.join(', ')}`, d.x, d.y + 36 * px);
       }
     }
+    // the strung route: current leg, then every mark in order
+    if ((S.moveTo && !S.moveTo.steer) || (S.route && S.route.length)) {
+      ctx.setLineDash([6 * px, 10 * px]);
+      ctx.strokeStyle = 'rgba(255,201,120,0.55)'; ctx.lineWidth = 2 * px;
+      ctx.beginPath(); ctx.moveTo(S.px, S.py);
+      if (S.moveTo && !S.moveTo.steer) ctx.lineTo(S.moveTo.x, S.moveTo.y);
+      for (const [rx, ry] of (S.route || [])) ctx.lineTo(rx, ry);
+      ctx.stroke(); ctx.setLineDash([]);
+      let ni = 0;
+      const pins = []; if (S.moveTo && !S.moveTo.steer) pins.push([S.moveTo.x, S.moveTo.y]); pins.push(...(S.route || []));
+      for (const [rx, ry] of pins) {
+        ni++;
+        ctx.fillStyle = 'rgba(255,201,120,0.95)';
+        ctx.beginPath(); ctx.arc(rx, ry, 8 * px, 0, 7); ctx.fill();
+        ctx.fillStyle = '#0a0e14'; ctx.font = `700 ${10 * px}px sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(String(ni), rx, ry + 0.5 * px);
+      }
+      ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+    }
     // player
     ctx.fillStyle = '#fff';
     ctx.beginPath(); ctx.arc(S.px, S.py, 6 * px, 0, 7); ctx.fill();
@@ -727,8 +761,13 @@ const UI = (() => {
         const z = mapView.z * dpr, ox = c.width / 2 - mapView.x * z, oy = c.height / 2 - mapView.y * z;
         const wx = ((e.clientX - r.left) * dpr - ox) / z, wy = ((e.clientY - r.top) * dpr - oy) / z;
         if (wx > 0 && wy > 0 && wx < DATA.W && wy < DATA.H && S && !S.dead && !S.cine) {
-          toggleMap(false);
-          if (Systems.moveTo(wx, wy)) { const m = S.moveTo; toast(m && m.label ? `Walking to ${m.label} — ${U.fmtDist(U.dist(S.px, S.py, m.x, m.y))}` : `Walking — ${U.fmtDist(U.dist(S.px, S.py, wx, wy))}`, '', 2600); }
+          if (e.shiftKey) {   // string marks across the map; the walk starts on the first, the rest follow in order
+            if (Systems.queueMove(wx, wy)) drawMap();
+          } else {
+            S.route = [];
+            toggleMap(false);
+            if (Systems.moveTo(wx, wy)) { const m = S.moveTo; toast(m && m.label ? `Walking to ${m.label} — ${U.fmtDist(U.dist(S.px, S.py, m.x, m.y))}` : `Walking — ${U.fmtDist(U.dist(S.px, S.py, wx, wy))}`, '', 2600); }
+          }
         }
       }
       drag = null;
@@ -779,10 +818,11 @@ const UI = (() => {
       mapOpen || !$('pause').classList.contains('hidden') || !$('helpOv').classList.contains('hidden') ||
       !$('skillsOv').classList.contains('hidden') || !$('lootOv').classList.contains('hidden') ||
       !$('traderOv').classList.contains('hidden') || !$('deathOv').classList.contains('hidden') ||
-      !$('chargen').classList.contains('hidden');
+      !$('packOv').classList.contains('hidden') || !$('chargen').classList.contains('hidden');
   }
   function closeAllModals() {
     closeStation();
+    $('packOv').classList.add('hidden');
     $('results').classList.add('hidden');
     toggleMap(false);
     $('pause').classList.add('hidden');
@@ -791,6 +831,7 @@ const UI = (() => {
   }
   function escPressed() {
     if (!$('deathOv').classList.contains('hidden') || !$('chargen').classList.contains('hidden')) return true;
+    if (!$('packOv').classList.contains('hidden')) { $('packOv').classList.add('hidden'); return true; }
     if (!$('helpOv').classList.contains('hidden')) { $('helpOv').classList.add('hidden'); return true; }
     if (!$('skillsOv').classList.contains('hidden')) { $('skillsOv').classList.add('hidden'); return true; }
     if (!$('traderOv').classList.contains('hidden')) { $('traderOv').classList.add('hidden'); return true; }

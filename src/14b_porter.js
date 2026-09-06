@@ -326,12 +326,12 @@ const Porter = (() => {
     }
     S.orders.active = [];
     // legacy
-    S.legacy.push({ name: S.pName, cls: CLASSES[S.pClass].name, fate: CAUSES[cause] || cause, likes: Math.round(S.pStats.likes), km: (S.pStats.km / 1000).toFixed(1), deliveries: S.pStats.deliveries });
+    S.legacy.push({ name: S.pName, cls: CLASSES[S.pClass].name, fate: CAUSES[cause] || cause, likes: Math.round(S.pStats.likes), km: (S.pStats.km / 1000).toFixed(1), deliveries: S.pStats.deliveries, cheated: !!S.flags.cheated });
     if (!inGrey) {
       if (!S.echoRoster.includes(S.pName)) S.echoRoster.push(S.pName);
-      Systems.addMail(`${S.pName} walks the network now`, 'Porters the light remembers never really stop delivering.');
+      Systems.addMail(`${S.pName} walks the network now`, 'Waylighters the light remembers never really stop delivering.');
     } else {
-      Systems.addMail(`The Grey kept ${S.pName}`, 'They stand where they fell. Light frees porters — carry a flare to them.');
+      Systems.addMail(`The Grey kept ${S.pName}`, 'They stand where they fell. Light frees the kept — carry a flare to them.');
     }
     NPC.onPorterDeath();
     UI2.showDeath({ name: S.pName, cls: CLASSES[S.pClass].name, cause: CAUSES[cause] || cause, wraith: inGrey, stats: S.pStats, seed: S.pSeed });

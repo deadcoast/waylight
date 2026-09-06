@@ -124,9 +124,9 @@ const State = (() => {
     while (S.likes >= totalNeedFor(S.level + 1)) {
       S.level++;
       Snd.sfx.levelup();
-      const t = titleFor(S.level);
-      if (t !== titleFor(S.level - 1)) UI.toast(`The network knows you now — <b>${t}</b>`, 'gold');
-      else UI.toast(`Network reputation ${S.level} — the valley talks about you`, 'gold');
+      const was = titleFor(S.level - 1), now = titleFor(S.level);
+      if (now !== was) { Render.announce(DATA.dispatch.promo.replace('%RANK%', now.toUpperCase())); UI.toast(`<b>${now}.</b> The Order would pin something on you, if the Order still had pins.`, 'gold', 6000); }
+      else UI.toast(`<b>Level ${S.level}.</b> The valley talks about you now — try living up to the version they tell.`, 'gold');
     }
     UI.updateHUD();
   }
@@ -139,7 +139,7 @@ const State = (() => {
   /* ---------- save / load ---------- */
   function save() {
     try {
-      const s = { ...S, wraiths: [], qte: null, struggle: null, zip: null, cine: null, state: 'walk', savedAt: Date.now(), event: null, surgeT: 0, stormT: 0, moveTo: null };
+      const s = { ...S, wraiths: [], qte: null, struggle: null, zip: null, cine: null, state: 'walk', savedAt: Date.now(), event: null, surgeT: 0, stormT: 0, moveTo: null, route: [] };
       s.camps = {};
       for (const [k, v] of Object.entries(S.camps)) s.camps[k] = { pacified: v.pacified, alert: 0, stash: v.stash, runners: [] };
       localStorage.setItem(SAVE_KEY, JSON.stringify(s));
@@ -148,6 +148,7 @@ const State = (() => {
     } catch (e) { return false; }
   }
   function hasSave() { try { return !!localStorage.getItem(SAVE_KEY); } catch (e) { return false; } }
+  function peekLegacy() { try { const j = JSON.parse(localStorage.getItem(SAVE_KEY)); return (j && j.legacy) || []; } catch (e) { return []; } }
   function load() {
     try {
       const s = JSON.parse(localStorage.getItem(SAVE_KEY));
@@ -202,8 +203,8 @@ const State = (() => {
     S.eventCd = 40;
     NPC.seedRuins(U.rng((S.seed || 1) ^ 0xACE1));
     NPC.seedStarterPool();
-    Systems.addMail('The valley changed while you walked', 'Porters are mortal now. The network is not. Your journal transcribes at every terminal — whatever happens, the next porter can carry what you learned.');
+    Systems.addMail('The valley changed while you walked', 'Waylighters are mortal now. The network is not. Your journal transcribes at every terminal — whatever happens, the next one carries what you learned.');
   }
 
-  return { newGame, refreshSources, cap, weight, makeItem, addCargo, removeCargo, countTool, takeTool, grantLikes, titleFor, levelNeed, totalNeedFor, canAfford, pay, save, load, hasSave, wipe };
+  return { newGame, refreshSources, cap, weight, makeItem, addCargo, removeCargo, countTool, takeTool, grantLikes, titleFor, levelNeed, totalNeedFor, canAfford, pay, save, load, hasSave, peekLegacy, wipe };
 })();

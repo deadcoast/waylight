@@ -10,7 +10,7 @@ const CHAR = (() => {
     bal: { name: 'Balance', icon: '≡', desc: 'The load rides quiet on a steady back.', fx: lv => `−${lv * 5}% wobble · +${(lv * 0.04).toFixed(2)}s steady window` },
     end: { name: 'Endurance', icon: '∿', desc: 'Lungs forged on the long climbs.', fx: lv => `+${lv * 6} max stamina · +${lv * 4}% regen` },
     haul: { name: 'Hauling', icon: '▣', desc: 'Weight is a language. Learn it.', fx: lv => `+${(lv * 2.8).toFixed(1)} kg capacity` },
-    rig: { name: 'Rigging', icon: '⌂', desc: 'The valley stands on what porters raise.', fx: lv => `−${lv * 3}% build cost · your builds decay ${lv * 4}% slower`, unlock: [2, 'lash a field ladder from 8 metal, anywhere (B)'] },
+    rig: { name: 'Rigging', icon: '⌂', desc: 'The valley stands on what Waylighters raise.', fx: lv => `−${lv * 3}% build cost · your builds decay ${lv * 4}% slower`, unlock: [2, 'lash a field ladder from 8 metal, anywhere (B)'] },
     sal: { name: 'Salvage', icon: '☍', desc: 'Nothing the old world left is junk twice.', fx: lv => `+${lv * 6}% harvest yield · +${lv * 8}% scrap value`, unlock: [2, 'salvage and scrap piles ping your compass'] },
     lum: { name: 'Lumenistry', icon: '✦', desc: 'The light that grows in dark places.', fx: lv => `+${lv * 6}% flare reach & lumen yield · cargo fades ${lv * 4}% slower in mist` },
     climb: { name: 'Climbing', icon: '⋀', desc: 'Cliffs are just slow doors.', fx: lv => `+${lv * 7}% ladder speed · −${lv * 5}% slope fatigue` },
@@ -61,7 +61,7 @@ const CHAR = (() => {
     'counts every step out loud, quietly', 'sings off-key in the mist', 'keeps dried mushrooms in their hood',
     'names every ladder they cross', 'talks to cargo like it listens', 'sleeps standing up, allegedly',
     'collects buttons from the ruins', 'whistles back at the wind', 'never steps on a bridge seam',
-    'remembers every porter they ever met', 'drinks lumen tea cold, like a monster', 'writes letters to no one',
+    'remembers every Waylighter they ever met', 'drinks lumen tea cold, like a monster', 'writes letters to no one',
     'waves at waylights like old friends', 'swears the Grey hums in B flat', 'patches clothes with map paper',
     'gives the wraiths nicknames', 'bows to every cairn', 'laughs at greyfall, nervously',
   ];
@@ -87,12 +87,12 @@ const CHAR = (() => {
     boots_cleat: { name: 'Cleated boots', kg: 0, cat: 'gear', slot: 'boots', slopeMul: 0.8, flavor: 'Quarry iron in the heel. Eats gradients.' },
     boots_grey: { name: 'Greyweave boots', kg: 0, cat: 'gear', slot: 'boots', mistMul: 0.85, wobbleMul: 0.95, flavor: 'Woven with lumen thread. The mist slides off.' },
     // gear: coats
-    coat0: { name: 'Porter’s cloak', kg: 0, cat: 'gear', slot: 'coat', warmth: 0.2, flavor: 'Standard issue since before anyone.' },
+    coat0: { name: 'Waylighter’s cloak', kg: 0, cat: 'gear', slot: 'coat', warmth: 0.2, flavor: 'Standard issue since before anyone.' },
     coat_wax: { name: 'Waxed coat', kg: 0, cat: 'gear', slot: 'coat', rainMul: 0.6, warmth: 0.35, flavor: 'Elm Farm wax. Greyfall beads and gives up.' },
     coat_high: { name: 'Highland coat', kg: 0, cat: 'gear', slot: 'coat', warmth: 0.7, rainMul: 0.85, flavor: 'Quilted for the north rim. Heavy with intention.' },
     coat_lumen: { name: 'Lumen-lined coat', kg: 0, cat: 'gear', slot: 'coat', warmth: 0.45, senseMul: 0.8, rainMul: 0.8, flavor: 'Thread of light in the seams. Wraiths look past you.' },
     // gear: packs
-    pack0: { name: 'Standard frame', kg: 0, cat: 'gear', slot: 'pack', cap: 0, flavor: 'A porter’s spine, external.' },
+    pack0: { name: 'Standard frame', kg: 0, cat: 'gear', slot: 'pack', cap: 0, flavor: 'A Waylighter’s spine, external.' },
     pack_wide: { name: 'Wide frame', kg: 0, cat: 'gear', slot: 'pack', cap: 8, flavor: 'Two more crates of yes.' },
     pack_rig: { name: 'Courier rig', kg: 0, cat: 'gear', slot: 'pack', cap: 5, speed: 1.04, flavor: 'Haven’s racing cut. Carries less than it promises, faster than it should.' },
     pack_exo1: { name: 'Exo frame I', kg: 0, cat: 'gear', slot: 'pack', cap: 40, flavor: 'Foundry servos take the weight your knees were saving up.' },
@@ -100,7 +100,7 @@ const CHAR = (() => {
     pack_sled: { name: 'Float sled', kg: 0, cat: 'gear', slot: 'pack', cap: 100, noSprint: true, speedCap: 0.88, flavor: 'Hums a handspan off the ground. No sprinting — it sulks.' },
     // charms
     charm_coin: { name: 'Old Post coin', kg: 0.1, cat: 'gear', slot: 'charm', likesMul: 1.03, flavor: 'Currency of a country that is now weather.' },
-    charm_feather: { name: 'Wren feather', kg: 0, cat: 'gear', slot: 'charm', windowAdd: 0.12, flavor: 'Light as the porter it’s named for.' },
+    charm_feather: { name: 'Wren feather', kg: 0, cat: 'gear', slot: 'charm', windowAdd: 0.12, flavor: 'Light as the walker it’s named for.' },
     charm_bell: { name: 'Glass bell', kg: 0.1, cat: 'gear', slot: 'charm', senseWarn: true, flavor: 'Rings once, softly, when something cold is near.' },
     charm_rose: { name: 'Compass rose', kg: 0.1, cat: 'gear', slot: 'charm', revealMul: 1.3, flavor: 'Cut from the old survey office door.' },
     charm_draw: { name: 'Child’s drawing', kg: 0, cat: 'gear', slot: 'charm', stationRegen: 1.3, flavor: 'A stick figure with a huge pack. Underneath: MY HERO.' },
@@ -130,7 +130,7 @@ const CHAR = (() => {
     MANUAL_VOLS.forEach((v, vi) => {
       ITEMS2[`man_${sid}${vi + 1}`] = {
         name: `${SKILLS[sid].name}, vol. ${v.n}`, kg: 0.4, cat: 'manual', skill: sid, vol: vi + 1,
-        flavor: `A porter’s hand, margin notes and all. ×${v.mul} ${SKILLS[sid].name} XP through level ${v.band[1] + 1}.`,
+        flavor: `A Waylighter’s hand, margin notes and all. ×${v.mul} ${SKILLS[sid].name} XP through level ${v.band[1] + 1}.`,
       };
     });
   }
@@ -141,7 +141,7 @@ const CHAR = (() => {
     post: { name: 'Old post office', rolls: 3, table: [['relic', 30], ['junk', 30], ['manual', 15], ['mat', 15], ['charm', 5], ['food', 5]] },
     caravan: { name: 'Wrecked caravan', rolls: 4, table: [['mat', 30], ['junk', 25], ['food', 20], ['gear', 8], ['manual', 8], ['relic', 9]] },
     watchpost: { name: 'Tumbled watchpost', rolls: 2, table: [['mat', 35], ['junk', 30], ['manual', 15], ['gear', 10], ['relic', 10]] },
-    camp: { name: 'Fallen porter’s camp', rolls: 3, table: [['manual', 25], ['food', 20], ['junk', 20], ['gear', 12], ['relic', 15], ['charm', 8]] },
+    camp: { name: 'Fallen Waylighter’s camp', rolls: 3, table: [['manual', 25], ['food', 20], ['junk', 20], ['gear', 12], ['relic', 15], ['charm', 8]] },
     shrine: { name: 'Shrine of the First Light', rolls: 2, table: [['charm', 30], ['relic', 30], ['manual', 20], ['food', 20]] },
   };
   const RUIN_SPREAD = ['cottage', 'cottage', 'cottage', 'post', 'caravan', 'caravan', 'watchpost', 'watchpost', 'camp', 'camp', 'shrine'];
@@ -172,9 +172,9 @@ const CHAR = (() => {
 
   /* ---------- events ---------- */
   const EVENTS = {
-    rescueWraith: { name: 'Porter cornered by wraiths', ttl: 420 },
+    rescueWraith: { name: 'Waylighter cornered by wraiths', ttl: 420 },
     rescueCaptive: { name: 'Captive at the camp', ttl: 480 },
-    rescueInjured: { name: 'Porter down', ttl: 420 },
+    rescueInjured: { name: 'Waylighter down', ttl: 420 },
     rescueStarving: { name: 'Starving drifter', ttl: 420 },
     supplyDrop: { name: 'Supply drop', ttl: 150 },
     surge: { name: 'Wraith surge', ttl: 120 },

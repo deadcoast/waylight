@@ -10,6 +10,13 @@ const Systems = (() => {
   function update(dt, input) {
     if (S.dead) return;
     S.time += dt; S.playtime += dt;
+    { const ph = Economy.dayPhase();
+      if (ph.night && !S.wasNight) { S.wasNight = true; if (!nearStation(200)) bark('night'); }
+      else if (ph.dawn && S.wasNight) { S.wasNight = false; if (!nearStation(200)) bark('dawn'); }
+      const deep = World.mistAt(S.px, S.py) > 0.55;
+      if (deep && !S.wasDeep) { S.wasDeep = true; bark('deepgrey'); }
+      else if (!deep && S.wasDeep && World.mistAt(S.px, S.py) < 0.4) S.wasDeep = false;
+    }
     if (S.cine) { updateCine(dt); return; }
     if (S.state === 'zip') { updateZip(dt); }
     else updatePlayer(dt, input);
@@ -87,7 +94,7 @@ const Systems = (() => {
     let ix = (input.right ? 1 : 0) - (input.left ? 1 : 0);
     let iy = (input.down ? 1 : 0) - (input.up ? 1 : 0);
     let mouseMove = false;
-    if (ix !== 0 || iy !== 0) { if (S.moveTo) S.moveTo = null; }          // hands on the keys: the keys win
+    if (ix !== 0 || iy !== 0) { if (S.moveTo) S.moveTo = null; if (S.route && S.route.length) S.route = []; }          // hands on the keys: the keys win
     else {
       const v = mouseVector(dt, input);
       if (v) { ix = v.x; iy = v.y; mouseMove = true; }
@@ -121,6 +128,7 @@ const Systems = (() => {
     if (S.sprinting) sp *= T.sprintMul;
     if (S.braced) sp *= T.braceMul;
     if (S.flags.effects.speed4) sp *= 1.04;
+    if (S.flags.effects.cheatLegs) sp *= 1.08;
     if (S.stam < T.lowStam) sp *= 0.85;
     if (S.qte) sp *= 0.35;
     if (e.speedCap < 1) sp = Math.min(sp, T.walk * e.speedCap * 1.1);
@@ -184,7 +192,7 @@ const Systems = (() => {
     if (terr.water && !here.crossing && !S.flags.calm) {
       for (const c of S.cargo) if (c.cat !== 'tool' && c.cond > 0) c.cond = Math.max(0, c.cond - (c.fragile ? 2.0 : 1.2) * dt);
       S.wadeT = (S.wadeT || 0) + dt;
-      if (moving) tut('firstWade');
+      if (moving) { tut('firstWade'); if (S.wadeT > 1.2 && S.wadeT < 1.2 + dt * 2) bark('wade'); }
     }
   }
 
@@ -214,6 +222,7 @@ const Systems = (() => {
   /* what a click on the ground means: a place to stand, or a thing to reach and use */
   function clickTarget(x, y) {
     for (const id of stationOrder) { const d = stations[id]; if (U.dist(x, y, d.x, d.y) < 140) return { x: d.x, y: d.y + 24, act: true, label: d.name, radius: 46 }; }   // 24 + 46 < the terminal's 96 u reach
+    { const n = NPC.companion(); if (n && U.dist(x, y, n.x, n.y) < 56) return { x: n.x, y: n.y, act: true, label: n.name.split(' ')[0], radius: 50, fn: () => UI2.openTransfer() }; }   // click your walker: the hand-over opens
     for (const rn of S.ruins) if (!rn.looted && U.dist(x, y, rn.x, rn.y) < 60) return { x: rn.x, y: rn.y, act: true, label: CHAR.RUIN_TYPES[rn.type].name, radius: 40 };
     for (const g of S.graves) if (U.dist(x, y, g.x, g.y) < 60) return { x: g.x, y: g.y, act: true, label: `${g.name}'s cairn`, radius: 45 };
     if (S.event && S.event.x !== undefined && U.dist(x, y, S.event.x, S.event.y) < 60) return { x: S.event.x, y: S.event.y, act: true, label: 'the event', radius: 40 };
@@ -242,10 +251,10 @@ const Systems = (() => {
     for (let i = 0; i <= n; i++) { const x = x0 + (x1 - x0) * i / n, y = y0 + (y1 - y0) * i / n; for (const a of z) if (U.dist(x, y, a.x, a.y) < a.r) return true; }
     return false;
   }
-  /* a tap: go there along a route feet can take */
-  function moveTo(x, y) {
+  /* a tap: go there along a route feet can take. plain: a strung waypoint — navigation only, no snapping to things */
+  function moveTo(x, y, opts) {
     if (S.dead || S.cine || S.state !== 'walk') return false;
-    const hot = clickTarget(x, y);
+    const hot = opts && opts.plain ? null : clickTarget(x, y);
     let tx = hot ? hot.x : x, ty = hot ? hot.y : y;
     const foot = footingNear(tx, ty);
     if (!foot) { UI.toast('No footing there', 'rust', 1600); Snd.sfx.denied(); return false; }
@@ -257,11 +266,22 @@ const Systems = (() => {
       if (!r.found) { UI.toast('No way through on foot — a ladder or bridge would change that', 'rust', 3200); Snd.sfx.denied(); return false; }
       path = r.path.slice(1); path.push([tx, ty]);
     }
-    S.moveTo = { x: tx, y: ty, path, i: 0, act: !!hot, label: hot ? hot.label : null, radius: hot ? hot.radius : 16, stuckT: 0, repathed: false, t0: S.time, zones };
+    S.moveTo = { x: tx, y: ty, path, i: 0, act: !!hot, fn: hot ? hot.fn : null, label: hot ? hot.label : null, radius: hot ? hot.radius : 16, stuckT: 0, repathed: false, t0: S.time, zones };
     Snd.sfx.ui();
     return true;
   }
-  function cancelMove() { S.moveTo = null; }
+  function cancelMove() { S.moveTo = null; S.route = []; }
+  /* shift-click: chain waypoints — walk them in the order they were laid (a route around a mountain, not through it) */
+  function queueMove(x, y) {
+    S.route = S.route || [];
+    if (!S.moveTo && !S.route.length) return moveTo(x, y, { plain: true });
+    if (S.route.length >= 8) { UI.toast('Eight marks is a long enough string', '', 1800); return false; }
+    const foot = footingNear(x, y);
+    if (!foot) { UI.toast('No footing there', 'rust', 1600); Snd.sfx.denied(); return false; }
+    S.route.push([foot.x, foot.y]);
+    Snd.sfx.ui();
+    return true;
+  }
   /* per-frame steering: returns a unit vector or null */
   function mouseVector(dt, input) {
     // hold: steer straight at the cursor (both buttons: sprint, handled by the caller)
@@ -279,7 +299,8 @@ const Systems = (() => {
     const stride = Math.max(0, S.speed * dt) * 1.2;
     if (U.dist(S.px, S.py, m.x, m.y) <= Math.max(m.radius, stride)) {
       S.moveTo = null;
-      if (m.act) { const e = getInteractions().find(i => i.key === 'E'); if (e) e.fn(); }
+      if (m.act) { if (m.fn) m.fn(); else { const e = getInteractions().find(i => i.key === 'E'); if (e) e.fn(); } }
+      if (S.route && S.route.length) { const nx2 = S.route.shift(); moveTo(nx2[0], nx2[1], { plain: true }); }
       return null;
     }
     // aim: the farthest waypoint we can see (re-checked a few times a second), else the next one
@@ -391,10 +412,23 @@ const Systems = (() => {
       if (inWater) { const rv = World.riverAt(S.px, S.py); item.cond = Math.max(0, item.cond - 8); dx += 90 + rand() * 140; dy += 45; }
       S.drops.push({ id: U.uid(), item, x: dx, y: dy });
       UI.toast(`${item.name} hit the ground — ${Math.round(item.cond)}%`, 'rust');
+      bark('drop');
     } else {
       UI.toast(`Cargo knocked: ${item.name} ${Math.round(item.cond)}%`, 'rust');
     }
     UI.refreshCargo();
+  }
+
+  /* =============== the Walker's voice =============== */
+  function bark(key) {
+    if (!S || S.dead || S.cine) return;
+    S.flags.barks = S.flags.barks || {};
+    if ((S.flags.barks[key] || 0) >= 3) return;                    // a line wears out
+    if (S.time - (S.barkAt || -99) < 30 && key !== 'relight') return;   // and the Walker is not a chatterbox
+    S.flags.barks[key] = (S.flags.barks[key] || 0) + 1;
+    S.barkAt = S.time;
+    const pool = DATA.barks[key];
+    if (pool) Render.say(S.px, S.py, U.pick(rand, pool), '233,226,208');
   }
 
   /* =============== weather =============== */
@@ -527,6 +561,7 @@ const Systems = (() => {
   }
   function beginStruggle(w) {
     S.struggle = { meter: T.grabStart, wraith: w };
+    { const n = NPC.companion(); if (n && !n.hungry) Render.say(n.x, n.y, 'Hold on — pull!'); }
     S.qte = null; UI.showQTE(false);
     UI.showStruggle(true);
     Snd.sfx.grab(); Render.shake(10);
@@ -543,6 +578,7 @@ const Systems = (() => {
       S.stats.escapes++;
       Snd.sfx.escape();
       UI.toast('Torn free — it recoils into the grey', 'gold');
+      bark('wraithFree');
     } else if (st.meter <= 0) { // yanked
       S.struggle = null; UI.showStruggle(false);
       const w = st.wraith;
@@ -605,7 +641,9 @@ const Systems = (() => {
       const pd = U.dist(S.px, S.py, cdef.x, cdef.y);
       const hasCargo = S.cargo.some(cc => cc.cat !== 'tool');
       const threat = pd < cdef.r && hasCargo && S.state === 'walk';
-      if (threat && pd < cdef.r * 0.95) tut('firstScrap');
+      if (threat && pd < cdef.r * 0.95) { tut('firstScrap'); bark('campNear'); }
+      c.shoutCd = Math.max(0, (c.shoutCd || 0) - dt);
+      if (threat && c.shoutCd <= 0 && pd < cdef.r * 0.9) { c.shoutCd = 14; const rr = c.runners[0]; if (rr) Render.say(rr.x, rr.y, U.pick(rand, DATA.scrapShouts), '224,101,74'); }
       for (const r of c.runners) {
         if (r.cd > 0) r.cd -= dt;
         if (r.carry) { // haul to stash
@@ -618,6 +656,7 @@ const Systems = (() => {
           const d = U.dist(r.x, r.y, S.px, S.py);
           r.x += (S.px - r.x) / d * T.scrapSpeed * dt;
           r.y += (S.py - r.y) / d * T.scrapSpeed * dt;
+          if (d < 220 && NPC.intercept(r)) continue;   // your walking partner meets them first
           if (d < T.scrapCatch) {
             if (NPC.tryShove()) { r.cd = 6; continue; }
             r.cd = 3.5;
@@ -664,7 +703,7 @@ const Systems = (() => {
         c.stash.push(State.makeItem('metal'), State.makeItem('metal'), State.makeItem('ceramic'));
         UI.toast(`${cdef.name} stood down — the light reached them. Their stash is yours; their fire is warm.`, 'gold');
         State.grantLikes(40);
-        addMail(`${cdef.name} joined the network`, 'They were porters once, before the Grey. They ask forgiveness in scrap metal.');
+        addMail(`${cdef.name} joined the network`, 'They were Waylighters once, before the Grey. They ask forgiveness in scrap metal.');
       }
     }
   }
@@ -719,6 +758,7 @@ const Systems = (() => {
         tut('firstZip');
       }
     }
+    { const n = NPC.companion(); if (n && U.dist(S.px, S.py, n.x, n.y) < 80 && (S.cargo.length || n.carry.length)) out.push({ key: 'G', label: `Trade loads with <b>${n.name.split(' ')[0]}</b>`, fn: () => UI2.openTransfer() }); }
     // pickups
     const picks = nearbyPickups();
     if (picks.length) out.push({ key: 'E', label: `Pick up — <b>${picks[0].label}</b>${picks.length > 1 ? ` +${picks.length - 1} more` : ''}`, fn: () => pickupAll(picks) });
@@ -732,10 +772,10 @@ const Systems = (() => {
     for (const g of S.graves) {
       const gd = U.dist(g.x, g.y, S.px, S.py);
       if (gd > 70) continue;
-      if (g.wraith) out.push({ key: 'F', label: `<b>${g.name}</b> stands in the Grey — light frees porters`, fn: useFlare });
+      if (g.wraith) out.push({ key: 'F', label: `<b>${g.name}</b> stands in the Grey — light frees the kept`, fn: useFlare });
       else {
         out.push({ key: 'E', label: `Recover <b>${g.name}</b>'s pack & journal`, fn: () => Porter.claimGrave(g) });
-        if (!g.respected) out.push({ key: 'L', label: `Leave a like at the cairn`, fn: () => { g.respected = true; State.grantLikes(3); Snd.sfx.like(0); UI.toast(`The stones hold it. ${g.name} would laugh.`, 'gold'); } });
+        if (!g.respected) out.push({ key: 'L', label: `Set a stone on the cairn`, fn: () => { g.respected = true; State.grantLikes(3); Snd.sfx.like(0); UI.toast(`The stones hold it. ${g.name} would laugh.`, 'gold'); } });
       }
       break;
     }
@@ -1086,7 +1126,7 @@ const Systems = (() => {
       Economy.onAccept(def);
     }
     S.orders.active.push(order);
-    if (State.weight() > State.cap()) UI.toast(`<b>Overloaded</b> — ${U.fmtKg(State.weight())} of ${State.cap()} kg. You will be slow and you will wobble. A companion could carry some.`, 'rust', 6000);
+    if (State.weight() > State.cap()) { UI.toast(`<b>Overloaded</b> — ${U.fmtKg(State.weight())} of ${State.cap()} kg. You will be slow and you will wobble. A companion could carry some.`, 'rust', 6000); bark('overload'); }
     Snd.sfx.accept();
     UI.updateTray(); UI.updateObjective();
     return order;
@@ -1146,9 +1186,11 @@ const Systems = (() => {
     if (o.item && !o.prio && o.item !== 'letters' && o.item !== 'core') need = Economy.onDeliver(stId, o.item, o.n || o.items.length);
     else if (o.prio) { const pd = DATA.priority.find(p => p.id === o.id); if (pd) for (const [it, n] of pd.items) if (it !== 'core' && it !== 'coreHeavy') { const r = Economy.onDeliver(stId, it, n); if (r.mood) need = r; } }
     const chain = Economy.chainStep();
+    { const c = DATA.dispatch.chain[Math.min(S.trip.n, DATA.dispatch.chain.length - 1)]; if (S.trip.n >= 2 && c) { Render.announce(c); Snd.sfx.grade(S.trip.n >= 4 ? 'S' : 'A'); } }
     let likes = Math.round(g.likes * need.mul * chain);
     g.needMul = need.mul; g.needMood = need.mood; g.chain = chain; g.chainN = S.trip.n; g.likes = likes;
     if (o.item === 'letters') g.letter = Economy.letterLine();
+    if (need.mood === 'critical') bark('lifesaver');
     for (const id of o.items) State.removeCargo(id);
     S.orders.active.splice(S.orders.active.indexOf(o), 1);
     S.stats.delivered++;
@@ -1230,7 +1272,7 @@ const Systems = (() => {
       const res = completeOrder(o, stId);
       res.prioDef = prioDef;
       results.push(res);
-      if (o.relight) { if (S.quiet) delete S.quiet[o.relight]; connectPrio = { connect: o.relight }; }
+      if (o.relight) { if (S.quiet) delete S.quiet[o.relight]; S.stations[o.relight].relitAt = S.time; connectPrio = { connect: o.relight }; bark('relight'); }
       if (prioDef) {
         S.orders.prioIdx++; S.orders.prioAccepted = false;
         if (prioDef.unlock) for (const u of prioDef.unlock) S.flags.unlocks[u] = true;
@@ -1329,7 +1371,7 @@ const Systems = (() => {
   function checkMilestones() {
     if (!S.flags.effects.cap10 && S.cov >= T.capMilestone) {
       S.flags.effects.cap10 = true;
-      UI.toast(`Coverage ${Math.round(S.cov * 100)}% — networked porters carry +10 kg`, 'gold');
+      UI.toast(`Coverage ${Math.round(S.cov * 100)}% — a networked Waylighter carries +10 kg`, 'gold');
     }
     if (!S.flags.unlocks.zipline && S.cov >= T.zipMilestone && S.stations.foundry.connected) {
       S.flags.unlocks.zipline = true;
@@ -1347,8 +1389,8 @@ const Systems = (() => {
     const st = S.stats;
     setTimeout(() => UI.toast('THE VALLEY IS AWAKE', 'gold', 8000), 800);
     setTimeout(() => UI.toast(`${st.delivered} deliveries · ${(st.distance / 1000).toFixed(1)} km on foot · ${st.built} structures raised · ${st.paved} road segments paved`, 'gold', 9000), 2600);
-    setTimeout(() => UI.toast('The stations still trade, the greyfall still falls, and the deep grey still hides what porters drop. Finish the stars. Pave every road. String the sky with ziplines.', '', 11000), 5200);
-    addMail('The valley is awake', 'Every waylight burns. Scrappers keep fires for cold porters, wraiths have nowhere left to stand, and the roads you fed remember every crate. The valley does not need saving now — it needs what it always needed. Deliveries.');
+    setTimeout(() => UI.toast('The stations still trade, the greyfall still falls, and the deep grey still hides what walkers drop. Finish the stars. Pave every road. String the sky with ziplines.', '', 11000), 5200);
+    addMail('The valley is awake', 'Every waylight burns. Scrappers keep fires for cold walkers, wraiths have nowhere left to stand, and the roads you fed remember every crate. The valley does not need saving now — it needs what it always needed. Deliveries.');
   }
 
   /* =============== echoes =============== */
@@ -1384,7 +1426,7 @@ const Systems = (() => {
     }
     if (total > 0) {
       State.grantLikes(total);
-      addMail('While you were resting', `${users} of your structures kept porters moving. +${total} ◆ came in overnight.`);
+      addMail('While you were resting', `${users} of your structures kept Waylighters moving. +${total} ◆ came in overnight.`);
       UI.toast(`While you were away: ${users} structures used, <b>+${total} ◆</b>`, 'gold');
       Snd.sfx.like(2);
     }
@@ -1397,7 +1439,7 @@ const Systems = (() => {
     const stars = stId ? S.stations[stId].stars : 0;
     list.push({ id: 'ladder', name: 'Ladder', cost: { metal: 10 }, gives: 'ladderTool', cat: 'Tools', desc: '3 kg on the back. Crosses cliffs and rivers.' });
     if (S.flags.unlocks.kit) list.push({ id: 'kit', name: 'Build kit', cost: { metal: 25, ceramic: 10 }, gives: 'kitTool', cat: 'Tools', desc: '5 kg. Becomes a bridge, generator, shelter, watchtower or pylon.' });
-    if (S.flags.unlocks.flare) list.push({ id: 'flare', name: 'Flare', cost: { lumen: 8 }, cat: 'Tools', max: 5, desc: 'Burns the mist. Wraiths cannot stand it. Frees kept porters.' });
+    if (S.flags.unlocks.flare) list.push({ id: 'flare', name: 'Flare', cost: { lumen: 8 }, cat: 'Tools', max: 5, desc: 'Burns the mist. Wraiths cannot stand it. Frees the kept.' });
     for (const f of CHAR.FAB_USE) {
       const d = DATA.items[f.id];
       list.push({ id: f.id, name: d.name, cost: f.cost, gives: f.id, cat: 'Provisions', desc: d.flavor });
@@ -1499,9 +1541,9 @@ const Systems = (() => {
   }
 
   return {
-    addStationLikes, finishCine, scrapJunk, eatQuick, postCrisis, pacifiedCampNear, crossingAt, moveTo, cancelMove, clickTarget, walkOpts,
+    addStationLikes, finishCine, scrapJunk, eatQuick, postCrisis, pacifiedCampNear, crossingAt, moveTo, cancelMove, queueMove, clickTarget, walkOpts,
     update, doInteract, getInteractions, steadyOk, struggleMash, useFlare,
-    buildOptions, tryBuild, boardFor, acceptOrder, abandonOrder, deliverablesAt, lostForStation, handleDelivery,
+    buildOptions, tryBuild, boardFor, acceptOrder, abandonOrder, deliverablesAt, lostForStation, handleDelivery, bark,
     igniteStation, onLightChanged, rebuildZipLinks, fabList, fabricate, donateCarried,
     awayLikes, addMail, gradeOrder, spawnEchoes, paverCost, nearestPaver, fmtCost,
     rainAt, inAura, nearStation, checkMilestones,

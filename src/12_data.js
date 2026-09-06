@@ -37,7 +37,7 @@ const DATA = (() => {
   ];
 
   /* ---------- stations: people, what they run short of, what they have to spare ----------
-     needs deplete over time and set the price of a delivery; makes are what a station hands a porter to carry.
+     needs deplete over time and set the price of a delivery; makes are what a station hands a Waylighter to carry.
      pop scales consumption. keep is the one thing they never run out of. */
   const stations = {
     haven: { name: 'Haven', x: 4200, y: 9980, role: 'Depot of the south · sixty people who kept the last light lit', prelit: true, baseR: 1090, pop: 1.0,
@@ -68,16 +68,85 @@ const DATA = (() => {
   };
   const stationOrder = ['haven', 'elm', 'mill', 'green', 'quarry', 'relay', 'foundry', 'pharos'];
 
+  /* the person behind each terminal: what they say depends on how their people are doing.
+     hello = first time through their door · relit = you just brought them back from the quiet */
+  const keepers = {
+    haven: { name: 'Mara Voss', role: 'quartermaster', voice: {
+      hello: 'New boots! Mara Voss — quartermaster. Sixty souls, one light, zero patience for standing around. Board’s behind me, Walker. Make me proud.',
+      critical: 'We are OUT. You want a hero’s welcome? It’s waiting behind one crate. Move like you mean it.',
+      wanting: 'The ledger says we’re fine. My gut says pack heavier. Back the gut.',
+      steady: 'Stores full enough to argue over. Kettle’s hot, roads are open — go make somewhere lucky.',
+      thriving: 'Look at these shelves. LOOK at them. Like the old days. First bowl of soup is on Haven, forever.',
+      relit: 'The light kicked on and sixty people lost their minds in the yard. You. YOU. Get in here.' },
+      react: { critical: 'Knew you’d come through. SOUP’S ON, EVERYBODY.', wanting: 'Good timing beats good intentions. This was both.' } },
+    elm: { name: 'Aldous Wren', role: 'farmer', voice: {
+      hello: 'Wren. Farm’s mine, debts are mine, and that laughing kid in the rows is mine too — she’s why medicine outranks everything here. Now you know me.',
+      critical: 'I’ve buried better harvests than this one. Read the board slow, walk it fast.',
+      wanting: 'We stretch. Stew gets thinner, my jokes get worse. Nobody wins.',
+      steady: 'Fields behaving, kid’s laughing. Take food where they ain’t so lucky and tell them Wren sent it.',
+      thriving: 'Barn is FULL. Say it with me — FULL. Take a crate of anything and brag about us.',
+      relit: 'You lit my farm back up. There’s a chair by our fire with your name carved in it now. Carved deep.' },
+      react: { critical: 'The kid’s already into it. Wren owes you — and Wren HATES owing.', wanting: 'That’s a winter argument settled. Obliged.' } },
+    mill: { name: 'Bo Tammen', role: 'head sawyer', voice: {
+      hello: 'HA! A real live Waylighter! BO TAMMEN — head sawyer, loudest man in the valley. Mind the blades. They’re louder.',
+      critical: 'Empty bellies, silent saws. Know what a quiet mill is? A DEAD one. Fix that and I’ll name a blade after you.',
+      wanting: 'We’re down to burning offcuts and patience, and I was born short on one of those.',
+      steady: 'Kilns hot, crew fed, timber for days. Ask big — Bo delivers.',
+      thriving: 'You HEAR that?! SAWS! Best song ever written, and you put it back on!',
+      relit: 'Yard lights hit the blades and my whole crew started work LAUGHING. You did that.' },
+      react: { critical: 'RATIONS! EVERYBODY — RATIONS! Somebody get this Walker a chair and the good mug!', wanting: 'HA! Right on time. Bo remembers.' } },
+    green: { name: 'Dr. Imre Callas', role: 'botanist', voice: {
+      hello: 'A visitor with legs instead of leaves! Forgive the staring — Dr. Callas. The tomatoes and I were just discussing you.',
+      critical: 'The beds are dying and I have run out of polite verbs. Help. That one still works.',
+      wanting: 'The glasshouse makes its own weather. Supplies, alas, are weather I cannot grow.',
+      steady: 'Everything green is behaving, which is frankly suspicious. Take medicine to whoever is not.',
+      thriving: 'The tomatoes have opinions again — loud ones. Magnificent. Take a crate before they unionize.',
+      relit: 'Light on glass! Every leaf in the house turned to look. So did we. So did I.' },
+      react: { critical: 'The beds will live! I am going to go tell them RIGHT NOW.', wanting: 'The plants noticed before I did. They approve.' } },
+    quarry: { name: 'Sela Marsh', role: 'forewoman', voice: {
+      hello: 'Marsh. You climbed my terraces without dying, so you’ll do. Board’s there. Gloves are a suggestion.',
+      critical: 'Stone doesn’t complain. My crew has earned the right. Feed them and watch what this quarry does.',
+      wanting: 'We cut, we stack, we wait. Two out of three keeps a body sane.',
+      steady: 'Crew’s fed, cuts are clean. Iron’s yours if your spine’s honest.',
+      thriving: 'Terraces are singing. Don’t grin about it. …Fine. One grin.',
+      relit: 'Lights on the stone again. Crew pretended not to cheer. They cheered. I counted.' },
+      react: { critical: 'Crew eats tonight. That buys you the good rope, permanently.', wanting: 'Solid. Marsh doesn’t say that twice.' } },
+    relay: { name: 'Corporal Finch', role: 'signal keeper', voice: {
+      hello: 'Corporal Finch, Relay Hill, still at post. You are the first traffic in four hundred days, and I have rehearsed this greeting eleven times. Welcome.',
+      critical: 'Post status: failing. I keep the log regardless. Posterity deserves handwriting.',
+      wanting: 'The dish turns by hand. Mine. Supplies thin, morale adequate, wrist legendary.',
+      steady: 'Post status: holding. I wrote it twice, for the pleasure of it.',
+      thriving: 'Full stores, clear channel. I have begun logging jokes. Filed under: morale, preventative.',
+      relit: 'Signal restored. I logged the exact minute your light crested the hill. That page gets a frame.' },
+      react: { critical: 'Resupply received. Log entry reads, in full: “FINALLY.”', wanting: 'Noted, weighed, and appreciated. Underlined twice.' } },
+    foundry: { name: 'Brand', role: 'smith', voice: {
+      hello: 'Brand. Fire’s mine. Speak.',
+      critical: 'Short on everything. Fire doesn’t care. I do.',
+      wanting: 'It runs. Barely counts.',
+      steady: 'Fire’s fed. Take coolant. Don’t drop it.',
+      thriving: 'Best heats in years. Smiled once. Nobody saw.',
+      relit: 'You walked light into the deep grey for us. That’s a debt. Brand pays debts.' },
+      react: { critical: 'Fire eats tonight. Good hands.', wanting: 'Kept us running. Remembered.' } },
+    pharos: { name: 'Keeper Aster', role: 'keeper of the great light', voice: {
+      hello: 'A hundred of us watched your lantern climb the last mile — the children named it a star. I am Aster. Welcome to the top of the world.',
+      critical: 'A hundred mouths, one tower, and the sea wind takes its cut of everything. We need all of it.',
+      wanting: 'We hold. Holding is the Pharos’ whole profession.',
+      steady: 'The tower stands easier with full stores. So do I.',
+      thriving: 'If the Pharos is lit, the whole valley can see it. Tonight — look UP, valley.',
+      relit: 'The great light turns again, and every station below knows exactly who to thank. So do we.' },
+      react: { critical: 'A hundred people just learned your name at once. Listen — you can almost hear it.', wanting: 'The tower thanks you. The keeper too.' } },
+  };
+
   /* per-station star rewards (index = star reached) */
   const starRewards = {
-    haven: [null, { note: '+donated metal with every delivery' }, { note: 'Storage lockers doubled' }, { note: 'Haven pays +10% likes on all orders from here', effect: 'havenPay' }, { note: 'Haven crews restore your cargo containers at this terminal' }, { note: 'Haven honors you — likes flow from the whole south' }],
+    haven: [null, { note: '+donated metal with every delivery' }, { note: 'Storage lockers doubled' }, { note: 'Haven pays +10% trust on all orders from here', effect: 'havenPay' }, { note: 'Haven crews restore your cargo containers at this terminal' }, { note: 'Haven honors you — trust flows from the whole south' }],
     elm: [null, { note: 'Elm donates rations — +ceramic trickle' }, { note: 'Fresh boots: +4% walk speed everywhere', effect: 'speed4' }, { note: 'Elm sends preserves — orders here pay +15%' }, { note: 'Seed exchange — +metal & ceramic gifts' }, { note: 'The farm thrives' }],
-    mill: [null, { note: 'Mill donates ceramics per delivery' }, { note: 'Reinforced containers: cargo wear −12%', effect: 'wear12' }, { note: 'The Mill outfits porters — wide frames on the bench' }, { note: 'Seasoned timber — bridges decay 2× slower' }, { note: 'The saws sing again' }],
+    mill: [null, { note: 'Mill donates ceramics per delivery' }, { note: 'Reinforced containers: cargo wear −12%', effect: 'wear12' }, { note: 'The Mill outfits Waylighters — wide frames on the bench' }, { note: 'Seasoned timber — bridges decay 2× slower' }, { note: 'The saws sing again' }],
     green: [null, { note: 'Greenhouse donates resin-ceramic per delivery' }, { note: 'Trail rations: stamina regens +20% faster', effect: 'regen20' }, { note: 'Greenhouse orders pay +15%' }, { note: 'Rooftop beds — big material gifts' }, { note: 'The glass houses glow' }],
     quarry: [null, { note: 'Quarry donates metal — the road fund begins' }, { note: 'Quarry donates heavy metal per delivery' }, { note: 'Blasting powder — paver costs −20%', effect: 'paver20' }, { note: 'Deep seams — huge metal gifts' }, { note: 'Stone flows south' }],
     relay: [null, { note: 'Forecast unlocked — greyfall shown on map', effect: 'forecast' }, { note: 'Signal boost — waylights reach +60 further', effect: 'reach60' }, { note: 'Blueprint: WATCHTOWER Mk II — reveals 2× area' }, { note: 'Relay pays +20% on express orders' }, { note: 'They see the whole valley now' }],
     foundry: [null, { note: 'Blueprint: EXO FRAME I — carry +40 kg', effect: 'frame1Bp' }, { note: 'Blueprint: FLOAT SLED — carry +100 kg, no sprint', effect: 'sledBp' }, { note: 'Blueprint: EXO FRAME II — +80 kg & steadier', effect: 'frame2Bp' }, { note: 'Alloy lattice — structures decay 2× slower' }, { note: 'The forges never cool' }],
-    pharos: [null, { note: 'The valley is awake' }, { note: 'Pilgrim roads — all likes +10%' }, { note: 'The light holds' }, { note: 'Nothing left in the dark' }, { note: 'Legend' }],
+    pharos: [null, { note: 'The valley is awake' }, { note: 'Pilgrim roads — all trust +10%' }, { note: 'The light holds' }, { note: 'Nothing left in the dark' }, { note: 'Legend' }],
   };
 
   /* ---------- roads: chains of pavers ---------- */
@@ -99,12 +168,12 @@ const DATA = (() => {
   ];
 
   /* ---------- echo porters ---------- */
-  const echoNames = ['K. Harlan', 'M. Osei', 'Porter Juno', 'T. Vasquez', 'R. Bell', 'Old Marrow', 'S. Ito', 'Wren', 'Cassa', 'The Twins'];
+  const echoNames = ['K. Harlan', 'M. Osei', 'Juno Longwalk', 'T. Vasquez', 'R. Bell', 'Old Marrow', 'S. Ito', 'Wren', 'Cassa', 'The Twins'];
   /* candidate echo structures, spawned as connections advance (trigger = station id just connected) */
   const echoSpots = [
     { trigger: 'mill', type: 'ladder', x: 3490, y: 8660, ang: 0.35, by: 'K. Harlan', likes: 214 },
     { trigger: 'mill', type: 'generator', x: 5310, y: 8810, by: 'M. Osei', likes: 96 },
-    { trigger: 'green', type: 'ladder', x: 2600, y: 7916, ang: 1.62, by: 'Porter Juno', likes: 340 },
+    { trigger: 'green', type: 'ladder', x: 2600, y: 7916, ang: 1.62, by: 'Juno Longwalk', likes: 340 },
     { trigger: 'green', type: 'shelter', x: 5200, y: 7200, by: 'R. Bell', likes: 158 },
     { trigger: 'quarry', type: 'watchtower', x: 3000, y: 7040, by: 'S. Ito', likes: 122 },
     { trigger: 'relay', type: 'shelter', x: 6620, y: 6460, by: 'Old Marrow', likes: 273 },
@@ -186,9 +255,9 @@ const DATA = (() => {
     },
     {
       id: 'p6', from: 'green', to: 'quarry', items: [['core', 1], ['food', 1]],
-      title: 'Stone and wire', brief: 'The Quarry has iron and nobody to send it to. Scrappers hold the ridge between — porters who were not paid enough, once. They only chase a loaded one.',
+      title: 'Stone and wire', brief: 'The Quarry has iron and nobody to send it to. Scrappers hold the ridge between — Waylighters who were never paid, once. They only chase a loaded one.',
       connect: 'quarry',
-      hint: 'Scrappers chase loaded porters. Outrun them, route around, or wait — waylight pacifies a camp for good.',
+      hint: 'Scrappers chase loaded walkers. Outrun them, route around, or wait — waylight pacifies a camp for good.',
       arrive: 'Stonecutters light the terraces. The road fund begins — the Quarry pays in metal.',
     },
     {
@@ -221,21 +290,21 @@ const DATA = (() => {
     'Tell the Greenhouse the seed they sent came up. All of it. Every row. — Elm',
     'The dish turned by itself last night for six seconds. Nobody slept after. — Relay',
     'We have enough coolant for a month if nobody breathes on the furnace. — Foundry',
-    'Ask the porter what the sky looks like where you are. We have forgotten. — Pharos',
+    'Ask your Waylighter what the sky looks like where you are. We have forgotten. — Pharos',
     'If this reaches you the road is open. If it does not, it was open once. — Haven',
     'The child is walking again. Whatever was in that crate, send it twice. — Elm',
     'Found a photograph in the kiln ash. Four people squinting. One of them is you. — Mill',
     'We are fine. We are fine. We are fine. Please answer. — Relay',
     'The glass held through the storm. The tomatoes did not. Send anyone who likes soup. — Greenhouse',
-    'A porter died on the ridge last winter. We kept her name on the board. Bring us another. — Quarry',
+    'A Waylighter died on the ridge last winter. We kept her name on the board. Bring us another. — Quarry',
     'Coolant for parts, parts for coolant. That is not trade, that is a marriage. — Foundry',
-    'The light you carry is not the point. The carrying is. — an old porter, quoted at every fire',
+    'The light you carry is not the point. The carrying is. — old Waylighter saying, quoted at every fire',
     'We can hear the Pharos bell on still nights. It is ringing for someone. — Relay',
     'Half the valley thinks the mist is weather. The other half stopped talking. — Haven',
     'Send textiles before the greyfall season. Send them anyway. — Mill',
     'Our doctor is nineteen and learning from a book you delivered. Send the next volume. — Quarry',
     'The seedlings arrived bruised and alive, like everyone else. — Elm',
-    'We put a lantern in the window every night for the porters. It has never once been needed. Keep it lit. — Greenhouse',
+    'We put a lantern in the window every night for the walkers. It has never once been needed. Keep it lit. — Greenhouse',
     'Tell Haven the debt is forgiven. Tell them to send food. — Foundry',
     'What do we call it, the mist? We call it the quiet. It grows where nothing moves. — Pharos',
     'The pump runs again. Parts from the Mill, hands from nowhere. — Greenhouse',
@@ -279,7 +348,80 @@ const DATA = (() => {
     parPad: 1.6, parFloor: 50,
   };
 
-  const titles = [[0, 'Novice Porter'], [4, 'Courier'], [8, 'Wayfarer'], [12, 'Pathbinder'], [17, 'Lifeline'], [22, 'Luminary'], [28, 'Legend of the Valley']];
+  /* ranks of the Order — read them like a promotion, because they are one */
+  const titles = [[0, 'Greenhand of the Order'], [4, 'Mudfoot'], [8, 'Waylighter, Sworn'], [12, 'Pathbinder'], [17, 'Lifeline'], [22, 'Lamplord'], [28, 'Legend of the Valley']];
+
+  /* THE ORDER OF WAYLIGHTERS — the dead institution whose coat you wear and whose dispatch still runs.
+     The Dispatch is the game's emcee: pre-quiet automation, all caps, zero doubt. Z's commander, NBA Jam's booth. */
+  const dispatch = {
+    chain: [null, null, 'DOUBLE DROP. THE WIRE NOTICES.', 'THREE STOPS — THE WIRE SINGS!', 'FOUR STOPS. WHO RAISED YOU?', 'FIVE STOPS — THEY WILL SING ABOUT THIS ONE.', 'SIX?! LEAVE SOME GLORY FOR THE REST OF THE ORDER.'],
+    promo: 'ORDER OF WAYLIGHTERS — FIELD PROMOTION. RANK: %RANK%. THE COAT FITS BETTER ALREADY.',
+    codeOk: ['CODE ACCEPTED, HOTSHOT.', 'THE OLD TRICKS STILL WORK.', 'DISPATCH SEES NOTHING. WINK.'],
+    codeBad: ['NICE TRY.', 'THAT CODE DIED WITH THE NINETIES.', 'DENIED. WALK IT OFF.'],
+    ignite: 'STATION ON THE WIRE — THE ORDER GROWS.',
+  };
+  /* the Roll of the Order — Cannon Fodder's hill: the dead are named, counted, and kept on the title screen.
+     These walked before you; your own dead join them. */
+  const rollSeed = [
+    { name: 'Juno Longwalk', cls: 'Mountaineer', fate: 'the Silt took her', deliveries: 214, km: '61.0' },
+    { name: 'K. Harlan', cls: 'Rigger', fate: 'fell with the bridge he was raising', deliveries: 168, km: '44.2' },
+    { name: 'Old Marrow', cls: 'Hearthkeeper', fate: 'sat down by his fire and stayed', deliveries: 402, km: '90.8' },
+    { name: 'M. Osei', cls: 'Courier', fate: 'outran everything except winter', deliveries: 131, km: '52.6' },
+    { name: 'Wren’s Wren', cls: 'Scavenger', fate: 'the Grey kept her, boots and all', deliveries: 77, km: '31.3' },
+    { name: 'The Twins', cls: 'Drifters', fate: 'one grave, by request', deliveries: 96, km: '38.0' },
+  ];
+  /* attract-mode taglines — box-copy with a pulse, rotating under the logo */
+  const taglines = [
+    'No chosen one. Just a pack and bad weather.',
+    'The apocalypse still expects its mail.',
+    'Pay: thanks, tomatoes, a bed by the fire.',
+    'Scrappers hate this one weird trick: DELIVERY.',
+    'Your knees will forgive you. The valley won’t forget you.',
+    'Walk it off.',
+    'Sixty kilos of hope and it’s raining.',
+  ];
+  /* typed on the title screen, like it’s 1996. Cheating is legal and goes on your permanent record. */
+  const cheats = {
+    TOMATOES: { fx: 'provisions', note: 'PAYDAY. FIFTY PROVISIONS, PRE-TOMATOED.' },
+    MELLYGIBS: { fx: 'flares', note: 'FIVE FLARES. GO BE THE ROAD WARRIOR.' },
+    LONGLEGS: { fx: 'legs', note: 'LEG DAY, PERMANENTLY. +12%% WALK SPEED.' },
+    BIGLANTERN: { fx: 'lantern', note: 'LANTERN: EMBARRASSINGLY LARGE.' },
+    BOOTHILL: { fx: 'roll', note: 'THE ROLL REMEMBERS EVERYONE.' },
+  };
+
+  /* the stamp under the grade — arcade-loud, one line, gone in a blink */
+  const gradeLines = {
+    S: ['TEXTBOOK. FRAME IT.', 'CLEAN AS DAWN. SIGNED.', 'THE STUFF OF FIRESIDE SONGS.'],
+    A: ['GOOD HANDS. FAST FEET.', 'STRONG WALK. ONE NOTE: FASTER.'],
+    B: ['DELIVERED. DENTED. FORGIVEN.', 'THE VALLEY TAKES IT.'],
+    C: ['IT ARRIVED. TECHNICALLY.', 'THIS CRATE HAS SEEN THINGS.'],
+  };
+  /* the last line on a death screen, by what did it */
+  const epitaphs = {
+    scrappers: 'They only wanted the pack. They took the rest to be thorough.',
+    wraith: 'The Grey reached out. This time it kept hold.',
+    cold: 'The valley is honest about winter. Every Waylighter gambles against it once too often.',
+    water: 'The river was patient. Rivers always are.',
+    fall: 'The ground was there the whole time.',
+    bleed: 'A small wound and a long road. The road won.',
+    starve: 'An empty pack kills slower than an empty stomach.',
+  };
+  /* what scrappers yell when the chase starts — Mutant League manners */
+  const scrapShouts = ['DROP THE PACK AND WALK, HERO!', 'Nice crates. OURS now!', 'RUN! We love it when they run!', 'The pack stays. YOU can go!', 'Fresh boots! GET ’EM!'];
+
+  /* what the Walker says to nobody in particular — dry, quiet, out loud */
+  const barks = {
+    night: ['Dark comes fast out here.', 'And there goes the sun. Wonderful.', 'Night shift. My favorite. Said nobody.'],
+    dawn: ['Made it. Morning.', 'Still here. Still walking.', 'Morning, valley. Miss me?'],
+    wade: ['Cold. Cold cold cold.', 'Boots were dry a whole day. Personal record.', 'The river charges a toll. The toll is dignity.'],
+    drop: ['No no no — not the cargo.', 'That better not have been the medicine.', 'Ten years of practice. Gravity: still undefeated.'],
+    wraithFree: ['Keep grabbing. The pack stays mine.', 'Not today. Walk on.', 'Buy it dinner first.'],
+    deepgrey: ['Nothing out here but weather and the things it hides.', 'Talk to yourself. It helps. I read that somewhere.', 'Deep grey. Where the map shrugs.'],
+    overload: ['My knees have filed a complaint.', 'Heavy is just pay you carry.', 'One more crate. Famous last words, every time.'],
+    lifesaver: ['Somebody sleeps easier tonight.', 'That one mattered. Felt it in the straps.', 'THAT is why we walk.'],
+    relight: ['One more light. Getting to be a habit.', 'There you are, valley. There you are.'],
+    campNear: ['Scrapper ground. Feet quiet, eyes up.', 'They only want the pack. The pack disagrees.'],
+  };
 
   const tutorials = {
     firstWobble: 'Rough ground under a load — press <b>Space</b> when the ring appears, or hold <b>Space</b> to brace and walk slow.',
@@ -287,13 +429,13 @@ const DATA = (() => {
     firstLadder: 'Face the crossing and press <b>B</b> — a ladder spans cliffs and rivers.',
     firstWade: 'Cold water. It slows you, drinks your stamina, and soaks the crates — the grade will show it. A ladder laid across keeps everything dry.',
     firstKit: 'Build kits raise real structures — stand where you want one and press <b>B</b>. They only rise where waylight reaches.',
-    firstScrap: 'Scrapper territory. They chase porters with cargo. Outrun them, drop nothing, or route around. Light will end them one day.',
+    firstScrap: 'Scrapper territory. They chase walkers with cargo. Outrun them, drop nothing, or route around. Light will end them one day.',
     firstBurn: 'It burned at the light\'s edge. Wraiths cannot cross onto lit ground — the gold rim is a wall to them. Run for the light.',
     firstWraith: 'A wraith. Movement draws them — creep braced with <b>Space</b>, or sprint and pray. A flare (<b>F</b>) burns them off.',
-    firstSnag: 'It took cargo to a snag. The marker shows where. Nothing stays lost that a porter can reach.',
+    firstSnag: 'It took cargo to a snag. The marker shows where. Nothing stays lost that a Waylighter can reach.',
     firstPaver: 'A road paver. Feed it metal and ceramic — banked or carried — and it paves a segment for good. Roads are fast, safe, forever — and the wire carries twice as much between the stations they join.',
     firstZip: 'Pylons within range link into ziplines automatically. Press <b>E</b> under one to fly.',
   };
 
-  return { W, H, features, rivers, stations, stationOrder, goodsInfo, letterLines, starRewards, roads, camps, echoNames, echoSpots, structures, items, priority, fabItems, T, titles, tutorials };
+  return { W, H, features, rivers, stations, stationOrder, goodsInfo, letterLines, starRewards, roads, camps, echoNames, echoSpots, structures, items, priority, fabItems, T, titles, tutorials, keepers, barks, gradeLines, epitaphs, scrapShouts, dispatch, rollSeed, taglines, cheats };
 })();

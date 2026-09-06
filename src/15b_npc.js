@@ -69,6 +69,7 @@ const NPC = (() => {
       n.state = 'companion';
       S.compPos = { x: S.px + 30, y: S.py + 30 };
       UI.toast(`<b>${n.name}</b> falls in beside you. ${n.line}.`, 'gold');
+      Render.say(S.px + 40, S.py - 10, U.pick(rand, ['Point me at the weight.', 'I walk, you plan. Deal.', 'Been a while since anyone hired anyone.']));
     }
     Snd.sfx.accept();
     return true;
@@ -130,12 +131,29 @@ const NPC = (() => {
     return false;
   }
   function struggleBonus() { const n = companion(); return n && !n.hungry ? 1.35 : 1; }
+  const SHOVE_LINES = ['Not this one.', 'Back off.', 'Try me instead.', 'Walk away.', 'Wrong pack, friend.'];
   function tryShove() {
     const n = companion();
     if (!n || n.hungry || n.shoveCd > 0) return false;
-    n.shoveCd = 18;
-    UI.toast(`${n.name.split(' ')[0]} shoves the scrapper off you!`, 'gold', 2200);
+    n.shoveCd = 9;
+    Render.say(n.x, n.y, U.pick(rand, SHOVE_LINES));
+    Render.burst(S.px, S.py);
     Snd.sfx.escape();
+    return true;
+  }
+  /* they do not stand and watch: a runner closing on you gets met first */
+  function intercept(r) {
+    const n = companion();
+    if (!n || n.hungry || n.shoveCd > 0) return false;
+    if (U.dist(n.x, n.y, r.x, r.y) > 150) return false;
+    n.shoveCd = 8;
+    const d = Math.max(1, U.dist(r.x, r.y, n.x, n.y));
+    r.x += (r.x - n.x) / d * 190; r.y += (r.y - n.y) / d * 190;   // knocked sprawling
+    r.cd = 5;
+    Render.burst(r.x, r.y);
+    Render.say(n.x, n.y, U.pick(rand, SHOVE_LINES));
+    Snd.sfx.stumble();
+    if (!S.flags.tut.firstIntercept) { S.flags.tut.firstIntercept = true; UI.toast(`<b>${n.name.split(' ')[0]}</b> knocks the scrapper flat. Waylighters walk together for a reason.`, 'gold', 5000); }
     return true;
   }
 
@@ -203,7 +221,7 @@ const NPC = (() => {
           if (r.route.runs % 4 === 0) UI.toast(`${r.name.split(' ')[0]}'s run: ${DATA.stations[r.route.a].name} ⇄ ${DATA.stations[r.route.b].name} · +${likes} ◆ each end`, '', 3500);
         } else if (!r.hungry) {
           r.hungry = true;
-          Systems.addMail(`${r.name}'s route is stalled`, 'No provisions banked. Porters cannot eat gratitude.');
+          Systems.addMail(`${r.name}'s route is stalled`, 'No provisions banked. Waylighters cannot eat gratitude.');
           UI.toast(`<b>${r.name}</b>'s route stalled — bank provisions`, 'rust');
         }
         if (r.hungry && S.banked.provisions >= 2) r.hungry = false;
@@ -232,7 +250,7 @@ const NPC = (() => {
       }
       if (ev.type === 'rescueCaptive' && ev.data.stage === 'following') {
         const camp = DATA.camps.find(c => c.id === ev.data.camp);
-        if (S.cargo.length > 0) { ev.data.stage = 'waiting'; UI.toast('They freeze — scrappers watch loaded porters. Come back empty-handed.', 'rust'); }
+        if (S.cargo.length > 0) { ev.data.stage = 'waiting'; UI.toast('They freeze — scrappers watch loaded walkers. Come back empty-handed.', 'rust'); }
         else {
           ev.x = U.lerp(ev.x, S.px - Math.cos(S.dir) * 36, Math.min(1, 4 * dt));
           ev.y = U.lerp(ev.y, S.py - Math.sin(S.dir) * 36, Math.min(1, 4 * dt));
@@ -306,12 +324,12 @@ const NPC = (() => {
         UI.toast(`<b>Someone's pinned by wraiths</b> ${U.fmtDist(U.dist(S.px, S.py, p.x, p.y))} out — light drives them off`, 'rust', 7000);
       } else if (kind === 'rescueCaptive') {
         mk(kind, camp.x + 40, camp.y + 30, { npc, camp: camp.id, stage: 'waiting' });
-        UI.toast(`<b>The scrappers at ${camp.name} keep a captive.</b> They ignore porters carrying nothing.`, 'rust', 7000);
+        UI.toast(`<b>The scrappers at ${camp.name} keep a captive.</b> They ignore walkers carrying nothing.`, 'rust', 7000);
       } else {
         const p = findSpot(null, 500, 1100);
         if (!p) return false;
         mk(kind, p.x, p.y, { npc });
-        UI.toast(kind === 'rescueInjured' ? '<b>A porter is down</b> nearby — they need a bandage or salve' : '<b>A drifter is starving</b> nearby — any food will do', 'rust', 7000);
+        UI.toast(kind === 'rescueInjured' ? '<b>A Waylighter is down</b> nearby — they need a bandage or salve' : '<b>A drifter is starving</b> nearby — any food will do', 'rust', 7000);
       }
       return true;
     }
@@ -383,7 +401,7 @@ const NPC = (() => {
     }
     if (ev.type === 'rescueCaptive' && ev.data.stage === 'waiting' && d < 60) {
       if (S.cargo.length === 0) out.push({ key: 'E', label: `Lead the captive out — <b>stay empty-handed</b>`, fn: () => { ev.data.stage = 'following'; UI.toast('They fall in behind you, silent as held breath'); } });
-      else out.push({ key: 'E', label: 'The captive eyes your cargo — <b>drop everything first</b>', fn: () => UI.toast('Scrappers only chase loaded porters. Stash your load, come back light.', 'rust') });
+      else out.push({ key: 'E', label: 'The captive eyes your cargo — <b>drop everything first</b>', fn: () => UI.toast('Scrappers only chase loaded walkers. Stash your load, come back light.', 'rust') });
     }
     if (ev.type === 'supplyDrop' && d < 50) {
       out.push({ key: 'E', label: 'Crack open the <b>supply drop</b>', fn: () => { lootDrop(); } });
@@ -485,6 +503,6 @@ const NPC = (() => {
 
   return {
     gen, companion, capOf, speedOf, refreshPools, seedStarterPool, hire, hireCost, dismiss, assignRoute, routeSlots, routesActive,
-    give, take, assistWobble, struggleBonus, tryShove, onPorterDeath, update, eventInteractions, lootRuin, seedRuins, rollLoot, peddlerStock, nearestConnected, clearEvent,
+    give, take, assistWobble, struggleBonus, tryShove, intercept, onPorterDeath, update, eventInteractions, lootRuin, seedRuins, rollLoot, peddlerStock, nearestConnected, clearEvent,
   };
 })();

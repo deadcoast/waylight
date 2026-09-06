@@ -22,7 +22,7 @@
     </div>
     <div id="social">
       <div id="likesRow">&#9670; <span class="num" id="likesNum">0</span></div>
-      <div id="titleRow">Novice Porter</div>
+      <div id="titleRow">Greenhand</div>
       <div id="covRow">Waylight coverage <b class="num" id="covNum">4%</b></div>
       <div id="dayRow">day · day 1</div>
     </div>
@@ -51,12 +51,27 @@
   <div id="toasts"></div>
   <div id="barTop" class="bar"></div><div id="barBot" class="bar"></div>
   <div id="cineTitle"><div class="big"></div><div class="small"></div></div>
+  <div id="announce"></div>
+
+  <div id="packOv" class="overlay hidden">
+    <div class="sheet glass" style="width:min(760px,94vw)">
+      <header><div><h2 id="txTitle">Hand-over</h2><div class="tag" id="txSub">click a crate to pass it across &middot; they steady you, flatten scrappers, and haul it all home if you fall</div></div>
+        <button class="btn quiet" id="txClose">Done <span class="k" style="margin:0 0 0 6px">Esc</span></button></header>
+      <div class="sheetBody" style="padding-top:10px">
+        <div id="txCols">
+          <div class="txCol"><div class="txHead"><span id="txYouName">You</span><span class="num" id="txYouKg"></span></div><div class="meter slim"><i id="txYouFill"></i></div><div class="txList" id="txYou"></div></div>
+          <div class="txCol"><div class="txHead"><span id="txThemName"></span><span class="num" id="txThemKg"></span></div><div class="meter slim"><i id="txThemFill"></i></div><div class="txList" id="txThem"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <div id="stationOv" class="overlay hidden">
     <div class="sheet glass">
       <header>
         <div><h2 id="stationName">Haven</h2>
           <div id="stationSub"><span class="starRow" id="stationStars"></span><span class="tag" id="stationRole"></span></div>
+          <div id="keeperLine"></div>
         </div>
         <div style="text-align:right">
           <div class="bank" id="bankRow"></div>
@@ -77,6 +92,7 @@
         <div id="gradeWrap"><span id="gradeStamp">S</span><div id="gradeRing"></div></div>
         <div class="scoreRows" id="scoreRows"></div>
         <hr class="hairline">
+        <div id="gradeLine"></div>
         <div id="likesTotal">+ 0 &#9670;</div>
         <div id="starUpNote" class="hidden"></div>
         <div id="resultFoot"><button class="btn primary" id="resultsClose">Carry on <span class="k" style="margin:0 0 0 6px">Enter</span></button></div>
@@ -90,7 +106,7 @@
       <span class="tag">Waylight coverage <span class="num" id="mapCov">0%</span></span>
       <span class="tag">Roads paved <span class="num" id="mapRoads">0 / 24</span></span>
       <span style="flex:1"></span>
-      <span class="tag"><b>click</b> a place to walk there &middot; drag to pan &middot; scroll to zoom &middot; <b>M</b> to close</span>
+      <span class="tag"><b>click</b> walk there &middot; <b>shift-click</b> string a route around trouble &middot; drag to pan &middot; scroll to zoom &middot; <b>M</b> to close</span>
     </div>
     <div id="mapCanvasWrap"><canvas id="map"></canvas><div id="mapTip" class="glass"></div>
       <div id="mapLegend" class="glass">
@@ -122,7 +138,8 @@
       <header><h2>Field manual</h2></header>
       <div class="sheetBody">
         <div class="helpCols">
-          <div class="rowline"><span><span class="k">M1</span></span><span class="desc">Click a place &mdash; walk there. Click a terminal, ruin or crate &mdash; walk there and use it</span></div>
+          <div class="rowline"><span><span class="k">M1</span></span><span class="desc">Click a place &mdash; walk there. Click a terminal, ruin, crate or your walking partner &mdash; walk there and use it</span></div>
+          <div class="rowline"><span><span class="k">&#8679;M1</span></span><span class="desc">Shift-click (world or map) &mdash; string waypoints; your feet take them in order, around what you route around</span></div>
           <div class="rowline"><span><span class="k">M1</span>hold</span><span class="desc">Steer toward the cursor</span></div>
           <div class="rowline"><span><span class="k">M1</span>+<span class="k">M2</span></span><span class="desc">Hold both &mdash; sprint</span></div>
           <div class="rowline"><span><span class="k">W</span><span class="k">A</span><span class="k">S</span><span class="k">D</span></span><span class="desc">Walk by hand (overrides the mouse)</span></div>
@@ -133,12 +150,12 @@
           <div class="rowline"><span><span class="k">F</span></span><span class="desc">Flare (banishes wraiths)</span></div>
           <div class="rowline"><span><span class="k">M</span></span><span class="desc">Valley map</span></div>
           <div class="rowline"><span><span class="k">I</span></span><span class="desc">Cargo &amp; equipment</span></div>
-          <div class="rowline"><span><span class="k">K</span></span><span class="desc">Skills &amp; porter</span></div>
+          <div class="rowline"><span><span class="k">K</span></span><span class="desc">Skills &amp; self</span></div>
           <div class="rowline"><span><span class="k">H</span></span><span class="desc">Eat</span></div>
           <div class="rowline"><span><span class="k">Esc</span></span><span class="desc">Pause</span></div>
         </div>
         <hr class="hairline">
-        <p style="color:var(--bone-dim); font-size:13.5px; line-height:1.6">Heavy loads wobble on rough ground &mdash; steady them or hold <b style="color:var(--bone)">Space</b> to brace and walk slow. Greyfall rain eats containers in the dark; light protects. Wraiths hunt by movement in the deep grey &mdash; walk braced, or burn a flare. Scrappers only chase porters carrying cargo.</p>
+        <p style="color:var(--bone-dim); font-size:13.5px; line-height:1.6">Heavy loads wobble on rough ground &mdash; steady them or hold <b style="color:var(--bone)">Space</b> to brace and walk slow. Greyfall rain eats containers in the dark; light protects. Wraiths hunt by movement in the deep grey &mdash; walk braced, or burn a flare. Scrappers only chase walkers carrying cargo.</p>
         <div style="padding-top:10px; text-align:center"><button class="btn primary" id="helpClose">Understood</button></div>
       </div>
     </div>
@@ -189,15 +206,15 @@
 
   <div id="briefOv" class="overlay hidden">
     <div class="sheet glass" style="width:min(600px,92vw)">
-      <header><div><h2>What every porter is told at the fire</h2><div class="tag">read once · the rest you learn by walking</div></div></header>
+      <header><div><h2>What Mara Voss tells every new Waylighter at the fire</h2><div class="tag">read once · the rest you learn by walking</div></div></header>
       <div class="sheetBody" id="briefBody">
         <div class="briefLine"><b>Every station is short of something another one makes.</b> The terminal board says who is out of what; a crate is worth more the worse they need it, and several crates one way pay more together. Accept, walk, press <span class="k">E</span> at the station named. <b>Click</b> anywhere to walk there &mdash; click a terminal to walk in and use it; hold both mouse buttons to sprint. <span class="k">W A S D</span> when you want your hands on the wheel. The gold line at the top of the screen always says what to do next and points the way.</div>
-        <div class="briefLine"><b>Connection is a wire, not a light.</b> Enough deliveries and a station joins the wire: from then on what it makes moves to the others without you &mdash; faster over roads you pave and routes you charter &mdash; and the quiet pulls back from its ground. Let a station on the wire run dry and it dims, loses people, and falls silent again. Deliveries earn <b>&#9670; likes</b>; likes are what a station remembers you by.</div>
-        <div class="briefLine"><b>You are mortal.</b> Scrappers, wraiths, rivers and the cold can end you. When you fall, everything you carried waits where you fell — and the next porter inherits the whole network.</div>
+        <div class="briefLine"><b>Connection is a wire, not a light.</b> Enough deliveries and a station joins the wire: from then on what it makes moves to the others without you &mdash; faster over roads you pave and routes you charter &mdash; and the quiet pulls back from its ground. Let a station on the wire run dry and it dims, loses people, and falls silent again. Deliveries earn <b>&#9670; trust</b> &mdash; trust is what a station remembers your name by.</div>
+        <div class="briefLine"><b>You are mortal.</b> Scrappers, wraiths, rivers and the cold can end you. When you fall, everything you carried waits where you fell — and the next Waylighter inherits the whole network.</div>
         <div class="briefLine"><b>Your body learns.</b> Walking, hauling, steadying, building, salvaging — every verb feeds a skill. Press <span class="k">K</span> to read what your body knows. Your calling learns its skills twice as fast.</div>
         <div class="briefLine"><b>Eat.</b> Food is the thin bar under your load. <span class="k">H</span> eats. Terminals print rations from provisions; farms donate them.</div>
         <div class="briefLine"><b>Waylighters wait by station fires.</b> Hire one to walk with you — they carry, steady you, and haul your cargo home if you die. Charter them onto routes you have made safe. Save one in the field and they never charge you.</div>
-        <div class="briefLine"><b>The Grey keeps porters who die inside it.</b> Light frees them. Your journal transcribes at every terminal — recover it and your skills come back with it.</div>
+        <div class="briefLine"><b>The Grey keeps walkers who die inside it.</b> Light frees them. Your journal transcribes at every terminal — recover it and your skills come back with it.</div>
       </div>
       <div style="padding:10px 22px 18px; text-align:right"><button class="btn primary" id="briefGo">Understood — who am I?</button></div>
     </div>
@@ -205,7 +222,7 @@
 
   <div id="chargen" class="overlay hidden">
     <div class="sheet glass" style="width:min(880px,96vw)">
-      <header><div><h2>A new porter answers</h2><div class="tag">the network is waiting — it kept everything</div></div>
+      <header><div><h2>Another Waylighter answers</h2><div class="tag">the network is waiting — it kept everything</div></div>
         <button class="btn quiet" id="cgRoll">Roll a stranger</button></header>
       <div class="sheetBody">
         <div id="cgTop">
@@ -238,20 +255,25 @@
     <div class="veil"></div>
     <div id="logo">
       <h1>WAY<b>LIGHT</b></h1>
-      <div class="sub">Carry what they need</div>
+      <div class="sub">somebody has to walk it</div>
+      <div id="tagline"></div>
     </div>
     <div id="titleMenu">
       <button class="btn primary hidden" id="btnContinue">Continue</button>
-      <button class="btn" id="btnNew">New porter</button>
+      <button class="btn" id="btnNew">New Waylighter</button>
       <button class="btn quiet" id="btnHelp">Controls</button>
     </div>
     <div id="introCard" class="glass hidden">
       <p>Eight settlements in one valley, and nobody has heard from anybody in a year.</p>
       <p>The mist between them grows where nothing moves. People call it the quiet. It takes roads first, then names, then whoever stays put long enough.</p>
       <p>A farm with no medicine. A mill with no food. A hundred people at the Pharos nobody has reached. Every one of them has something another one is dying without.</p>
-      <p>You carry. <b>Put them back in reach of each other.</b></p>
+      <p>There used to be an answer: the <b>Order of Waylighters</b> &mdash; coats, lanterns, an oath, a dispatch bell on every terminal. Loud, corny, and it worked. The quiet ate them one road at a time, and the last coat has hung by Haven&rsquo;s door for three years.</p>
+      <p>Today Mara Voss takes it off the hook, looks you over once, and holds it out. &ldquo;It&rsquo;ll fit,&rdquo; she says. &ldquo;It always fits somebody.&rdquo;</p>
+      <p><b>Somebody has to walk it.</b></p>
       <button class="btn primary" id="btnBegin">Shoulder the pack</button>
     </div>
-    <div id="titleFoot">a delivery game about connecting people &middot; mouse or keyboard &middot; progress saves in this browser</div>
+    <div id="theRoll" class="glass"><div class="tag">THE ROLL OF THE ORDER</div><div id="rollBody"></div></div>
+    <div id="cheatEcho" class="num"></div>
+    <div id="titleFoot">a delivery game about connecting people &middot; mouse or keyboard &middot; saves in this browser &middot; <span style="letter-spacing:.1em">CODES WORK HERE. TYPE ONE.</span></div>
   </div>
 </div>
