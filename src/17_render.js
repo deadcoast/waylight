@@ -4,7 +4,10 @@
 const Render = (() => {
   const { stations, stationOrder, T, structures: SDEF } = DATA;
   const cv = U.el('game');
-  const cx = cv.getContext('2d');
+  const mainCx = cv.getContext('2d');
+  let cx = mainCx;                       // all world drawing goes through cx; frame() points it at the low-res buffer
+  const PIXK = 2.6;                      // the era look: the world renders at 1/2.6 resolution and lands chunky
+  let worldC = null, worldCx = null;
   let vw = 0, vh = 0, dpr = 1;
   let cam = { x: 2100, y: 4990, z: 1 };
   let shakeT = 0, shakeAmp = 0, flareT = 0;
@@ -21,6 +24,9 @@ const Render = (() => {
     dpr = Math.min(1.5, devicePixelRatio || 1);
     vw = innerWidth; vh = innerHeight;
     cv.width = vw * dpr; cv.height = vh * dpr;
+    worldC = document.createElement('canvas');
+    worldC.width = Math.ceil(cv.width / PIXK); worldC.height = Math.ceil(cv.height / PIXK);
+    worldCx = worldC.getContext('2d');
     vign = document.createElement('canvas');
     vign.width = vw; vign.height = vh;
     const g = vign.getContext('2d');
@@ -100,12 +106,15 @@ const Render = (() => {
     if (shakeT <= 0) shakeAmp = 0;
 
     const z = cam.z * dpr;
+    // the whole world pass draws into the low-res buffer; it lands on screen as fat pixels
+    cx = worldCx;
+    const zw = z / PIXK;
     cx.setTransform(1, 0, 0, 1, 0, 0);
     cx.fillStyle = '#0a0e14';
-    cx.fillRect(0, 0, cv.width, cv.height);
+    cx.fillRect(0, 0, worldC.width, worldC.height);
 
     // world transform
-    cx.setTransform(z, 0, 0, z, cv.width / 2 - cam.x * z + shx, cv.height / 2 - cam.y * z + shy);
+    cx.setTransform(zw, 0, 0, zw, worldC.width / 2 - cam.x * zw + shx / PIXK, worldC.height / 2 - cam.y * zw + shy / PIXK);
     const viewW = cv.width / z, viewH = cv.height / z;
     const vx0 = cam.x - viewW / 2 - 60, vy0 = cam.y - viewH / 2 - 60, vx1 = cam.x + viewW / 2 + 60, vy1 = cam.y + viewH / 2 + 60;
     const inView = (x, y, m = 40) => x > vx0 - m && x < vx1 + m && y > vy0 - m && y < vy1 + m;
@@ -160,6 +169,14 @@ const Render = (() => {
     drawRain(dt); mark('rain');
     drawFx(dt); mark('fx');
 
+    // the world lands on screen: nearest-neighbour up, colour punched hot — the nineties were not subtle
+    cx = mainCx;
+    cx.setTransform(1, 0, 0, 1, 0, 0);
+    cx.imageSmoothingEnabled = false;
+    cx.drawImage(worldC, 0, 0, worldC.width, worldC.height, 0, 0, cv.width, cv.height);
+    cx.imageSmoothingEnabled = true;
+    drawSays(z, cv.width / 2 - cam.x * z + shx, cv.height / 2 - cam.y * z + shy);
+
     // screen space
     cx.setTransform(1, 0, 0, 1, 0, 0);
     { const nn = Economy.dayPhase().nightness;
@@ -196,6 +213,66 @@ const Render = (() => {
   }
 
   /* ---------- stations & waylights ---------- */
+  /* =============== authored pixel sprites ===============
+     Drawn the way the era drew them: a small grid, a hard outline, a deliberate palette.
+     Every humanoid shares one rig; coats recolour it. Blits snap to the texel grid so sprites step, not smear. */
+  const RIG_IDLE = [
+    '..OOOO...',
+    '.OHHHHO..',
+    '.OHHHHO..',
+    '..OSSO...',
+    '.OCCCCO..',
+    'OCcCCcCO.',
+    'OCCCCCCO.',
+    'OCTTTCCO.',
+    'OCCCCCCO.',
+    '.OCcCcO..',
+    '..OBBO...',
+    '..OB.BO..',
+    '..OB.BO..',
+    '..OO.OO..'];
+  const RIG_A = RIG_IDLE.slice(0, 10).concat([
+    '..OBBO...',
+    '.OB..BO..',
+    '.OB...BO.',
+    '.OO...OO.']);
+  const RIG_B = RIG_IDLE.slice(0, 10).concat([
+    '..OBBO...',
+    '..OB.BO..',
+    'OB...BO..',
+    'OO...OO..']);
+  const PAL_WALKER = { O: '#12161c', H: '#20262e', S: '#e0c298', C: '#3d5a74', c: '#2c4258', T: '#c9a05a', B: '#23282f' };
+  const PAL_MATE = { O: '#12161c', H: '#262c22', S: '#d8b890', C: '#54683f', c: '#41522f', T: '#b8a06a', B: '#23282f' };
+  const PAL_SCRAP = { O: '#150f0c', H: '#33241e', S: '#d8b890', C: '#8a4432', c: '#6b3426', T: '#5a4a3a', B: '#20242a' };
+  const HUT = [
+    '.rrrrrrrrrrrrrr.',
+    'RRRRRRRRRRRRRRRR',
+    'RRRRRRRRRRRRRRRR',
+    'OGGGGOGGGGOGGGGO',
+    'OGWWGOGGDGOGWWGO',
+    'OGWWGOGGDGOGWWGO',
+    'OGGGGOGGGGOGGGGO',
+    'OOOOOOOOOOOOOOOO'];
+  function blit(rows, wx, wy, tx, pal, flip) {
+    const w = rows[0].length;
+    const sx = Math.round(wx / tx) * tx, sy = Math.round(wy / tx) * tx;
+    for (let j = 0; j < rows.length; j++) {
+      const row = rows[j];
+      for (let i = 0; i < w; i++) {
+        const ch = row[flip ? w - 1 - i : i];
+        if (ch === '.') continue;
+        cx.fillStyle = pal[ch] || '#f0f';
+        cx.fillRect(sx + i * tx, sy + j * tx, tx + 0.06, tx + 0.06);
+      }
+    }
+  }
+  /* a walker on their feet: rig frame by stride, flipped by facing; feet land on (x, y+5) */
+  function blitWalker(x, y, pal, moving, phase, dir) {
+    const tx = 1.7;
+    const rows = moving ? (Math.sin(phase) > 0 ? RIG_A : RIG_B) : RIG_IDLE;
+    blit(rows, x - 4.5 * tx, y + 5 - 14 * tx, tx, pal, Math.cos(dir) < 0);
+  }
+
   function drawStations(inView, dt) {
     for (const id of stationOrder) {
       const d = stations[id], st = S.stations[id];
@@ -204,23 +281,29 @@ const Render = (() => {
       const t = S.time;
       // platform
       cx.fillStyle = '#20262e';
-      cx.beginPath(); cx.ellipse(d.x, d.y + 6, 46, 20, 0, 0, 7); cx.fill();
+      cx.beginPath(); cx.ellipse(d.x, d.y + 8, 52, 22, 0, 0, 7); cx.fill();
       cx.fillStyle = '#2b323c';
-      cx.beginPath(); cx.ellipse(d.x, d.y, 44, 18, 0, 0, 7); cx.fill();
-      // buildings
-      const hh = U.hash2(d.x | 0, d.y | 0, 3);
-      cx.fillStyle = lit ? '#3a3f45' : '#272c33';
-      cx.fillRect(d.x - 34, d.y - 22, 26, 22);
-      cx.fillRect(d.x + 10, d.y - 16 - hh * 8, 22, 16 + hh * 8);
-      cx.fillStyle = lit ? '#ffca7a' : '#3b4048';
-      cx.fillRect(d.x - 28, d.y - 16, 5, 6);
-      cx.fillRect(d.x + 16, d.y - 10, 5, 5);
-      // waylight tower
-      const tx = d.x, tyb = d.y - 4, th = 74;
-      cx.strokeStyle = lit ? '#4a4436' : '#31363e'; cx.lineWidth = 5;
+      cx.beginPath(); cx.ellipse(d.x, d.y + 2, 50, 20, 0, 0, 7); cx.fill();
+      // waylight tower rises BEHIND the longhouse roof
+      const tx = d.x, tyb = d.y - 14, th = 64;
+      cx.strokeStyle = '#0d1116'; cx.lineWidth = 7;
+      cx.beginPath(); cx.moveTo(tx - 10, tyb); cx.lineTo(tx, tyb - th); cx.lineTo(tx + 10, tyb); cx.stroke();
+      cx.strokeStyle = lit ? '#6b5a42' : '#3a4048'; cx.lineWidth = 4;
       cx.beginPath(); cx.moveTo(tx - 10, tyb); cx.lineTo(tx, tyb - th); cx.lineTo(tx + 10, tyb); cx.stroke();
       cx.lineWidth = 2;
       cx.beginPath(); cx.moveTo(tx - 7, tyb - th * 0.35); cx.lineTo(tx + 7, tyb - th * 0.35); cx.moveTo(tx - 4, tyb - th * 0.68); cx.lineTo(tx + 4, tyb - th * 0.68); cx.stroke();
+      // the stone longhouse out front, windows burning when the station is on the wire
+      const hutPal = {
+        O: '#0d1116',
+        r: lit ? '#a06a40' : '#5c4a3a', R: lit ? '#7a5138' : '#463a30',
+        G: lit ? '#7d8288' : '#525860', W: lit ? '#ffd98f' : '#2b313b', D: '#3c2e22',
+      };
+      blit(HUT, d.x - 36.8, d.y - 22.8, 4.6, hutPal, false);
+      // yard props: crates stacked port side, a rain barrel starboard — it's a depot, not a lawn
+      const crate = lit ? '#8a6a42' : '#4c4234', crateHi = lit ? '#a8845a' : '#5a4e3c';
+      blit(['OOOO', 'OCCO', 'OCCO', 'OOOO'], d.x - 47, d.y - 4, 2.8, { O: '#0d1116', C: crate }, false);
+      blit(['OOOO', 'OcCO', 'OCcO', 'OOOO'], d.x - 44, d.y + 4, 2.8, { O: '#0d1116', C: crate, c: crateHi }, false);
+      blit(['.OO.', 'OBBO', 'OBBO', '.OO.'], d.x + 41, d.y - 1, 2.8, { O: '#0d1116', B: lit ? '#556066' : '#3c444c' }, false);
       if (lit) {
         const pulse = 0.85 + Math.sin(t * 1.4 + d.x) * 0.15;
         cx.globalCompositeOperation = 'lighter';
@@ -464,10 +547,8 @@ const Render = (() => {
         cx.save(); cx.translate(r.x, r.y);
         cx.fillStyle = 'rgba(0,0,0,0.3)';
         cx.beginPath(); cx.ellipse(0, 6, 8, 3.5, 0, 0, 7); cx.fill();
-        cx.fillStyle = '#8a4a38';
-        cx.fillRect(-4, -12, 8, 14);
-        cx.fillStyle = '#c96a4e';
-        cx.beginPath(); cx.arc(0, -15, 4, 0, 7); cx.fill();
+        const chasing = r.cd <= 0 && U.dist(r.x, r.y, S.px, S.py) < cd.r;
+        blitWalker(0, 0, PAL_SCRAP, chasing, S.time * 12 + r.wa, Math.atan2(S.py - r.y, S.px - r.x));
         // headlamp cone toward player when hunting
         const d = U.dist(r.x, r.y, S.px, S.py);
         if (d < cd.r + 60) {
@@ -545,41 +626,38 @@ const Render = (() => {
     // shadow
     cx.fillStyle = 'rgba(0,0,0,0.35)';
     cx.beginPath(); cx.ellipse(0, 5, 9, 4, 0, 0, 7); cx.fill();
-    cx.rotate(lean);
     const crouch = S.braced ? 2 : 0;
-    // legs
-    if (moving) {
-      cx.strokeStyle = '#2a2f38'; cx.lineWidth = 3;
-      const lp = Math.sin(bobT) * 4;
-      cx.beginPath(); cx.moveTo(-2, -6); cx.lineTo(-2 + lp, 4); cx.moveTo(2, -6); cx.lineTo(2 - lp, 4); cx.stroke();
-    }
     // cargo stack (behind body, offset opposite facing)
     const stack = S.cargo.filter(c => c.cat !== 'tool').slice(0, 7);
     const tools = S.cargo.filter(c => c.cat === 'tool').length;
     const bx = -Math.cos(S.dir) * 5, by = -2;
-    let sy = -13 - crouch + bob * 0.5;
+    let sy = -9 - crouch + bob * 0.5;
     cx.save();
     cx.translate(bx, by);
     cx.rotate(lean * 2.2 + (S.qte ? Math.sin(S.time * 22) * 0.1 : 0));
     const colors = { goods: '#b3a06a', core: '#ffc978', mat: '#8a8676', lost: '#c9975a' };
     for (let i = 0; i < stack.length; i++) {
       const c = stack[i];
-      const hgt2 = 4 + Math.min(4, c.kg * 0.28);
+      const hgt2 = c.kg > 12 ? 6.8 : 5.1;   // crates on the pixel grid, big or small
       sy -= hgt2;
+      cx.fillStyle = '#12161c';
+      cx.fillRect(-6, sy - 0.85, 12, hgt2 + 0.85);
       cx.fillStyle = c.cat === 'core' ? '#ffc978' : c.lostTo ? '#c9975a' : colors[c.cat] || '#b3a06a';
-      cx.fillRect(-6, sy, 12, hgt2 - 1);
-      cx.fillStyle = 'rgba(0,0,0,0.25)';
-      cx.fillRect(-6, sy + hgt2 - 2, 12, 1);
+      cx.fillRect(-5.1, sy, 10.2, hgt2 - 1.7);
+      cx.fillStyle = 'rgba(18,22,28,0.75)';   // lash strap down the middle
+      cx.fillRect(-0.9, sy, 1.8, hgt2 - 1.7);
       if (c.cat === 'core') {
         cx.globalCompositeOperation = 'lighter';
         cx.fillStyle = 'rgba(255,214,140,0.4)';
-        cx.fillRect(-4, sy + 1, 8, 2);
+        cx.fillRect(-3.4, sy + 0.9, 6.8, 1.7);
         cx.globalCompositeOperation = 'source-over';
       }
     }
     for (let i = 0; i < Math.min(3, tools); i++) {
+      cx.fillStyle = '#12161c';
+      cx.fillRect(6.4, -17.5 - i * 3.4 - crouch, 2.6, 12.8);
       cx.fillStyle = '#7a8a8f';
-      cx.fillRect(7, -18 - i * 3 - crouch, 2.5, 14);
+      cx.fillRect(6.8, -17 - i * 3.4 - crouch, 1.7, 11.9);
     }
     cx.restore();
     // sled
@@ -591,18 +669,13 @@ const Render = (() => {
       cx.beginPath(); cx.ellipse(-Math.cos(S.dir) * 22, 7 - Math.sin(S.dir) * 6, 10, 3, 0, 0, 7); cx.fill();
       cx.globalCompositeOperation = 'source-over';
     }
-    // body
-    cx.fillStyle = '#33404d';
-    cx.beginPath();
-    cx.roundRect ? cx.roundRect(-5, -16 - crouch + bob * 0.4, 10, 15, 4) : cx.rect(-5, -16 - crouch, 10, 15);
-    cx.fill();
-    cx.fillStyle = '#4a5a68';
-    cx.fillRect(-5, -16 - crouch + bob * 0.4, 10, 4);
-    // head
-    cx.fillStyle = '#d8c9a8';
-    cx.beginPath(); cx.arc(0, -20 - crouch + bob * 0.6, 4.5, 0, 7); cx.fill();
-    cx.fillStyle = '#2a323c';
-    cx.beginPath(); cx.arc(0, -22 - crouch + bob * 0.6, 4.2, Math.PI, 0); cx.fill();
+    // the Walker, drawn like it's 1996
+    blitWalker(0, crouch, PAL_WALKER, moving, bobT, S.dir);
+    if (World.lightAt(x, y) < 0.35) {   // the lantern in hand, out where it's needed
+      const fl = Math.cos(S.dir) < 0 ? -1 : 1;
+      cx.fillStyle = '#8a7a5a'; cx.fillRect(fl * 7, -10 + crouch, 1.6, 5);
+      cx.fillStyle = '#ffd98f'; cx.fillRect(fl * 7 - 1, -5 + crouch, 3.4, 3.4);
+    }
     // headlamp glow in dark
     if (World.lightAt(x, y) < 0.3) {
       const big = S.flags.effects.bigLantern ? 2.4 : 1;   // BIGLANTERN: exactly what it says
@@ -716,7 +789,7 @@ const Render = (() => {
       }
     }
   }
-  function drawNpcFigure(x, y, npc, pose = 'stand') {
+  function drawNpcFigure(x, y, npc, pose = 'stand', dir = 0) {
     const rg = U.rng(npc ? npc.seed : 7);
     const hood = U.pick(rg, CHAR.PORTRAIT.hoods), scarf = U.pick(rg, CHAR.PORTRAIT.scarves);
     cx.save(); cx.translate(x, y);
@@ -724,18 +797,19 @@ const Render = (() => {
     cx.beginPath(); cx.ellipse(0, 4, 8, 3.5, 0, 0, 7); cx.fill();
     if (pose === 'down') cx.rotate(1.35);
     else if (pose === 'sit') cx.translate(0, 3);
-    cx.fillStyle = hood;
-    cx.fillRect(-4.5, -14, 9, 13);
-    cx.fillStyle = scarf; cx.fillRect(-4.5, -8, 9, 2.5);
-    cx.fillStyle = '#d8c9a8'; cx.beginPath(); cx.arc(0, -17, 4, 0, 7); cx.fill();
-    cx.fillStyle = hood; cx.beginPath(); cx.arc(0, -18.5, 3.9, Math.PI, 0); cx.fill();
+    const pal = { ...PAL_MATE, C: hood, T: scarf };
+    blitWalker(0, 0, pal, pose === 'walk', S.time * 9 + (npc ? npc.seed % 7 : 0), dir);
     cx.restore();
   }
+  let compPrev = null;
   function drawAboveMist(inView, dt) {
     // companion walks with you, above the mist like you
     const n = NPC.companion();
     if (n && S.compPos) {
-      drawNpcFigure(S.compPos.x, S.compPos.y, n);
+      const mvd = compPrev ? Math.abs(S.compPos.x - compPrev.x) + Math.abs(S.compPos.y - compPrev.y) : 0;
+      if (compPrev && mvd > 0.4) compPrev.dir = Math.atan2(S.compPos.y - compPrev.y, S.compPos.x - compPrev.x);
+      drawNpcFigure(S.compPos.x, S.compPos.y, n, mvd > 0.4 ? 'walk' : 'stand', compPrev ? (compPrev.dir || 0) : 0);
+      compPrev = { x: S.compPos.x, y: S.compPos.y, dir: compPrev ? compPrev.dir : 0 };
       if (cam.z > 0.75) {
         cx.font = `${U.clamp(10 / cam.z, 9, 13)}px Atkinson Hyperlegible, sans-serif`;
         cx.textAlign = 'center'; cx.fillStyle = 'rgba(233,226,208,0.7)';
@@ -935,17 +1009,26 @@ const Render = (() => {
         cx.lineWidth = 3 / cam.z;
         cx.beginPath(); cx.arc(f.x, f.y, 6 + t * 34, 0, 7); cx.stroke();
       } else if (f.type === 'say') {
+        f.tick = true;   // advanced here; drawn crisp after the pixel blit
         const t = f.t / 2.4;
         if (t >= 1) { fx.splice(i, 1); continue; }
-        const a = t < 0.12 ? t / 0.12 : 1 - Math.max(0, (t - 0.6) / 0.4);
-        cx.font = `italic 600 ${13.5 / cam.z}px Fraunces, Georgia, serif`;
-        cx.textAlign = 'center';
-        cx.fillStyle = `rgba(10,14,20,${a * 0.75})`;
-        cx.fillText(f.text, f.x + 1 / cam.z, f.y - t * 30 + 1 / cam.z);
-        cx.fillStyle = `rgba(${f.color || '255,224,170'},${a})`;
-        cx.fillText(f.text, f.x, f.y - t * 30);
-        cx.textAlign = 'left';
       }
+    }
+  }
+  /* spoken lines ride above the fat pixels — the voice stays sharp */
+  function drawSays(z, ox, oy) {
+    for (const f of fx) {
+      if (f.type !== 'say') continue;
+      const t = f.t / 2.4;
+      const a = t < 0.12 ? t / 0.12 : 1 - Math.max(0, (t - 0.6) / 0.4);
+      const sx = f.x * z + ox, sy = (f.y - t * 30) * z + oy;
+      cx.font = `italic 600 ${13.5 * dpr}px Fraunces, Georgia, serif`;
+      cx.textAlign = 'center';
+      cx.fillStyle = `rgba(10,14,20,${a * 0.8})`;
+      cx.fillText(f.text, sx + 1.5 * dpr, sy + 1.5 * dpr);
+      cx.fillStyle = `rgba(${f.color || '255,224,170'},${a})`;
+      cx.fillText(f.text, sx, sy);
+      cx.textAlign = 'left';
     }
   }
   /* a line spoken in the world — hangs over someone's head, then lets go */

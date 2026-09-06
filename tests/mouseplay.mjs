@@ -116,7 +116,7 @@ v = await see();
 await page.mouse.move(center.x + Math.cos(v.bearing) * 300, center.y + Math.sin(v.bearing) * 300);
 await page.mouse.down({ button: 'left' }); await page.waitForTimeout(150);
 const walkSpeed = (await see()).speed;
-await page.mouse.down({ button: 'right' }); await page.waitForTimeout(400);
+await page.mouse.down({ button: 'right' }); await page.waitForTimeout(120);   // sample fast, before the ground underfoot changes
 const sprint = await see();
 ok('holding both buttons sprints (speed up, stamina draining)', sprint.sprinting && sprint.speed > walkSpeed * 1.25, `walk ${walkSpeed | 0} → sprint ${sprint.speed | 0}, stamina ${sprint.stam | 0}`);
 await page.mouse.up({ button: 'right' }); await page.waitForTimeout(200);
@@ -177,7 +177,7 @@ const arrived = await see();
 ok('the porter walks around the cliffs to the Mill on its own', t >= 0 && Math.hypot(arrived.x - DATA_MILL.x, arrived.y - DATA_MILL.y) < 130, `${((Date.now() - tMill) / 1000).toFixed(0)}s, from ${Math.hypot(startPos.x - DATA_MILL.x, startPos.y - DATA_MILL.y) | 0} m away`);
 await page.screenshot({ path: `${shots}/95_mouse_mill.png` });
 if (await page.evaluate(() => !document.getElementById('stationOv').classList.contains('hidden'))) { await tap('#stationClose'); await page.waitForTimeout(200); }
-await page.evaluate(() => { WL.tp('haven'); window.__toasts.length = 0; }); await page.waitForTimeout(200);
+await page.evaluate(() => { WL.tp('haven'); S.moveTo = null; window.__toasts.length = 0; }); await page.waitForTimeout(200);   // drop any half-finished route from the Mill leg
 await page.keyboard.press('m'); await page.waitForTimeout(300);
 const farBank = await page.evaluate(() => UI.mapPoint(4200, 7560));   // the Silt's north bank, straight north of Haven — on the map as opened
 await clickAt(farBank.x, farBank.y); await page.waitForTimeout(400);

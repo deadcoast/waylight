@@ -193,18 +193,21 @@ const World = (() => {
   const thumb = document.createElement('canvas'); thumb.width = 525; thumb.height = 700;
 
   // palette ramps [r,g,b]
+  /* authored four-tone ramps — every pixel on the ground is one of these, chosen with ordered dither.
+     This is the era's actual technique: a small deliberate palette and Bayer dithering, no soft blends. */
   const COL = {
-    [MEADOW]: [[46, 60, 48], [66, 78, 55]],
-    [FOREST]: [[30, 44, 37], [42, 57, 44]],
-    [SCREE]: [[84, 88, 74], [104, 106, 90]],
-    [ROCK]: [[104, 112, 116], [130, 139, 142]],
-    [SNOW]: [[188, 199, 205], [219, 229, 231]],
-    [MARSH]: [[40, 55, 47], [52, 66, 54]],
-    [SHALLOW]: [[36, 78, 88], [50, 96, 104]],
-    [DEEP]: [[16, 35, 46], [24, 52, 63]],
-    [CLIFF]: [[46, 51, 57], [63, 69, 75]],
-    [PAD]: [[62, 60, 53], [90, 86, 75]],
+    [MEADOW]: [[50, 72, 42], [70, 94, 50], [92, 116, 56], [114, 136, 64]],
+    [FOREST]: [[26, 46, 34], [38, 62, 40], [52, 78, 46], [68, 94, 52]],
+    [SCREE]: [[94, 86, 62], [118, 108, 76], [140, 128, 90], [162, 148, 104]],
+    [ROCK]: [[90, 98, 106], [112, 120, 128], [136, 144, 150], [160, 168, 173]],
+    [SNOW]: [[170, 186, 198], [196, 210, 218], [220, 230, 236], [242, 248, 250]],
+    [MARSH]: [[42, 60, 40], [54, 74, 46], [68, 88, 52], [82, 100, 58]],
+    [SHALLOW]: [[36, 106, 112], [50, 128, 132], [64, 146, 146], [80, 162, 158]],
+    [DEEP]: [[12, 42, 64], [18, 56, 82], [24, 70, 98], [32, 84, 114]],
+    [CLIFF]: [[38, 42, 50], [52, 56, 64], [66, 71, 79], [82, 87, 95]],
+    [PAD]: [[86, 78, 62], [106, 96, 76], [126, 114, 90], [146, 132, 104]],
   };
+  const BAYER = [[0, 8, 2, 10], [12, 4, 14, 6], [3, 11, 1, 9], [15, 7, 13, 5]];   // 4×4 ordered dither, /16
 
   /* ---------- bake ---------- */
   async function bake(onProgress) {
@@ -266,41 +269,42 @@ const World = (() => {
           const ramp = COL[c];
           let t = U.clamp((h - 0.2) / 0.7, 0, 1);
           if (c === DEEP || c === SHALLOW) { const r = riverAt(wx, wy); t = U.clamp(r.dist / (rivers[r.idx] ? rivers[r.idx].w : 40), 0, 1); }
-          let r = U.lerp(ramp[0][0], ramp[1][0], t), g = U.lerp(ramp[0][1], ramp[1][1], t), b = U.lerp(ramp[0][2], ramp[1][2], t);
-          // hillshade from NW
+          // hillshade folds into the tone index instead of multiplying the colour — banded light, like it was drawn
           const e = 6;
           const gx2 = hgtAt(wx + e, wy) - hgtAt(wx - e, wy);
           const gy2 = hgtAt(wx, wy + e) - hgtAt(wx, wy - e);
-          let sh = 1 + (-gx2 - gy2) * 24;
-          sh = U.clamp(sh, 0.62, c === SNOW ? 1.12 : 1.35);
-          r *= sh; g *= sh; b *= sh;
+          const sh = U.clamp(1 + (-gx2 - gy2) * 24, 0.62, c === SNOW ? 1.12 : 1.35);
+          let f = t * 2.1 + (sh - 1) * 3.4;
+          // ground tone drifts in patches you can see inside one screen, not one continent
+          if (c === MEADOW || c === MARSH) f += (U.fbm(wx / 340, wy / 340, SEED + 41, 2) - 0.5) * 2.6;
+          // ordered dither picks the tone: hard pixels, authored transitions.
+          // land dithers in 2×2 blocks — chunky and deliberate; water keeps fine bands
+          const bayD = (c === DEEP || c === SHALLOW)
+            ? BAYER[(y0 + py) & 3][px & 3]
+            : BAYER[((y0 + py) >> 1) & 3][(px >> 1) & 3];
+          let idx = Math.floor(f + bayD / 16);
+          // authored texture on top of the ramp
           if (c === MEADOW || c === MARSH) {
-            const v = U.fbm(wx / 1800, wy / 1800, SEED + 41, 2) - 0.5;
-            r += v * 16; g += v * 22; b += v * 8;
+            // grass tufts: a fixed 4-texel glyph stamped in scattered 4×4 cells, the LTTP way
+            const hh = U.hash2(px >> 2, (y0 + py) >> 2, 71);
+            if (hh > (c === MARSH ? 0.70 : 0.79)) {
+              const lx = px & 3, ly = (y0 + py) & 3;
+              if ((lx === 1 && (ly === 1 || ly === 2)) || (lx === 2 && (ly === 1 || ly === 2))) idx -= 1;
+            }
           }
-          if (c === CLIFF) {
-            const band2 = ((px + ((y0 + py) >> 1)) % 7);
-            if (band2 < 2) { r *= 0.74; g *= 0.74; b *= 0.76; }
-          }
-          // contour lines
-          if (c !== DEEP && c !== SHALLOW) {
-            const band = (h * 22) % 1;
-            if (band < 0.06) { r *= 0.86; g *= 0.86; b *= 0.86; }
-          }
-          // forest stipple
           if (c === FOREST) {
-            const n = U.hash2(px >> 1, (y0 + py) >> 1, 99);
-            if (n > 0.72) { r *= 0.78; g *= 0.82; b *= 0.78; }
-            else if (n < 0.1) { r *= 1.16; g *= 1.18; b *= 1.1; }
+            // canopy clumps: 2×2 bright crowns scattered on the dark floor
+            const n = U.hash2(px >> 2, (y0 + py) >> 2, 99);
+            if (n > 0.60) { const lx = px & 3, ly = (y0 + py) & 3; if (lx > 0 && lx < 3 && ly > 0 && ly < 3) idx += 1; }
+            else if (n < 0.08) idx -= 1;
           }
-          if (c === SCREE || c === ROCK) {
-            const n = U.hash2(px, y0 + py, 137);
-            if (n > 0.85) { r *= 1.14; g *= 1.14; b *= 1.12; } else if (n < 0.12) { r *= 0.85; g *= 0.85; b *= 0.87; }
-          }
-          // dither
-          const dth = (U.hash2(px, y0 + py, 7) - 0.5) * 9;
+          if (c === SCREE || c === ROCK) { const n = U.hash2(px, y0 + py, 137); if (n > 0.86) idx += 1; else if (n < 0.1) idx -= 1; }
+          if (c === CLIFF && ((px + ((y0 + py) >> 1)) % 7) < 2) idx -= 1;
+          if (c !== DEEP && c !== SHALLOW && (h * 22) % 1 < 0.055) idx -= 1;   // contour steps
+          idx = U.clamp(idx, 0, 3);
+          const col = ramp[idx];
           const i = (py * TW + px) * 4;
-          d[i] = U.clamp(r + dth, 0, 255); d[i + 1] = U.clamp(g + dth, 0, 255); d[i + 2] = U.clamp(b + dth, 0, 255); d[i + 3] = 255;
+          d[i] = col[0]; d[i + 1] = col[1]; d[i + 2] = col[2]; d[i + 3] = 255;
         }
       }
       ctx.putImageData(img, 0, y0);
