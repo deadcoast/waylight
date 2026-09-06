@@ -1,0 +1,257 @@
+<div id="stage">
+  <canvas id="game"></canvas>
+
+  <div id="hud" class="hidden">
+    <div id="vitals">
+      <div class="tag">Stamina</div>
+      <div class="meter"><i id="stamFill" style="width:100%"></i></div>
+      <div class="tag">Health</div>
+      <div class="meter slim"><i id="hpFill" style="width:100%"></i></div>
+      <div id="weightRow"><span class="tag">Load</span><span class="num" id="weightNum">0.0 / 60 kg</span></div>
+      <div class="meter"><i id="weightFill" style="width:0%"></i></div>
+      <div style="display:flex; justify-content:space-between"><span class="tag">Food</span><span class="tag hidden" id="warmTag">Warmth</span></div>
+      <div id="foodWarmRow"><div class="meter slim food"><i id="foodFill" style="width:85%"></i></div><div class="meter slim warm hidden" id="warmMeter"><i id="warmFill" style="width:100%"></i></div></div>
+      <div id="moodles"></div>
+      <div id="buffs"></div>
+    </div>
+    <div id="compass"><div id="compassInner"></div></div>
+    <div id="hintStrip" class="hidden"><span class="k">M1</span>walk there <span class="k">M1+M2</span>sprint <span class="k">I</span>pack <span class="k">K</span>skills <span class="k">H</span>eat <span class="k">M</span>map <span class="k">E</span>interact <span class="k">B</span>build</div>
+    <div id="guide" class="glass hidden">
+      <div class="gDir"><span id="guideArrow"><svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 1.5 L21.5 22 L12 16.5 L2.5 22 Z" fill="currentColor"/></svg></span><span id="guideDist" class="num"></span></div>
+      <div class="gText"><div id="guideHead"></div><div id="guideSub"></div></div>
+    </div>
+    <div id="social">
+      <div id="likesRow">&#9670; <span class="num" id="likesNum">0</span></div>
+      <div id="titleRow">Novice Porter</div>
+      <div id="covRow">Waylight coverage <b class="num" id="covNum">4%</b></div>
+      <div id="dayRow">day · day 1</div>
+    </div>
+    <div id="saveNote">saved</div>
+    <div id="cargoPanel" class="glass hidden">
+      <h3>On your back</h3><span class="tag" id="cargoCount"></span>
+      <div id="cargoList"></div>
+    </div>
+    <div id="compChip" class="glass hidden"></div>
+    <div id="prompts"></div>
+    <div id="orderTray"></div>
+    <div id="qte" class="hidden">
+      <div class="ring">
+        <svg width="74" height="74"><circle id="qteArc" cx="37" cy="37" r="33" fill="none" stroke="#e0654a" stroke-width="3" stroke-dasharray="207" stroke-dashoffset="0"></circle></svg>
+        <span class="key">SPACE</span>
+      </div>
+      <div class="lbl">Steady! &mdash; space or click</div>
+    </div>
+    <div id="struggle" class="hidden">
+      <div class="lbl">Mash Space or click &mdash; it has your cargo</div>
+      <div id="struggleMeter"><i id="struggleFill" style="width:45%"></i></div>
+    </div>
+  </div>
+
+  <div id="buildBar" class="glass hidden"></div>
+  <div id="toasts"></div>
+  <div id="barTop" class="bar"></div><div id="barBot" class="bar"></div>
+  <div id="cineTitle"><div class="big"></div><div class="small"></div></div>
+
+  <div id="stationOv" class="overlay hidden">
+    <div class="sheet glass">
+      <header>
+        <div><h2 id="stationName">Haven</h2>
+          <div id="stationSub"><span class="starRow" id="stationStars"></span><span class="tag" id="stationRole"></span></div>
+        </div>
+        <div style="text-align:right">
+          <div class="bank" id="bankRow"></div>
+          <div class="starMeter" style="width:150px"><i id="starFill" style="width:0%"></i></div>
+          <div class="tag" id="starNext" style="margin-top:3px"></div>
+        </div>
+      </header>
+      <nav class="tabs" id="stationTabs"></nav>
+      <div class="sheetBody" id="stationBody"></div>
+      <div style="padding:10px 22px 16px; text-align:right"><button class="btn quiet" id="stationClose">Leave <span class="k" style="margin:0 0 0 6px">Esc</span></button></div>
+    </div>
+  </div>
+
+  <div id="results" class="overlay hidden">
+    <div class="sheet glass">
+      <header><div><h2>Delivery complete</h2><div class="tag" id="resultRoute"></div></div></header>
+      <div class="sheetBody">
+        <div id="gradeWrap"><span id="gradeStamp">S</span><div id="gradeRing"></div></div>
+        <div class="scoreRows" id="scoreRows"></div>
+        <hr class="hairline">
+        <div id="likesTotal">+ 0 &#9670;</div>
+        <div id="starUpNote" class="hidden"></div>
+        <div id="resultFoot"><button class="btn primary" id="resultsClose">Carry on <span class="k" style="margin:0 0 0 6px">Enter</span></button></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="mapWrap" class="hidden">
+    <div id="mapHead">
+      <h2>The Valley</h2>
+      <span class="tag">Waylight coverage <span class="num" id="mapCov">0%</span></span>
+      <span class="tag">Roads paved <span class="num" id="mapRoads">0 / 24</span></span>
+      <span style="flex:1"></span>
+      <span class="tag"><b>click</b> a place to walk there &middot; drag to pan &middot; scroll to zoom &middot; <b>M</b> to close</span>
+    </div>
+    <div id="mapCanvasWrap"><canvas id="map"></canvas><div id="mapTip" class="glass"></div>
+      <div id="mapLegend" class="glass">
+        <div><span class="sw" style="background:#ffc978"></span>Waylight station</div>
+        <div><span class="sw" style="background:#5a6472"></span>Dark station</div>
+        <div><span class="sw" style="background:#6fe3d2"></span>Your structures</div>
+        <div><span class="sw" style="background:#d96b4f"></span>Scrapper territory</div>
+        <div><span class="sw" style="background:#3a4a66"></span>Deep grey &mdash; wraiths</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="pause" class="overlay hidden">
+    <div class="sheet glass">
+      <header><h2>Paused</h2></header>
+      <div class="sheetBody">
+        <div class="setRow"><span>Sound</span><button class="btn quiet" id="sndBtn">On</button></div>
+        <div class="setRow"><span>Volume</span><input type="range" id="volSlider" min="0" max="100" value="70"></div>
+        <div class="setRow"><span>Screen effects (grain, shake)</span><button class="btn quiet" id="fxBtn">On</button></div>
+        <div class="setRow"><span>Controls</span><button class="btn quiet" id="helpBtn2">View</button></div>
+        <div class="setRow"><span>Abandon this valley (wipe save)</span><button class="btn quiet" id="wipeBtn">Wipe</button></div>
+        <div style="padding-top:16px; text-align:center"><button class="btn primary" id="resumeBtn">Resume</button></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="helpOv" class="overlay hidden">
+    <div class="sheet glass">
+      <header><h2>Field manual</h2></header>
+      <div class="sheetBody">
+        <div class="helpCols">
+          <div class="rowline"><span><span class="k">M1</span></span><span class="desc">Click a place &mdash; walk there. Click a terminal, ruin or crate &mdash; walk there and use it</span></div>
+          <div class="rowline"><span><span class="k">M1</span>hold</span><span class="desc">Steer toward the cursor</span></div>
+          <div class="rowline"><span><span class="k">M1</span>+<span class="k">M2</span></span><span class="desc">Hold both &mdash; sprint</span></div>
+          <div class="rowline"><span><span class="k">W</span><span class="k">A</span><span class="k">S</span><span class="k">D</span></span><span class="desc">Walk by hand (overrides the mouse)</span></div>
+          <div class="rowline"><span><span class="k">Shift</span></span><span class="desc">Sprint (drains stamina)</span></div>
+          <div class="rowline"><span><span class="k">Space</span></span><span class="desc">Brace / steady a wobble / struggle</span></div>
+          <div class="rowline"><span><span class="k">E</span></span><span class="desc">Interact &middot; pick up</span></div>
+          <div class="rowline"><span><span class="k">B</span></span><span class="desc">Build</span></div>
+          <div class="rowline"><span><span class="k">F</span></span><span class="desc">Flare (banishes wraiths)</span></div>
+          <div class="rowline"><span><span class="k">M</span></span><span class="desc">Valley map</span></div>
+          <div class="rowline"><span><span class="k">I</span></span><span class="desc">Cargo &amp; equipment</span></div>
+          <div class="rowline"><span><span class="k">K</span></span><span class="desc">Skills &amp; porter</span></div>
+          <div class="rowline"><span><span class="k">H</span></span><span class="desc">Eat</span></div>
+          <div class="rowline"><span><span class="k">Esc</span></span><span class="desc">Pause</span></div>
+        </div>
+        <hr class="hairline">
+        <p style="color:var(--bone-dim); font-size:13.5px; line-height:1.6">Heavy loads wobble on rough ground &mdash; steady them or hold <b style="color:var(--bone)">Space</b> to brace and walk slow. Greyfall rain eats containers in the dark; light protects. Wraiths hunt by movement in the deep grey &mdash; walk braced, or burn a flare. Scrappers only chase porters carrying cargo.</p>
+        <div style="padding-top:10px; text-align:center"><button class="btn primary" id="helpClose">Understood</button></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="skillsOv" class="overlay hidden">
+    <div class="sheet glass">
+      <header><div><h2 id="skillsName">Porter</h2><div class="tag" id="skillsSub"></div></div>
+        <img id="skillsPortrait" width="64" height="64" alt=""></header>
+      <div class="sheetBody" id="skillsBody"></div>
+      <div style="padding:8px 22px 16px; text-align:right"><button class="btn quiet" id="skillsClose">Close <span class="k" style="margin:0 0 0 6px">K</span></button></div>
+    </div>
+  </div>
+
+  <div id="lootOv" class="overlay hidden">
+    <div class="sheet glass" style="width:min(480px,92vw)">
+      <header><div><h2 id="lootTitle">Ruin</h2><div class="tag" id="lootSub"></div></div></header>
+      <div class="sheetBody" id="lootBody"></div>
+      <div style="padding:8px 22px 16px; display:flex; justify-content:space-between">
+        <button class="btn quiet" id="lootClose">Leave it</button>
+        <button class="btn primary" id="lootTake">Take everything</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="traderOv" class="overlay hidden">
+    <div class="sheet glass" style="width:min(560px,92vw)">
+      <header><div><h2>The Peddler</h2><div class="tag">materials for marvels · no refunds, no questions</div></div>
+        <div class="bank" id="traderBank"></div></header>
+      <div class="sheetBody" id="traderBody"></div>
+      <div style="padding:8px 22px 16px; text-align:right"><button class="btn quiet" id="traderClose">Walk on</button></div>
+    </div>
+  </div>
+
+  <div id="deathOv" class="overlay hidden">
+    <div class="sheet glass" style="width:min(560px,92vw); text-align:center">
+      <div class="sheetBody">
+        <img id="deathPortrait" width="80" height="80" alt="" style="margin-top:14px; filter:grayscale(0.8)">
+        <h2 id="deathName" style="font:600 34px var(--disp); margin-top:8px">A porter fell</h2>
+        <div id="deathCause" class="tag" style="margin-top:4px"></div>
+        <hr class="hairline" style="margin:16px 40px">
+        <div id="deathStats" style="color:var(--bone-dim); font-size:14px; line-height:1.8"></div>
+        <p id="deathNote" style="font:16px/1.6 var(--disp); color:var(--gold-hot); margin:14px 30px 6px"></p>
+        <div style="padding:14px 0 20px"><button class="btn primary" id="deathContinue">The valley remembers · another answers</button></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="briefOv" class="overlay hidden">
+    <div class="sheet glass" style="width:min(600px,92vw)">
+      <header><div><h2>What every porter is told at the fire</h2><div class="tag">read once · the rest you learn by walking</div></div></header>
+      <div class="sheetBody" id="briefBody">
+        <div class="briefLine"><b>Every station is short of something another one makes.</b> The terminal board says who is out of what; a crate is worth more the worse they need it, and several crates one way pay more together. Accept, walk, press <span class="k">E</span> at the station named. <b>Click</b> anywhere to walk there &mdash; click a terminal to walk in and use it; hold both mouse buttons to sprint. <span class="k">W A S D</span> when you want your hands on the wheel. The gold line at the top of the screen always says what to do next and points the way.</div>
+        <div class="briefLine"><b>Connection is a wire, not a light.</b> Enough deliveries and a station joins the wire: from then on what it makes moves to the others without you &mdash; faster over roads you pave and routes you charter &mdash; and the quiet pulls back from its ground. Let a station on the wire run dry and it dims, loses people, and falls silent again. Deliveries earn <b>&#9670; likes</b>; likes are what a station remembers you by.</div>
+        <div class="briefLine"><b>You are mortal.</b> Scrappers, wraiths, rivers and the cold can end you. When you fall, everything you carried waits where you fell — and the next porter inherits the whole network.</div>
+        <div class="briefLine"><b>Your body learns.</b> Walking, hauling, steadying, building, salvaging — every verb feeds a skill. Press <span class="k">K</span> to read what your body knows. Your calling learns its skills twice as fast.</div>
+        <div class="briefLine"><b>Eat.</b> Food is the thin bar under your load. <span class="k">H</span> eats. Terminals print rations from provisions; farms donate them.</div>
+        <div class="briefLine"><b>Waylighters wait by station fires.</b> Hire one to walk with you — they carry, steady you, and haul your cargo home if you die. Charter them onto routes you have made safe. Save one in the field and they never charge you.</div>
+        <div class="briefLine"><b>The Grey keeps porters who die inside it.</b> Light frees them. Your journal transcribes at every terminal — recover it and your skills come back with it.</div>
+      </div>
+      <div style="padding:10px 22px 18px; text-align:right"><button class="btn primary" id="briefGo">Understood — who am I?</button></div>
+    </div>
+  </div>
+
+  <div id="chargen" class="overlay hidden">
+    <div class="sheet glass" style="width:min(880px,96vw)">
+      <header><div><h2>A new porter answers</h2><div class="tag">the network is waiting — it kept everything</div></div>
+        <button class="btn quiet" id="cgRoll">Roll a stranger</button></header>
+      <div class="sheetBody">
+        <div id="cgTop">
+          <img id="cgPortrait" width="84" height="84" alt="">
+          <div style="flex:1">
+            <div style="display:flex; gap:8px; align-items:center">
+              <input id="cgName" maxlength="24" spellcheck="false">
+              <button class="miniBtn" id="cgReName">reroll</button>
+            </div>
+            <div id="cgLine" class="desc" style="margin-top:6px; color:var(--bone-dim); font-style:italic"></div>
+          </div>
+          <div style="text-align:right">
+            <div class="tag">Trait budget</div>
+            <div id="cgBudget" style="font:700 26px var(--disp)">0</div>
+          </div>
+        </div>
+        <div class="tag" style="margin:12px 0 6px">Calling</div>
+        <div id="cgClasses"></div>
+        <div class="tag" style="margin:14px 0 6px">Traits — virtues cost, burdens pay</div>
+        <div id="cgTraits"></div>
+      </div>
+      <div style="padding:10px 22px 18px; display:flex; justify-content:space-between; align-items:center">
+        <span id="cgSummary" class="desc" style="color:var(--bone-dim)"></span>
+        <button class="btn primary" id="cgBegin">Shoulder the pack</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="titleScreen">
+    <div class="veil"></div>
+    <div id="logo">
+      <h1>WAY<b>LIGHT</b></h1>
+      <div class="sub">Carry what they need</div>
+    </div>
+    <div id="titleMenu">
+      <button class="btn primary hidden" id="btnContinue">Continue</button>
+      <button class="btn" id="btnNew">New porter</button>
+      <button class="btn quiet" id="btnHelp">Controls</button>
+    </div>
+    <div id="introCard" class="glass hidden">
+      <p>Eight settlements in one valley, and nobody has heard from anybody in a year.</p>
+      <p>The mist between them grows where nothing moves. People call it the quiet. It takes roads first, then names, then whoever stays put long enough.</p>
+      <p>A farm with no medicine. A mill with no food. A hundred people at the Pharos nobody has reached. Every one of them has something another one is dying without.</p>
+      <p>You carry. <b>Put them back in reach of each other.</b></p>
+      <button class="btn primary" id="btnBegin">Shoulder the pack</button>
+    </div>
+    <div id="titleFoot">a delivery game about connecting people &middot; mouse or keyboard &middot; progress saves in this browser</div>
+  </div>
+</div>
