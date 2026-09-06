@@ -1,6 +1,6 @@
 # WAYLIGHT — Shipped Design Doc (v3.1 · The Needs Economy · The Light Is the Screen)
 
-Playable build: **https://claude.ai/code/artifact/9ed799db-2103-4667-b424-0de78dce88c5** (single-file HTML5, canvas, ~7,200 lines, no libraries; saves to localStorage per browser; v1/v2 saves migrate and are seeded with stock). Future sessions: republish to this URL via the Artifact tool's `url` parameter (read the live version first — the tool requires it). Source parts live in the session workspace at `waylight/src/*` assembled by `build.py`; that workspace is ephemeral — the artifact is the durable copy. Companion docs: `research-death-stranding-delivery-mechanics.md`, `research-loop-psychology.md`, `research-zomboid-permadeath.md`, `game-approaches.md`, `waylight-expansion-design.md`.
+Playable build: **<https://claude.ai/code/artifact/9ed799db-2103-4667-b424-0de78dce88c5>** (single-file HTML5, canvas, ~7,200 lines, no libraries; saves to localStorage per browser; v1/v2 saves migrate and are seeded with stock). Future sessions: republish to this URL via the Artifact tool's `url` parameter (read the live version first — the tool requires it). Source parts live in the session workspace at `waylight/src/*` assembled by `build.py`; that workspace is ephemeral — the artifact is the durable copy. Companion docs: `research-death-stranding-delivery-mechanics.md`, `research-loop-psychology.md`, `research-zomboid-permadeath.md`, `game-approaches.md`, `waylight-expansion-design.md`.
 
 ## Three lessons, all kept
 
