@@ -3,7 +3,7 @@
 ---
 [1]
 
-Create me a game similar to the delivery mechanics in death stranding where connecting people helps make the land safer through delivery. Research death stranding 2, its game loop, buildable items, resources, etc. We do **NOT** require the death stranding story we are SIMPLY copying the addicting delivery and connection progression game loop. A feeling of accomplishment in the gameplay loop in its progression, like in death stranding is CRUCIAL to success. 
+Create me a game similar to the delivery mechanics in death stranding where connecting people helps make the land safer through delivery. Research death stranding 2, its game loop, buildable items, resources, etc. We do **NOT** require the death stranding story we are SIMPLY copying the addicting delivery and connection progression game loop. A feeling of accomplishment in the gameplay loop in its progression, like in death stranding is CRUCIAL to success.
 
 Create this to impress me.
 
@@ -44,7 +44,7 @@ Building it now — full loop: weight/stamina/balance traversal, order board wit
 
 Ran 32 commands, edited 27 files, read 17 files · 15 notes
 Waylight
-Artifact 
+Artifact
 
 Publishing succeeded. Writing the design doc to the project so future sessions can pick it up:
 
@@ -62,4 +62,3 @@ One heads-up: it's keyboard-first (WASD, Space to brace/steady, E interact, B bu
 
 ---
 [4]
-
