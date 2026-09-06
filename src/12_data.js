@@ -288,6 +288,7 @@ const DATA = (() => {
     firstWade: 'Cold water. It slows you, drinks your stamina, and soaks the crates — the grade will show it. A ladder laid across keeps everything dry.',
     firstKit: 'Build kits raise real structures — stand where you want one and press <b>B</b>. They only rise where waylight reaches.',
     firstScrap: 'Scrapper territory. They chase porters with cargo. Outrun them, drop nothing, or route around. Light will end them one day.',
+    firstBurn: 'It burned at the light\'s edge. Wraiths cannot cross onto lit ground — the gold rim is a wall to them. Run for the light.',
     firstWraith: 'A wraith. Movement draws them — creep braced with <b>Space</b>, or sprint and pray. A flare (<b>F</b>) burns them off.',
     firstSnag: 'It took cargo to a snag. The marker shows where. Nothing stays lost that a porter can reach.',
     firstPaver: 'A road paver. Feed it metal and ceramic — banked or carried — and it paves a segment for good. Roads are fast, safe, forever — and the wire carries twice as much between the stations they join.',

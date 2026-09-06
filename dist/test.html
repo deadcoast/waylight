@@ -1212,6 +1212,7 @@ const DATA = (() => {
     firstWade: 'Cold water. It slows you, drinks your stamina, and soaks the crates — the grade will show it. A ladder laid across keeps everything dry.',
     firstKit: 'Build kits raise real structures — stand where you want one and press <b>B</b>. They only rise where waylight reaches.',
     firstScrap: 'Scrapper territory. They chase porters with cargo. Outrun them, drop nothing, or route around. Light will end them one day.',
+    firstBurn: 'It burned at the light\'s edge. Wraiths cannot cross onto lit ground — the gold rim is a wall to them. Run for the light.',
     firstWraith: 'A wraith. Movement draws them — creep braced with <b>Space</b>, or sprint and pray. A flare (<b>F</b>) burns them off.',
     firstSnag: 'It took cargo to a snag. The marker shows where. Nothing stays lost that a porter can reach.',
     firstPaver: 'A road paver. Feed it metal and ceramic — banked or carried — and it paves a segment for good. Roads are fast, safe, forever — and the wire carries twice as much between the stations they join.',
@@ -1573,22 +1574,28 @@ const World = (() => {
       lightG[cy * LW + cx] = L;
       const m = U.clamp(mistBase(x, y) * (1 - L * 1.2), 0, 1);
       const i = (cy * LW + cx) * 4;
-      // dark veil where unlit
-      vd.data[i] = 7; vd.data[i + 1] = 10; vd.data[i + 2] = 16;
-      vd.data[i + 3] = Math.round(U.clamp((1 - Math.pow(L, 0.65)) * 0.55 + m * 0.12, 0, 0.78) * 255);
-      // warm glow where lit — strongest where the land is naturally dark/misty, never on snowfields
+      /* the founding rule of the game, enforced here: lit land and grey land must not read as the same world.
+         unlit — a cold blue-dark veil and the mist body. lit — the veil burns off entirely and a warm wash
+         lifts the ground toward gold. between them, a bright rim where the light ends: the boundary wraiths burn at. */
+      const veilA = U.clamp((1 - Math.pow(L, 0.6)) * 0.62 + m * 0.10, 0, 0.80);
+      vd.data[i] = 8; vd.data[i + 1] = 11; vd.data[i + 2] = 22;
+      vd.data[i + 3] = Math.round(veilA * 255);
       const mb = mistBase(x, y);
-      gd.data[i] = 255; gd.data[i + 1] = 196; gd.data[i + 2] = 120;
-      gd.data[i + 3] = Math.round(U.clamp(L * 0.14 * U.clamp(0.35 + mb, 0, 1), 0, 0.14) * 255);
+      const warmA = U.clamp(Math.pow(L, 0.85) * 0.28 * U.clamp(0.5 + mb * 0.7, 0, 1), 0, 0.28);
+      const rimA = Math.pow(Math.max(0, 1 - Math.abs(L - 0.30) / 0.10), 2) * 0.20;
+      // glowC is the punch-through layer: at night the render screens it over the dark, so the network reads as lit ground, not lamps
+      gd.data[i] = 255; gd.data[i + 1] = 200; gd.data[i + 2] = 125;
+      gd.data[i + 3] = Math.round(Math.pow(L, 0.9) * 255);
       // mist body
       const mv = U.clamp(m, 0, 1);
       md.data[i] = 138; md.data[i + 1] = 146; md.data[i + 2] = 168;
       md.data[i + 3] = Math.round(Math.pow(mv, 1.25) * 0.82 * 255);
-      // precomposite: veil -> warm -> mist (straight-alpha source-over)
+      // precomposite: veil -> warm wash -> rim -> mist (straight-alpha source-over)
       let r = 0, g = 0, bb = 0, a = 0;
       const over = (cr, cg, cb, ca) => { const na = ca + a * (1 - ca); if (na > 0) { r = (cr * ca + r * a * (1 - ca)) / na; g = (cg * ca + g * a * (1 - ca)) / na; bb = (cb * ca + bb * a * (1 - ca)) / na; } a = na; };
-      over(7, 10, 16, vd.data[i + 3] / 255);
-      over(255, 196, 120, gd.data[i + 3] / 255 * 0.3);
+      over(8, 11, 22, veilA);
+      over(255, 208, 140, warmA);
+      over(255, 236, 178, rimA);
       over(138, 146, 168, md.data[i + 3] / 255);
       od.data[i] = r; od.data[i + 1] = g; od.data[i + 2] = bb; od.data[i + 3] = Math.round(a * 255);
     }
@@ -2968,7 +2975,7 @@ const Systems = (() => {
     for (let i = S.wraiths.length - 1; i >= 0; i--) {
       const w = S.wraiths[i];
       const wm = World.mistAt(w.x, w.y);
-      if (wm < 0.30) { w.state = 'burn'; w.burnT = (w.burnT || 0) + dt; if (w.burnT > 0.9) { S.wraiths.splice(i, 1); continue; } }
+      if (wm < 0.30) { if (w.state !== 'burn' && w.alert > 0.5 && U.dist(w.x, w.y, S.px, S.py) < 900) tut('firstBurn'); w.state = 'burn'; w.burnT = (w.burnT || 0) + dt; if (w.burnT > 0.9) { S.wraiths.splice(i, 1); continue; } }
       if (w.cd > 0) w.cd -= dt;
       const d = U.dist(w.x, w.y, S.px, S.py);
       if (d > 1700) { S.wraiths.splice(i, 1); continue; }
@@ -5982,6 +5989,7 @@ const Render = (() => {
   const wisps = [];
   let reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
   let fxOn = true;
+  let nightC = null;
   let grain = null, vign = null, grainPat = null;
 
   function resize() {
@@ -6129,7 +6137,24 @@ const Render = (() => {
 
     // screen space
     cx.setTransform(1, 0, 0, 1, 0, 0);
-    { const nn = Economy.dayPhase().nightness; if (nn > 0) { cx.fillStyle = `rgba(10,14,44,${0.3 * nn})`; cx.fillRect(0, 0, cv.width, cv.height); } }
+    { const nn = Economy.dayPhase().nightness;
+      if (nn > 0) {
+        // night is a veil the waylight burns holes in: unlit ground drowns, lit ground keeps its day face
+        if (!nightC || nightC.width !== cv.width || nightC.height !== cv.height) { nightC = document.createElement('canvas'); nightC.width = cv.width; nightC.height = cv.height; }
+        const nx2 = nightC.getContext('2d');
+        nx2.setTransform(1, 0, 0, 1, 0, 0);
+        nx2.globalCompositeOperation = 'source-over'; nx2.globalAlpha = 1;
+        nx2.clearRect(0, 0, cv.width, cv.height);
+        nx2.fillStyle = `rgba(10,14,44,${0.42 * nn})`; nx2.fillRect(0, 0, cv.width, cv.height);
+        if (lsw > 0 && lsh > 0) {
+          nx2.globalCompositeOperation = 'destination-out'; nx2.globalAlpha = 0.9;
+          nx2.setTransform(z, 0, 0, z, cv.width / 2 - cam.x * z + shx, cv.height / 2 - cam.y * z + shy);
+          nx2.drawImage(World.glowC, lsx, lsy, lsw, lsh, lsx * ls, lsy * ls, lsw * ls, lsh * ls);
+          nx2.setTransform(1, 0, 0, 1, 0, 0);
+        }
+        cx.drawImage(nightC, 0, 0);
+      }
+    }
     drawGuide(dt); mark('guide');
     if (flareT > 0) {
       flareT -= dt * 1.4;

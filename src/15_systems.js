@@ -499,7 +499,7 @@ const Systems = (() => {
     for (let i = S.wraiths.length - 1; i >= 0; i--) {
       const w = S.wraiths[i];
       const wm = World.mistAt(w.x, w.y);
-      if (wm < 0.30) { w.state = 'burn'; w.burnT = (w.burnT || 0) + dt; if (w.burnT > 0.9) { S.wraiths.splice(i, 1); continue; } }
+      if (wm < 0.30) { if (w.state !== 'burn' && w.alert > 0.5 && U.dist(w.x, w.y, S.px, S.py) < 900) tut('firstBurn'); w.state = 'burn'; w.burnT = (w.burnT || 0) + dt; if (w.burnT > 0.9) { S.wraiths.splice(i, 1); continue; } }
       if (w.cd > 0) w.cd -= dt;
       const d = U.dist(w.x, w.y, S.px, S.py);
       if (d > 1700) { S.wraiths.splice(i, 1); continue; }

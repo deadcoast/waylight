@@ -14,6 +14,7 @@ const Render = (() => {
   const wisps = [];
   let reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
   let fxOn = true;
+  let nightC = null;
   let grain = null, vign = null, grainPat = null;
 
   function resize() {
@@ -161,7 +162,24 @@ const Render = (() => {
 
     // screen space
     cx.setTransform(1, 0, 0, 1, 0, 0);
-    { const nn = Economy.dayPhase().nightness; if (nn > 0) { cx.fillStyle = `rgba(10,14,44,${0.3 * nn})`; cx.fillRect(0, 0, cv.width, cv.height); } }
+    { const nn = Economy.dayPhase().nightness;
+      if (nn > 0) {
+        // night is a veil the waylight burns holes in: unlit ground drowns, lit ground keeps its day face
+        if (!nightC || nightC.width !== cv.width || nightC.height !== cv.height) { nightC = document.createElement('canvas'); nightC.width = cv.width; nightC.height = cv.height; }
+        const nx2 = nightC.getContext('2d');
+        nx2.setTransform(1, 0, 0, 1, 0, 0);
+        nx2.globalCompositeOperation = 'source-over'; nx2.globalAlpha = 1;
+        nx2.clearRect(0, 0, cv.width, cv.height);
+        nx2.fillStyle = `rgba(10,14,44,${0.42 * nn})`; nx2.fillRect(0, 0, cv.width, cv.height);
+        if (lsw > 0 && lsh > 0) {
+          nx2.globalCompositeOperation = 'destination-out'; nx2.globalAlpha = 0.9;
+          nx2.setTransform(z, 0, 0, z, cv.width / 2 - cam.x * z + shx, cv.height / 2 - cam.y * z + shy);
+          nx2.drawImage(World.glowC, lsx, lsy, lsw, lsh, lsx * ls, lsy * ls, lsw * ls, lsh * ls);
+          nx2.setTransform(1, 0, 0, 1, 0, 0);
+        }
+        cx.drawImage(nightC, 0, 0);
+      }
+    }
     drawGuide(dt); mark('guide');
     if (flareT > 0) {
       flareT -= dt * 1.4;

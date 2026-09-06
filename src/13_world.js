@@ -149,22 +149,28 @@ const World = (() => {
       lightG[cy * LW + cx] = L;
       const m = U.clamp(mistBase(x, y) * (1 - L * 1.2), 0, 1);
       const i = (cy * LW + cx) * 4;
-      // dark veil where unlit
-      vd.data[i] = 7; vd.data[i + 1] = 10; vd.data[i + 2] = 16;
-      vd.data[i + 3] = Math.round(U.clamp((1 - Math.pow(L, 0.65)) * 0.55 + m * 0.12, 0, 0.78) * 255);
-      // warm glow where lit — strongest where the land is naturally dark/misty, never on snowfields
+      /* the founding rule of the game, enforced here: lit land and grey land must not read as the same world.
+         unlit — a cold blue-dark veil and the mist body. lit — the veil burns off entirely and a warm wash
+         lifts the ground toward gold. between them, a bright rim where the light ends: the boundary wraiths burn at. */
+      const veilA = U.clamp((1 - Math.pow(L, 0.6)) * 0.62 + m * 0.10, 0, 0.80);
+      vd.data[i] = 8; vd.data[i + 1] = 11; vd.data[i + 2] = 22;
+      vd.data[i + 3] = Math.round(veilA * 255);
       const mb = mistBase(x, y);
-      gd.data[i] = 255; gd.data[i + 1] = 196; gd.data[i + 2] = 120;
-      gd.data[i + 3] = Math.round(U.clamp(L * 0.14 * U.clamp(0.35 + mb, 0, 1), 0, 0.14) * 255);
+      const warmA = U.clamp(Math.pow(L, 0.85) * 0.28 * U.clamp(0.5 + mb * 0.7, 0, 1), 0, 0.28);
+      const rimA = Math.pow(Math.max(0, 1 - Math.abs(L - 0.30) / 0.10), 2) * 0.20;
+      // glowC is the punch-through layer: at night the render screens it over the dark, so the network reads as lit ground, not lamps
+      gd.data[i] = 255; gd.data[i + 1] = 200; gd.data[i + 2] = 125;
+      gd.data[i + 3] = Math.round(Math.pow(L, 0.9) * 255);
       // mist body
       const mv = U.clamp(m, 0, 1);
       md.data[i] = 138; md.data[i + 1] = 146; md.data[i + 2] = 168;
       md.data[i + 3] = Math.round(Math.pow(mv, 1.25) * 0.82 * 255);
-      // precomposite: veil -> warm -> mist (straight-alpha source-over)
+      // precomposite: veil -> warm wash -> rim -> mist (straight-alpha source-over)
       let r = 0, g = 0, bb = 0, a = 0;
       const over = (cr, cg, cb, ca) => { const na = ca + a * (1 - ca); if (na > 0) { r = (cr * ca + r * a * (1 - ca)) / na; g = (cg * ca + g * a * (1 - ca)) / na; bb = (cb * ca + bb * a * (1 - ca)) / na; } a = na; };
-      over(7, 10, 16, vd.data[i + 3] / 255);
-      over(255, 196, 120, gd.data[i + 3] / 255 * 0.3);
+      over(8, 11, 22, veilA);
+      over(255, 208, 140, warmA);
+      over(255, 236, 178, rimA);
       over(138, 146, 168, md.data[i + 3] / 255);
       od.data[i] = r; od.data[i + 1] = g; od.data[i + 2] = bb; od.data[i + 3] = Math.round(a * 255);
     }
