@@ -1,6 +1,6 @@
-# WAYLIGHT — Shipped Design Doc (v3.0 · The Needs Economy)
+# WAYLIGHT — Shipped Design Doc (v3.1 · The Needs Economy · The Light Is the Screen)
 
-[Playable build](https://claude.ai/code/artifact/9ed799db-2103-4667-b424-0de78dce88c5) (single-file HTML5, canvas, ~7,200 lines, no libraries; saves to localStorage per browser; v1/v2 saves migrate and are seeded with stock). Future sessions: republish to this URL via the Artifact tool's `url` parameter (read the live version first — the tool requires it). Source parts live in the session workspace at `waylight/src/*` assembled by `build.py`; that workspace is ephemeral — the artifact is the durable copy. Companion docs: `research-death-stranding-delivery-mechanics.md`, `research-loop-psychology.md`, `research-zomboid-permadeath.md`, `game-approaches.md`, `waylight-expansion-design.md`.
+Playable build: **<https://claude.ai/code/artifact/9ed799db-2103-4667-b424-0de78dce88c5>** (single-file HTML5, canvas, ~7,200 lines, no libraries; saves to localStorage per browser; v1/v2 saves migrate and are seeded with stock). Future sessions: republish to this URL via the Artifact tool's `url` parameter (read the live version first — the tool requires it). Source parts live in the session workspace at `waylight/src/*` assembled by `build.py`; that workspace is ephemeral — the artifact is the durable copy. Companion docs: `research-death-stranding-delivery-mechanics.md`, `research-loop-psychology.md`, `research-zomboid-permadeath.md`, `game-approaches.md`, `waylight-expansion-design.md`.
 
 ## Three lessons, all kept
 
@@ -23,6 +23,18 @@ The opening is true to the fiction: Elm Farm is out of medicine (8), Haven is ea
 **Letters** go everywhere people are — light, half pay, and each one read aloud on delivery (24 lines from the valley). A place's mailbag refills only every ~5–8 minutes once carried off; they are proof, not income. **Crises** (events after three stations are lit) empty a station's best-stocked need in one stroke. A **day** is 8 minutes; the last 40% is night: wraiths wake in thinner mist, the cold bites harder, a veil settles on the screen, and the HUD says so.
 
 **Skill verbs** (the character layer inside the loop): Rigging 2 lays a *field ladder* from 8 scrap when none is packed; Hearthcraft 2 cooks a warm meal anywhere; Salvage 2 (or a Scavenger) pings scrap and lumen on the compass.
+
+## The light is the screen (v3.1)
+
+The theme selection promised one thing above all: *"network % is not a number on a screen — it is the screen."* v3.0 shipped the mechanics of light (safety, regen, pacification, coverage) with the picture missing — a 55% dark veil over already-dark art and a warm glow at an effective 4% opacity, tuned to protect the terrain art instead of serving the design sentence. The failure mechanism is recorded here because it is the project's recurring one: every mechanical claim had a bot, the pixel claim had none, so it got no pressure.
+
+v3.1 regrades the world and pins it with measurements (`tests/light.mjs`, sampling the composited canvas):
+
+- **Grey land** sits under a cold blue-dark veil (62% + mist) — dark, not black; terrain stays faintly readable and the porter's own lantern carries them.
+- **Lit land** burns the veil off entirely and takes a warm gold wash. Measured on the same meadow class: lit ground is **×2.6 the brightness** of grey ground by day, 30 points warmer in r−b.
+- **The boundary** carries a golden rim (a measured warm bump above the inside→beyond blend line) at exactly the light level wraiths cannot stand — a hunting wraith crossing it burns away within a second, and the first burn teaches the rule on screen.
+- **Night** is a veil the waylight burns holes in (destination-out by the light field): lit ground keeps ~96% of its day face while the grey drowns — the lit/grey ratio grows to **×3.2**. Crossing your own network at night reads as islands of day.
+- **The map** draws the same overlay, so territory reclaimed is territory brightened: +19% whole-map luminance at 14% coverage, scaling with the network. Connecting a station repaints both the field and the map in the cinematic's expanding ring.
 
 ## Where the features now live
 
@@ -61,7 +73,7 @@ Character layer (8 classes, 19 traits, 10 skills with PZ curve, manuals), surviv
 
 ## Verification
 
-179 automated Playwright checks green, console clean, across seven suites: the delivery loop and network progression (33), the character-layer systems (35), the keys-and-clicks player-fidelity run (31), the **screen-reading first walk** (24), the **mouse-only run** (18), the **economy dynamics** (24: needs and moods set boards and pay, stock fills and drains, the wire flows and is multiplied by roads and porters, dimming, star loss, going quiet and relighting, chain bonuses, letters, crises, night, skill verbs, save migration), and the **v3 loop rules** (14: the lost-crate Guide/compass/tray chain, pickup recovery, stash tracking, giving up, companion hand-over, thriving suppression, letter scarcity, camp-skirting loaded routes, the wire's star-loss exemption, best-stock crises, honest stall handling, the wire cinematic) — plus the 30-game-minute balance session above.
+189 automated Playwright checks green, console clean, across eight suites — including **the light, measured in pixels** (10: lit/grey brightness and warmth ratios on matched terrain, the boundary rim, whole-map brightening with coverage, night punch-through, wraith burn and its tutorial) — the other seven: the delivery loop and network progression (33), the character-layer systems (35), the keys-and-clicks player-fidelity run (31), the **screen-reading first walk** (24), the **mouse-only run** (18), the **economy dynamics** (24: needs and moods set boards and pay, stock fills and drains, the wire flows and is multiplied by roads and porters, dimming, star loss, going quiet and relighting, chain bonuses, letters, crises, night, skill verbs, save migration), and the **v3 loop rules** (14: the lost-crate Guide/compass/tray chain, pickup recovery, stash tracking, giving up, companion hand-over, thriving suppression, letter scarcity, camp-skirting loaded routes, the wire's star-loss exemption, best-stock crises, honest stall handling, the wire cinematic) — plus the 30-game-minute balance session above.
 
 ## Future-work candidates
 
