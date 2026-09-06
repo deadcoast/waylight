@@ -1,0 +1,20 @@
+import { chromium } from 'playwright';
+const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium', args: ['--disable-background-networking'] });
+const page = await b.newPage({ viewport: { width: 1440, height: 860 } });
+await page.route(/fonts\.(googleapis|gstatic)\.com/, r => r.abort());
+await page.goto('file:///home/claude/waylight/dist/test.html?debug', { waitUntil: 'domcontentloaded' });
+await page.waitForFunction(() => window.WL && WL.snapshot().baked, null, { timeout: 60000 });
+await page.evaluate(() => localStorage.clear());
+await page.click('#btnNew'); await page.waitForTimeout(150); await page.click('#btnBegin'); await page.waitForTimeout(250);
+await page.click('#briefGo'); await page.waitForTimeout(200); await page.click('#cgBegin'); await page.waitForTimeout(600);
+await page.evaluate(() => { WL.calm(); S.weather.state = 'clear'; S.weather.t = 9999; for (let i = 0; i < 15 && S.cine; i++) WL.skipCine && WL.skipCine();
+  S.stations.green.connected = true; S.stations.green.met = true; S.stations.green.litT = 1; State.refreshSources(); World.rebuildLight();
+  const d = DATA.stations.green; WL.tp([d.x + 30, d.y + 380]); S.moveTo = null;
+  // deep night: t fraction ≈ 0.7 of the day
+  const dayLen = DATA.T.dayLen || 480; S.time = Math.floor(S.time / dayLen) * dayLen + dayLen * 0.7;
+  document.getElementById('guide').style.display = 'none'; document.getElementById('toasts').style.display = 'none';
+});
+await page.waitForTimeout(700);
+await page.screenshot({ path: '/tmp/art_night.png', clip: { x: 430, y: 40, width: 580, height: 620 } });
+console.log('night done');
+await b.close();

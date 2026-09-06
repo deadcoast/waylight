@@ -116,8 +116,11 @@ v = await see();
 await page.mouse.move(center.x + Math.cos(v.bearing) * 300, center.y + Math.sin(v.bearing) * 300);
 await page.mouse.down({ button: 'left' }); await page.waitForTimeout(150);
 const walkSpeed = (await see()).speed;
-await page.mouse.down({ button: 'right' }); await page.waitForTimeout(120);   // sample fast, before the ground underfoot changes
-const sprint = await see();
+await page.mouse.down({ button: 'right' });
+await page.waitForFunction(() => WL.S.sprinting, null, { timeout: 2000 }).catch(() => {});
+let topSpeed = 0;
+for (let i = 0; i < 6; i++) { await page.waitForTimeout(60); const vv = await see(); if (vv.speed > topSpeed) topSpeed = vv.speed; }
+const sprint = { ...(await see()), speed: topSpeed };   // peak over the burst: robust to slope and speed smoothing
 ok('holding both buttons sprints (speed up, stamina draining)', sprint.sprinting && sprint.speed > walkSpeed * 1.25, `walk ${walkSpeed | 0} → sprint ${sprint.speed | 0}, stamina ${sprint.stam | 0}`);
 await page.mouse.up({ button: 'right' }); await page.waitForTimeout(200);
 const afterR = await see();

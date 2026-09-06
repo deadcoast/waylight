@@ -17,7 +17,6 @@ const Render = (() => {
   const wisps = [];
   let reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
   let fxOn = true;
-  let nightC = null;
   let grain = null, vign = null, grainPat = null;
 
   function resize() {
@@ -119,8 +118,8 @@ const Render = (() => {
     const vx0 = cam.x - viewW / 2 - 60, vy0 = cam.y - viewH / 2 - 60, vx1 = cam.x + viewW / 2 + 60, vy1 = cam.y + viewH / 2 + 60;
     const inView = (x, y, m = 40) => x > vx0 - m && x < vx1 + m && y > vy0 - m && y < vy1 + m;
 
-    // terrain + roads (source canvases are 1/TS scale)
-    cx.imageSmoothingEnabled = true;
+    // terrain + roads (source canvases are 1/TS scale) — nearest neighbour: every texel keeps its edge
+    cx.imageSmoothingEnabled = false;
     const ts = World.TS;
     const sx = Math.max(0, vx0 / ts), sy = Math.max(0, vy0 / ts);
     const sw = Math.min(World.tc.width - sx, (vx1 - vx0) / ts), sh = Math.min(World.tc.height - sy, (vy1 - vy0) / ts);
@@ -129,6 +128,31 @@ const Render = (() => {
     const P = window.__prof, pt = P ? performance.now() : 0; let pl = pt;
     const mark = k => { if (P) { const n = performance.now(); P[k] = (P[k] || 0) + n - pl; pl = n; } };
     mark('terrain');
+    // the light field lands directly on the ground, under everything built and walking:
+    // solid palette-remapped texels — cold steps in the quiet, warm steps on the wire, a dithered
+    // golden coastline at the wraith line. Night = the same land two palette steps deeper, drawn
+    // in hard stages, the way a cartridge swapped its colours.
+    const nnQ = (() => { const nn = Economy.dayPhase().nightness; return nn < 0.18 ? 0 : nn < 0.62 ? 1 : 2; })();
+    if (sw > 0 && sh > 0) {
+      cx.drawImage(World.lightOv, sx, sy, sw, sh, sx * ts, sy * ts, sw * ts, sh * ts);
+      if (nnQ === 1) { cx.globalAlpha = 0.55; cx.drawImage(World.lightOvN, sx, sy, sw, sh, sx * ts, sy * ts, sw * ts, sh * ts); cx.globalAlpha = 1; }
+      else if (nnQ === 2) cx.drawImage(World.lightOvN, sx, sy, sw, sh, sx * ts, sy * ts, sw * ts, sh * ts);
+    }
+    mark('lightfield');
+    // shore sparkle: foam texels blinking on shallow water in slow shifts — the SNES sea
+    {
+      const sparkT = Math.floor(S.time * 2.2);
+      let cnt = 0;
+      for (let gy3 = Math.floor(vy0 / 40) * 40; gy3 < vy1 && cnt < 900; gy3 += 40)
+        for (let gx3 = Math.floor(vx0 / 40) * 40; gx3 < vx1; gx3 += 40, cnt++) {
+          const hsh = U.hash2(gx3 * 0.025 + (sparkT % 7) * 11, gy3 * 0.025, 913);
+          if (hsh < 0.88) continue;
+          if (World.classAt(gx3, gy3) !== World.SHALLOW) continue;
+          cx.fillStyle = hsh > 0.95 ? '#d8f0ea' : '#8fd2c8';
+          cx.fillRect(Math.floor(gx3 / 5) * 5, Math.floor(gy3 / 5) * 5, 5, 5);
+        }
+    }
+    mark('sparkle');
     drawPavers(inView); mark('pavers');
     drawPickups(inView); mark('pickups');
     drawWorldExtras(inView, dt); mark('extras');
@@ -136,11 +160,6 @@ const Render = (() => {
     drawCamps(inView, dt); mark('camps');
     drawStations(inView, dt); mark('stations');
 
-    // light & mist overlays (low-res canvases cover whole world) — blit visible sub-rect only
-    const ls = World.LS;
-    const lsx = Math.max(0, vx0 / ls), lsy = Math.max(0, vy0 / ls);
-    const lsw = Math.min(World.veilC.width - lsx, (vx1 - vx0) / ls), lsh = Math.min(World.veilC.height - lsy, (vy1 - vy0) / ls);
-    if (lsw > 0 && lsh > 0) cx.drawImage(World.overlayC, lsx, lsy, lsw, lsh, lsx * ls, lsy * ls, lsw * ls, lsh * ls);
     mark('overlays');
     drawWisps(dt, inView); mark('wisps');
     // creatures of the mist and the porter ride above it
@@ -156,11 +175,9 @@ const Render = (() => {
       cx.strokeStyle = `rgba(255,214,150,${0.3 * (1 - lt * 0.6)})`;
       cx.lineWidth = 22 / cam.z;
       cx.beginPath(); cx.arc(stD.x, stD.y, rr * 0.97, 0, 7); cx.stroke();
-      const g2 = cx.createRadialGradient(stD.x, stD.y, 1, stD.x, stD.y, 380 * lt + 60);
-      g2.addColorStop(0, `rgba(255,225,170,${0.5 * (1 - lt)})`);
-      g2.addColorStop(1, 'rgba(255,225,170,0)');
-      cx.fillStyle = g2;
-      cx.beginPath(); cx.arc(stD.x, stD.y, 380 * lt + 60, 0, 7); cx.fill();
+      cx.globalAlpha = Math.max(0, 1 - lt);
+      glowShells(stD.x, stD.y, 380 * lt + 60, 'rgba(255,225,170,0.4)');
+      cx.globalAlpha = 1;
       cx.globalCompositeOperation = 'source-over';
     }
     drawWraiths(inView, dt); mark('wraiths');
@@ -177,26 +194,8 @@ const Render = (() => {
     cx.imageSmoothingEnabled = true;
     drawSays(z, cv.width / 2 - cam.x * z + shx, cv.height / 2 - cam.y * z + shy);
 
-    // screen space
+    // screen space (night lives in the world buffer now, as a palette field — no veil here)
     cx.setTransform(1, 0, 0, 1, 0, 0);
-    { const nn = Economy.dayPhase().nightness;
-      if (nn > 0) {
-        // night is a veil the waylight burns holes in: unlit ground drowns, lit ground keeps its day face
-        if (!nightC || nightC.width !== cv.width || nightC.height !== cv.height) { nightC = document.createElement('canvas'); nightC.width = cv.width; nightC.height = cv.height; }
-        const nx2 = nightC.getContext('2d');
-        nx2.setTransform(1, 0, 0, 1, 0, 0);
-        nx2.globalCompositeOperation = 'source-over'; nx2.globalAlpha = 1;
-        nx2.clearRect(0, 0, cv.width, cv.height);
-        nx2.fillStyle = `rgba(10,14,44,${0.42 * nn})`; nx2.fillRect(0, 0, cv.width, cv.height);
-        if (lsw > 0 && lsh > 0) {
-          nx2.globalCompositeOperation = 'destination-out'; nx2.globalAlpha = 0.9;
-          nx2.setTransform(z, 0, 0, z, cv.width / 2 - cam.x * z + shx, cv.height / 2 - cam.y * z + shy);
-          nx2.drawImage(World.glowC, lsx, lsy, lsw, lsh, lsx * ls, lsy * ls, lsw * ls, lsh * ls);
-          nx2.setTransform(1, 0, 0, 1, 0, 0);
-        }
-        cx.drawImage(nightC, 0, 0);
-      }
-    }
     drawGuide(dt); mark('guide');
     if (flareT > 0) {
       flareT -= dt * 1.4;
@@ -273,6 +272,29 @@ const Render = (() => {
     blit(rows, x - 4.5 * tx, y + 5 - 14 * tx, tx, pal, Math.cos(dir) < 0);
   }
 
+  /* every glow in the world is dithered, not gradiented — the era faked light with patterns.
+     A pattern is solid dots at a Bayer coverage; shells of falling coverage make a halo. */
+  const RBAY = [[0, 8, 2, 10], [12, 4, 14, 6], [3, 11, 1, 9], [15, 7, 13, 5]];
+  const patCache = {};
+  function ditherPat(color, cov, cell = 2.6) {
+    const key = color + '|' + cov + '|' + cell;
+    if (patCache[key]) return patCache[key];
+    const c = document.createElement('canvas'); c.width = c.height = Math.ceil(cell * 4);
+    const g = c.getContext('2d'); g.fillStyle = color;
+    for (let y = 0; y < 4; y++) for (let x = 0; x < 4; x++)
+      if (RBAY[y][x] / 16 < cov) g.fillRect(x * cell, y * cell, cell + 0.1, cell + 0.1);
+    return patCache[key] = g.createPattern(c, 'repeat');   // patterns are context-free; one per look
+  }
+  function glowShells(x, y, R, color, coreColor) {
+    // three shells: 75% core, 45% mid, 20% rim — additive solid dots, an era halo
+    const shells = [[0.38, 0.75], [0.68, 0.45], [1.0, 0.2]];
+    for (const [fr, cov] of shells) {
+      cx.fillStyle = ditherPat(color, cov);
+      cx.beginPath(); cx.arc(x, y, R * fr, 0, 7); cx.fill();
+    }
+    if (coreColor) { cx.fillStyle = coreColor; cx.beginPath(); cx.arc(x, y, Math.max(2.5, R * 0.14), 0, 7); cx.fill(); }
+  }
+
   function drawStations(inView, dt) {
     for (const id of stationOrder) {
       const d = stations[id], st = S.stations[id];
@@ -307,12 +329,7 @@ const Render = (() => {
       if (lit) {
         const pulse = 0.85 + Math.sin(t * 1.4 + d.x) * 0.15;
         cx.globalCompositeOperation = 'lighter';
-        const gr = cx.createRadialGradient(tx, tyb - th, 2, tx, tyb - th, 90 * pulse * st.litT);
-        gr.addColorStop(0, 'rgba(255,220,150,0.85)');
-        gr.addColorStop(0.25, 'rgba(255,190,110,0.28)');
-        gr.addColorStop(1, 'rgba(255,190,110,0)');
-        cx.fillStyle = gr;
-        cx.beginPath(); cx.arc(tx, tyb - th, 90 * pulse * st.litT, 0, 7); cx.fill();
+        glowShells(tx, tyb - th, 90 * pulse * st.litT, 'rgba(255,196,120,0.30)');
         cx.fillStyle = `rgba(255,235,190,${0.9 * st.litT})`;
         cx.beginPath(); cx.arc(tx, tyb - th, 5.5, 0, 7); cx.fill();
         cx.globalCompositeOperation = 'source-over';
@@ -342,16 +359,17 @@ const Render = (() => {
       if (!st.connected || st.litT <= 0) continue;
       const d = stations[id];
       const bh = 240 * st.litT;
-      const g = cx.createLinearGradient(d.x, d.y - 78, d.x, d.y - 78 - bh);
-      g.addColorStop(0, `rgba(255,214,150,${0.30 * st.litT})`);
-      g.addColorStop(1, 'rgba(255,214,150,0)');
-      cx.fillStyle = g;
-      cx.beginPath();
-      cx.moveTo(d.x - 4, d.y - 78);
-      cx.lineTo(d.x - 16, d.y - 78 - bh);
-      cx.lineTo(d.x + 16, d.y - 78 - bh);
-      cx.lineTo(d.x + 4, d.y - 78);
-      cx.fill();
+      // the pillar of light, dithered: a dense core column and two thinning sleeves — no gradient
+      const steps = [[3.5, 0.85], [8, 0.45], [14, 0.18]];
+      for (const [hw2, cov] of steps) {
+        cx.fillStyle = ditherPat('rgba(255,214,150,0.5)', cov);
+        cx.beginPath();
+        cx.moveTo(d.x - hw2 * 0.4, d.y - 78);
+        cx.lineTo(d.x - hw2, d.y - 78 - bh);
+        cx.lineTo(d.x + hw2, d.y - 78 - bh);
+        cx.lineTo(d.x + hw2 * 0.4, d.y - 78);
+        cx.fill();
+      }
     }
     cx.globalCompositeOperation = 'source-over';
   }
@@ -489,10 +507,7 @@ const Render = (() => {
       if (n.type === 'lumen') {
         const p = 0.5 + Math.sin(S.time * 2.4 + n.x) * 0.5;
         cx.globalCompositeOperation = 'lighter';
-        const g = cx.createRadialGradient(n.x, n.y, 1, n.x, n.y, 20 + p * 8);
-        g.addColorStop(0, 'rgba(140,240,225,0.8)'); g.addColorStop(1, 'rgba(140,240,225,0)');
-        cx.fillStyle = g;
-        cx.beginPath(); cx.arc(n.x, n.y, 20 + p * 8, 0, 7); cx.fill();
+        glowShells(n.x, n.y, 20 + p * 8, 'rgba(140,240,225,0.55)');
         cx.globalCompositeOperation = 'source-over';
         cx.fillStyle = '#bff5ec';
         for (let i = 0; i < 3; i++) {
@@ -534,11 +549,7 @@ const Render = (() => {
       // fire
       const f = 0.5 + Math.sin(S.time * 7 + cd.x) * 0.3;
       cx.globalCompositeOperation = 'lighter';
-      const g = cx.createRadialGradient(cd.x, cd.y, 1, cd.x, cd.y, 22 * f + 10);
-      g.addColorStop(0, cs.pacified ? 'rgba(255,214,140,0.9)' : 'rgba(255,140,80,0.8)');
-      g.addColorStop(1, 'rgba(255,140,80,0)');
-      cx.fillStyle = g;
-      cx.beginPath(); cx.arc(cd.x, cd.y, 22 * f + 10, 0, 7); cx.fill();
+      glowShells(cd.x, cd.y, 22 * f + 10, cs.pacified ? 'rgba(255,214,140,0.55)' : 'rgba(255,140,80,0.5)', cs.pacified ? '#ffd98f' : '#ff9a5a');
       cx.globalCompositeOperation = 'source-over';
       // stash
       if (cs.stash.length) { cx.fillStyle = '#c9b98a'; cx.fillRect(cd.x + 24, cd.y - 8, 14, 12); cx.fillRect(cd.x + 30, cd.y - 16, 12, 10); }
@@ -575,31 +586,36 @@ const Render = (() => {
       if (!inView(w.x, w.y, 120)) continue;
       const hunt = w.state === 'hunt';
       const burn = w.state === 'burn';
-      const alpha = burn ? Math.max(0, 1 - (w.burnT || 0)) : 0.85;
+      const alpha = burn ? Math.max(0, 1 - (w.burnT || 0)) : 1;
+      /* the one unsolid thing in the valley, rendered in the era's own language for unsolid things:
+         its body IS ordered dither — a cloud of solid spectral texels thinning outward, breathing
+         as the world's fixed dither grid slides under it. Ghosts were checkerboards in 1996. */
       cx.globalCompositeOperation = 'lighter';
-      const rad = hunt ? 34 : 28;
-      const g = cx.createRadialGradient(w.x, w.y - 14, 2, w.x, w.y - 14, rad);
-      const core = hunt ? 'rgba(150,160,255,' : 'rgba(120,130,170,';
-      g.addColorStop(0, core + (0.55 * alpha) + ')');
-      g.addColorStop(0.5, core + (0.18 * alpha) + ')');
-      g.addColorStop(1, 'rgba(120,130,170,0)');
-      cx.fillStyle = g;
-      cx.beginPath(); cx.arc(w.x, w.y - 14, rad, 0, 7); cx.fill();
-      // tendrils
-      cx.strokeStyle = `rgba(140,150,200,${0.35 * alpha})`;
-      cx.lineWidth = 2;
+      cx.globalAlpha = alpha;
+      const rad = hunt ? 30 : 25;
+      const bodyCol = hunt ? 'rgba(150,160,255,0.60)' : 'rgba(120,132,178,0.55)';
+      const sway = Math.sin(S.time * 1.7 + w.ph) * 3;
+      glowShells(w.x + sway * 0.4, w.y - 14, rad, bodyCol);
+      // tendrils: chains of solid squares walking down the old curve
+      cx.fillStyle = hunt ? '#96a0e0' : '#7e88b4';
       for (let i = 0; i < 4; i++) {
         const a = w.ph + i * 1.7 + S.time * 0.8;
-        cx.beginPath();
-        cx.moveTo(w.x, w.y - 10);
-        cx.quadraticCurveTo(w.x + Math.cos(a) * 16, w.y + 6, w.x + Math.cos(a) * 26, w.y + 18 + Math.sin(a * 2) * 5);
-        cx.stroke();
+        const cxm = w.x + Math.cos(a) * 16, cym = w.y + 6;
+        const ex = w.x + Math.cos(a) * 26, ey = w.y + 18 + Math.sin(a * 2) * 5;
+        for (let tq = 0.15; tq <= 1; tq += 0.17) {
+          const it = 1 - tq;
+          const px2 = it * it * w.x + 2 * it * tq * cxm + tq * tq * ex;
+          const py2 = it * it * (w.y - 10) + 2 * it * tq * cym + tq * tq * ey;
+          const s2 = 2.6 - tq * 1.2;
+          cx.fillRect(px2 - s2 / 2, py2 - s2 / 2, s2, s2);
+        }
       }
-      // eyes
+      // eyes: two hard pixels — the only certain thing about it
       if (!burn) {
-        cx.fillStyle = `rgba(220,228,255,${alpha})`;
-        cx.beginPath(); cx.arc(w.x - 5, w.y - 18, 1.8, 0, 7); cx.arc(w.x + 5, w.y - 18, 1.8, 0, 7); cx.fill();
+        cx.fillStyle = '#e6ecff';
+        cx.fillRect(w.x - 6, w.y - 19, 2.4, 2.4); cx.fillRect(w.x + 3.6, w.y - 19, 2.4, 2.4);
       }
+      cx.globalAlpha = 1;
       cx.globalCompositeOperation = 'source-over';
       // alert meter
       if (!hunt && !burn && w.alert > 0.1) {
@@ -680,10 +696,7 @@ const Render = (() => {
     if (World.lightAt(x, y) < 0.3) {
       const big = S.flags.effects.bigLantern ? 2.4 : 1;   // BIGLANTERN: exactly what it says
       cx.globalCompositeOperation = 'lighter';
-      const g = cx.createRadialGradient(0, -18, 1, 0, -18, 46 * big);
-      g.addColorStop(0, `rgba(255,230,180,${big > 1 ? 0.38 : 0.30})`); g.addColorStop(1, 'rgba(255,230,180,0)');
-      cx.fillStyle = g;
-      cx.beginPath(); cx.arc(0, -18, 46 * big, 0, 7); cx.fill();
+      glowShells(0, -18, 46 * big, `rgba(255,230,180,${big > 1 ? 0.34 : 0.26})`);
       cx.globalCompositeOperation = 'source-over';
     }
     cx.restore();
@@ -710,9 +723,7 @@ const Render = (() => {
         cx.fillRect(-16, -12, 32, 7);
         if (!rn.looted) {
           cx.globalCompositeOperation = 'lighter';
-          const g = cx.createRadialGradient(0, 0, 1, 0, 0, 26);
-          g.addColorStop(0, 'rgba(140,240,225,0.35)'); g.addColorStop(1, 'rgba(140,240,225,0)');
-          cx.fillStyle = g; cx.beginPath(); cx.arc(0, 0, 26, 0, 7); cx.fill();
+          glowShells(0, 0, 26, 'rgba(140,240,225,0.3)');
           cx.globalCompositeOperation = 'source-over';
         }
       } else {
@@ -744,9 +755,7 @@ const Render = (() => {
       cx.fillStyle = '#8d979c';
       cx.beginPath(); cx.arc(-1, -4, 2.5, 0, 7); cx.fill();
       cx.globalCompositeOperation = 'lighter';
-      const gg = cx.createRadialGradient(0, -12, 1, 0, -12, 18);
-      gg.addColorStop(0, 'rgba(255,214,150,0.35)'); gg.addColorStop(1, 'rgba(255,214,150,0)');
-      cx.fillStyle = gg; cx.beginPath(); cx.arc(0, -12, 18, 0, 7); cx.fill();
+      glowShells(0, -12, 18, 'rgba(255,214,150,0.32)');
       cx.globalCompositeOperation = 'source-over';
       cx.restore();
       cx.font = `${U.clamp(11 / cam.z, 10, 15)}px Fraunces, Georgia, serif`;
@@ -771,9 +780,7 @@ const Render = (() => {
         cx.fillStyle = '#2a2f38'; cx.beginPath(); cx.arc(-12, 10, 7, 0, 7); cx.arc(12, 10, 7, 0, 7); cx.fill();
         const lp = 0.7 + Math.sin(S.time * 2.2) * 0.3;
         cx.globalCompositeOperation = 'lighter';
-        const lg = cx.createRadialGradient(24, -18, 1, 24, -18, 30 * lp);
-        lg.addColorStop(0, 'rgba(255,214,140,0.8)'); lg.addColorStop(1, 'rgba(255,214,140,0)');
-        cx.fillStyle = lg; cx.beginPath(); cx.arc(24, -18, 30 * lp, 0, 7); cx.fill();
+        glowShells(24, -18, 30 * lp, 'rgba(255,214,140,0.5)');
         cx.globalCompositeOperation = 'source-over';
         cx.fillStyle = '#ffe3b0'; cx.beginPath(); cx.arc(24, -18, 3, 0, 7); cx.fill();
         cx.restore();
@@ -822,10 +829,7 @@ const Render = (() => {
       g.ph = (g.ph || 0) + dt * 0.5;
       const bob = Math.sin(g.ph) * 2;
       cx.globalCompositeOperation = 'lighter';
-      const gg = cx.createRadialGradient(g.x, g.y - 16 + bob, 2, g.x, g.y - 16 + bob, 34);
-      gg.addColorStop(0, 'rgba(150,160,255,0.5)'); gg.addColorStop(1, 'rgba(150,160,255,0)');
-      cx.fillStyle = gg;
-      cx.beginPath(); cx.arc(g.x, g.y - 16 + bob, 34, 0, 7); cx.fill();
+      glowShells(g.x, g.y - 16 + bob, 34, 'rgba(150,160,255,0.4)');
       cx.globalCompositeOperation = 'source-over';
       cx.fillStyle = 'rgba(90,100,150,0.85)';
       cx.fillRect(g.x - 5, g.y - 20 + bob, 10, 18);
@@ -949,26 +953,32 @@ const Render = (() => {
     const want = reduced || !fxOn ? 0 : Math.round(r * 130);
     while (rains.length < want) rains.push({ x: cam.x + (Math.random() - 0.5) * (cv.width / cam.z / dpr), y: cam.y + (Math.random() - 0.5) * (cv.height / cam.z / dpr), l: 10 + Math.random() * 14, v: 700 + Math.random() * 300 });
     if (rains.length > want) rains.length = want;
-    cx.strokeStyle = 'rgba(170,185,200,0.30)';
-    cx.lineWidth = 1.2;
-    cx.beginPath();
+    // greyfall rain: solid falling dashes, the way a cartridge rained
+    cx.fillStyle = '#7e93a6';
     for (const p of rains) {
       p.y += p.v * dt; p.x += p.v * 0.12 * dt;
       const vh2 = cv.height / (cam.z * dpr);
       if (p.y > cam.y + vh2 / 2 + 30) { p.y = cam.y - vh2 / 2 - 20; p.x = cam.x + (Math.random() - 0.5) * (cv.width / (cam.z * dpr)); }
-      cx.moveTo(p.x, p.y); cx.lineTo(p.x - p.l * 0.14, p.y - p.l);
+      cx.fillRect(p.x - 0.7, p.y - p.l * 0.6, 1.4, p.l * 0.6);
     }
-    cx.stroke();
   }
   let wispSprite = null;
   function drawWisps(dt, inView) {
     if (!fxOn) return;
     if (!wispSprite) {
+      // mist wisps are dither clouds too — coverage falls off in rings, cells stay square
       wispSprite = document.createElement('canvas'); wispSprite.width = wispSprite.height = 128;
       const g2 = wispSprite.getContext('2d');
-      const gr = g2.createRadialGradient(64, 64, 1, 64, 64, 64);
-      gr.addColorStop(0, 'rgba(150,158,180,0.55)'); gr.addColorStop(0.5, 'rgba(150,158,180,0.18)'); gr.addColorStop(1, 'rgba(150,158,180,0)');
-      g2.fillStyle = gr; g2.fillRect(0, 0, 128, 128);
+      const wid = g2.createImageData(128, 128);
+      for (let y = 0; y < 128; y++) for (let x = 0; x < 128; x++) {
+        const d2 = Math.hypot(x - 64, y - 64) / 64;
+        const cov = d2 < 0.35 ? 0.55 : d2 < 0.7 ? 0.3 : d2 < 1 ? 0.12 : 0;
+        if (RBAY[(y >> 2) & 3][(x >> 2) & 3] / 16 < cov) {
+          const i = (y * 128 + x) * 4;
+          wid.data[i] = 150; wid.data[i + 1] = 158; wid.data[i + 2] = 180; wid.data[i + 3] = 255;
+        }
+      }
+      g2.putImageData(wid, 0, 0);
     }
     cx.globalCompositeOperation = 'lighter';
     let drawn = 0;

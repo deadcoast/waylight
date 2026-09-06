@@ -175,6 +175,105 @@ const World = (() => {
       od.data[i] = r; od.data[i + 1] = g; od.data[i + 2] = bb; od.data[i + 3] = Math.round(a * 255);
     }
     vx.putImageData(vd, 0, 0); gx.putImageData(gd, 0, 0); mx.putImageData(md, 0, 0); ox.putImageData(od, 0, 0);
+    repaintLightTexels();
+  }
+
+  /* =============== the law of the world layer: no alpha. light is palette; transparency is dither. ===============
+     The light field lands on the ground as SOLID texels in Bayer proportion — a cold checker thickening
+     where the quiet holds, gold dust scattered where the wire feeds, and a dithered golden COASTLINE at
+     the exact light level a wraith cannot cross: the network's edge drawn as a shore. Night is a second,
+     darker field baked the same way — the world snaps through palette steps at dusk like a cartridge
+     swapping CLUTs, instead of drowning under a translucent veil. */
+  const lightOv = document.createElement('canvas'); lightOv.width = TW; lightOv.height = TH;    // day field
+  const lightOvN = document.createElement('canvas'); lightOvN.width = TW; lightOvN.height = TH; // night field
+  const BAY4 = [[0, 8, 2, 10], [12, 4, 14, 6], [3, 11, 1, 9], [15, 7, 13, 5]];
+  const mistG = new Float32Array(LW * LH);
+  let prevLightG = null, terrainReady = false;
+  const gridAt = (arr, wx, wy) => {   // bilinear over the LS grid
+    const gx2 = U.clamp(wx / LS - 0.5, 0, LW - 1.001), gy2 = U.clamp(wy / LS - 0.5, 0, LH - 1.001);
+    const x0 = gx2 | 0, y0 = gy2 | 0, fx = gx2 - x0, fy = gy2 - y0;
+    const i0 = y0 * LW + x0;
+    return (arr[i0] * (1 - fx) + arr[i0 + 1] * fx) * (1 - fy) + (arr[i0 + LW] * (1 - fx) + arr[i0 + LW + 1] * fx) * fy;
+  };
+  function paintLightRegion(tx0, ty0, tx1, ty1) {
+    if (!terrainReady) return;
+    tx0 = Math.max(0, tx0 | 0); ty0 = Math.max(0, ty0 | 0);
+    tx1 = Math.min(TW, Math.ceil(tx1)); ty1 = Math.min(TH, Math.ceil(ty1));
+    const w = tx1 - tx0, h = ty1 - ty0;
+    if (w <= 0 || h <= 0) return;
+    const dxD = lightOv.getContext('2d'), dxN = lightOvN.getContext('2d');
+    const td = tc.getContext('2d').getImageData(tx0, ty0, w, h).data;   // the ground itself — light recolours it
+    const idD = dxD.createImageData(w, h), idN = dxN.createImageData(w, h);
+    const dD = idD.data, dN = idN.data;
+    const F = 255;
+    for (let py = 0; py < h; py++) {
+      const wy = (ty0 + py) * TS + TS / 2;
+      for (let px = 0; px < w; px++) {
+        const wx = (tx0 + px) * TS + TS / 2;
+        const L = gridAt(lightG, wx, wy);
+        const m = gridAt(mistG, wx, wy);
+        const bay = BAY4[(ty0 + py) & 3][(tx0 + px) & 3] / 16;
+        const i = (py * w + px) * 4;
+        const tr = td[i], tg = td[i + 1], tb = td[i + 2];
+        // the coastline: the wraith-burn threshold drawn as a dithered golden shore, day and night
+        if (Math.abs(L - 0.30) < 0.020 && bay < 0.42) {
+          dD[i] = dN[i] = 255; dD[i + 1] = dN[i + 1] = 232; dD[i + 2] = dN[i + 2] = 170; dD[i + 3] = dN[i + 3] = 255;
+          continue;
+        }
+        // Bayer jitters the light value, not the colour: bands stay solid, their EDGES dither.
+        const Lq = L + (bay - 0.47) * 0.07 - (m > 0.62 + (bay - 0.5) * 0.2 ? 0.05 : 0);
+        let r = 0, g = 0, b2 = 0, a = 0, rN, gN, bN, aN = 255;
+        if (Lq < 0.10) { r = tr * 0.30; g = tg * 0.34; b2 = tb * 0.34 + 14; a = 255; }
+        else if (Lq < 0.30) { r = tr * 0.52; g = tg * 0.55; b2 = tb * 0.55 + 10; a = 255; }
+        else if (Lq < 0.47) { a = 0; }                                            // bare ground: the neutral shelf
+        else if (Lq < 0.78) { r = tr * 1.13 + 10; g = tg * 1.07 + 5; b2 = tb * 0.94; a = 255; }
+        else { r = tr * 1.24 + 20; g = tg * 1.13 + 9; b2 = tb * 0.88; a = 255; }
+        // night: the same land two palette steps deeper and bluer — lit ground keeps its day face
+        if (Lq < 0.10) { rN = tr * 0.13; gN = tg * 0.16; bN = tb * 0.26 + 18; }
+        else if (Lq < 0.30) { rN = tr * 0.26; gN = tg * 0.30; bN = tb * 0.44 + 16; }
+        else if (Lq < 0.47) { rN = tr * 0.44; gN = tg * 0.47; bN = tb * 0.66 + 13; }
+        else if (Lq < 0.78) { rN = tr * 1.06 + 6; gN = tg * 1.01 + 3; bN = tb * 0.92; }
+        else { rN = tr * 1.24 + 20; gN = tg * 1.13 + 9; bN = tb * 0.88; }
+        dD[i] = Math.min(F, r); dD[i + 1] = Math.min(F, g); dD[i + 2] = Math.min(F, b2); dD[i + 3] = a;
+        dN[i] = Math.min(F, rN); dN[i + 1] = Math.min(F, gN); dN[i + 2] = Math.min(F, bN); dN[i + 3] = aN;
+      }
+    }
+    dxD.putImageData(idD, tx0, ty0); dxN.putImageData(idN, tx0, ty0);
+  }
+  let pend = null, lastPaintT = -9, flushTimer = null;
+  function flushPend() {
+    if (!pend) return;
+    const p = pend; pend = null; lastPaintT = performance.now() / 1000;
+    paintLightRegion(p.x0 * LS / TS, p.y0 * LS / TS, p.x1 * LS / TS, p.y1 * LS / TS);
+  }
+  function repaintLightTexels() {
+    if (!terrainReady) return;   // nothing to recolour until the ground exists
+    // mist grid rides along; find what actually changed and repaint only that ground
+    for (let cy = 0; cy < LH; cy++) for (let cx = 0; cx < LW; cx++)
+      mistG[cy * LW + cx] = mistBase(cx * LS + LS / 2, cy * LS + LS / 2);
+    let x0 = LW, y0 = LH, x1 = -1, y1 = -1;
+    if (!prevLightG) { x0 = 0; y0 = 0; x1 = LW; y1 = LH; prevLightG = new Float32Array(lightG); }
+    else {
+      for (let cy = 0; cy < LH; cy++) for (let cx = 0; cx < LW; cx++) {
+        const i = cy * LW + cx;
+        if (Math.abs(lightG[i] - prevLightG[i]) > 0.004) {
+          if (cx < x0) x0 = cx; if (cx > x1) x1 = cx;
+          if (cy < y0) y0 = cy; if (cy > y1) y1 = cy;
+          prevLightG[i] = lightG[i];
+        }
+      }
+      if (x1 < 0) return;
+      x0 -= 1; y0 -= 1; x1 += 2; y1 += 2;
+    }
+    // batch bursts (the connect cinematic re-lights every 0.12 s): merge dirt, flush at most ~4×/s
+    pend = pend ? { x0: Math.min(pend.x0, x0), y0: Math.min(pend.y0, y0), x1: Math.max(pend.x1, x1), y1: Math.max(pend.y1, y1) } : { x0, y0, x1, y1 };
+    const now = performance.now() / 1000;
+    if (now - lastPaintT < 0.22) {
+      if (!flushTimer) flushTimer = setTimeout(() => { flushTimer = null; flushPend(); }, 240);
+      return;
+    }
+    if (flushTimer) { clearTimeout(flushTimer); flushTimer = null; }
+    flushPend();
   }
   function coverage() {
     let lit = 0, land = 0;
@@ -313,6 +412,8 @@ const World = (() => {
 
     // water edge shimmer base: subtle lighter line along shallow/deep boundary — cheap pass
     onProgress && onProgress(0.99, 'first light');
+    terrainReady = true;
+    repaintLightTexels();   // the light field reads the finished ground — first full paint happens here
     rebuildThumb();
     await tick(1, 'done');
   }
@@ -344,6 +445,10 @@ const World = (() => {
       draw(24, '#3c424a');
       draw(2.2, 'rgba(255,214,150,0.5)');
     }
+    // the light field holds a recoloured copy of this ground — refresh it where the road landed
+    let bx0 = 1e9, by0 = 1e9, bx1 = -1e9, by1 = -1e9;
+    for (const p of pts) { bx0 = Math.min(bx0, p.x); by0 = Math.min(by0, p.y); bx1 = Math.max(bx1, p.x); by1 = Math.max(by1, p.y); }
+    paintLightRegion(bx0 / TS - 5, by0 / TS - 5, bx1 / TS + 5, by1 / TS + 5);
     rebuildThumb();
   }
   // roads are permanent: re-stamp built segments into the terrain canvas after a load
@@ -426,7 +531,7 @@ const World = (() => {
     W, H, MEADOW, FOREST, SCREE, ROCK, SNOW, MARSH, SHALLOW, DEEP, CLIFF, CP,
     bake, hgtAt, slopeAt, classAt, terrainAt, riverAt,
     setSources, lightAt, mistAt, mistBase, rebuildLight, coverage, lightG, LW, LH, LS,
-    tc, rc, thumb, TS, veilC, glowC, mistC, overlayC, rebuildThumb, repaintRoads,
+    tc, rc, thumb, TS, veilC, glowC, mistC, overlayC, lightOv, lightOvN, rebuildThumb, repaintRoads,
     paintRoadSegment, paverPos, roadSegPts, pathTime, buildPathGrid, pathCell, PS,
   };
 })();
