@@ -115,8 +115,10 @@ await page.screenshot({ path: `${shots}/73_hired.png` });
 const elm = await page.evaluate(() => [DATA.stations.elm.x, DATA.stations.elm.y]);
 const walkMs = await walkRoad('haven', 'elm');
 await walkTo(elm[0], elm[1] + 40, 30000, 70);
-await page.keyboard.press('e'); await page.waitForTimeout(900);
-ok('delivery results after walking', await visible('results'));
+await page.keyboard.press('e');
+// the DELIVER ceremony plays out in the world — crates leave the pack, then the slip lands
+await page.waitForFunction(() => !document.getElementById('results').classList.contains('hidden'), null, { timeout: 8000 }).catch(() => {});
+ok('delivery results after walking (through the hand-over ceremony)', await visible('results'));
 const grade = await page.evaluate(() => document.getElementById('gradeStamp').textContent);
 await page.keyboard.press('Enter'); await page.waitForTimeout(300);
 if (await visible('stationOv')) { await page.click('#stationClose'); await page.waitForTimeout(150); }

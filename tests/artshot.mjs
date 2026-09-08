@@ -17,6 +17,14 @@ await page.waitForTimeout(800);
 await page.evaluate(() => { document.getElementById('guide').style.display = 'none'; document.getElementById('toasts').style.display = 'none'; });
 await page.waitForTimeout(200);
 await page.screenshot({ path: '/tmp/art_green.png', clip: { x: 430, y: 90, width: 580, height: 520 } });
+// his close-up: zoomed right into the lit station
+await page.evaluate(() => Render.setZoom(2.05));
+await page.waitForTimeout(700);
+await page.screenshot({ path: '/tmp/art_close.png', clip: { x: 500, y: 60, width: 440, height: 400 } });
+await page.evaluate(() => Render.setZoom(0.72));
+await page.waitForTimeout(900);
+await page.screenshot({ path: '/tmp/art_wide.png' });
+await page.evaluate(() => Render.setZoom(null));
 await page.evaluate(() => { document.getElementById('guide').style.display = ''; document.getElementById('toasts').style.display = ''; WL.tp('haven'); S.px += 340; S.py -= 60; });
 await page.waitForTimeout(700);
 await page.screenshot({ path: '/tmp/art_haven.png' });

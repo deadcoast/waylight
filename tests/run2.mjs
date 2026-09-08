@@ -150,7 +150,7 @@ const routeRes = await page.evaluate(async () => {
   WL.calm();
   for (let i = 0; i < 3; i++) {
     const p = DATA.priority[WL.S.orders.prioIdx];
-    WL.acceptPrio(); WL.tp(p.to); WL.instantPar(); WL.openStation(p.to);
+    WL.acceptPrio(); WL.tp(p.to); WL.instantPar(); WL.openStation(p.to); WL.skipHandover();
     await new Promise(r => setTimeout(r, 300));
     WL.skipCine();
     await new Promise(r => setTimeout(r, 350));

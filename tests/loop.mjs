@@ -96,8 +96,8 @@ await page.evaluate(() => { WL.timeScale = 1; });
 ok('a walk that keeps hitting the same wall re-routes, then stops with "The ground stops you here" — never grinds forever', !r.moveTo, JSON.stringify(r));
 
 /* 12. the connection cinematic says who feeds whom */
-r = await ev(() => { S.stations.elm.connected = true; S.stations.mill.connected = false; S.stations.mill.met = true; Systems.igniteStation('mill'); for (let i = 0; i < 60; i++) Systems.update(0.1, {}); const t = document.querySelector('#cineTitle .big').textContent + ' | ' + document.querySelector('#cineTitle .small').textContent; Systems.finishCine(); return t; });
-ok('the connection title reads "ON THE WIRE" and names the feeders', /ON THE WIRE/.test(r) && /Haven and Elm Farm now send what The Mill lacks/.test(r), r);
+r = await ev(() => { S.stations.elm.connected = true; S.stations.mill.connected = false; S.stations.mill.met = true; Systems.igniteStation('mill'); for (let i = 0; i < 60; i++) Systems.update(0.1, {}); const ct = Render.crtText(); const t = ct ? ct.big + ' | ' + ct.small : ''; Systems.finishCine(); return t; });
+ok('the connection title takes the big CRT voice — "ON THE WIRE", naming the feeders', /ON THE WIRE/.test(r) && /HAVEN AND ELM FARM NOW SEND WHAT THE MILL LACKS/.test(r), r);
 
 console.log(results.join('\n'));
 console.log(`\n${results.filter(x => x.startsWith('PASS')).length}/${results.length} passed · errors: ${errors.length ? errors.join(' | ') : 'none'}`);

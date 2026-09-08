@@ -10,6 +10,10 @@ const UI = (() => {
   let mapOpen = false, mapView = { x: DATA.W / 2, y: DATA.H / 2, z: 0.16 };
   let likeAnim = null;
 
+  /* ---------- player options — browser-persistent, outlive the save (they are yours, not the porter's) ---------- */
+  const OPTS = (() => { try { return JSON.parse(localStorage.getItem('waylight.opts') || '{}') || {}; } catch (e) { return {}; } })();
+  function saveOpts() { try { localStorage.setItem('waylight.opts', JSON.stringify(OPTS)); } catch (e) {} }
+
   /* ---------- HUD ---------- */
   function updateHUD() {
     if (!S) return;
@@ -30,6 +34,51 @@ const UI = (() => {
     if (S.warmT > 0) buffs.push('WARM');
     if (S.gear.flares > 0) buffs.push(`FLARE ×${S.gear.flares}`);
     $('buffs').innerHTML = buffs.map(b => `<span class="buff">${b}</span>`).join('');
+  }
+  /* ---------- hearts — health counted in wounds, not watched as a level ----------
+     five hearts of 20; half-heart steps; the last live heart beats, faster as it empties.
+     brick rust from the family palette — a field dressing, not an arcade. */
+  const HEART = ['.oo...oo.', 'obho.obbo', 'obbbsbbbo', 'obbbbbbbo', '.obbbbbo.', '..obbbo..', '...obo...', '....o....'];
+  const HEART_C = { o: '#140b09', b: '#d96b4f', s: '#8a3a2c', h: '#f2ead4', d: '#221317' };
+  let heartLastHp = 100, heartDmgT = 0;
+  function drawHearts() {
+    const cv = $('hpHearts'); if (!cv || !S) return;
+    if (S.health < heartLastHp - 0.5) heartDmgT = 0.3;
+    heartLastHp = S.health;
+    heartDmgT = Math.max(0, heartDmgT - 0.016);
+    const g = cv.getContext('2d');
+    g.clearRect(0, 0, cv.width, cv.height);
+    const hp = U.clamp(S.health, 0, 100);
+    const lastLive = Math.ceil(hp / 20) - 1;                       // index of the heart still holding blood
+    const low = hp <= 25 && hp > 0;
+    const rate = low ? 2.4 : 1.3;
+    const squeeze = (S.time * rate) % 1 < 0.16;
+    const shake = heartDmgT > 0 ? (((S.time * 40) | 0) % 2 ? 1 : -1) : 0;
+    const flash = heartDmgT > 0.18;
+    for (let i = 0; i < 5; i++) {
+      const hpHere = U.clamp(hp - i * 20, 0, 20);
+      const state = hpHere >= 15 ? 'full' : hpHere >= 5 ? 'half' : 'empty';
+      const beat = (i === lastLive || (low && state !== 'empty')) && squeeze && state !== 'empty';
+      const x0 = 1 + i * 12 + shake, y0 = beat ? 2 : 1;
+      for (let r = 0; r < (beat ? 7 : 8); r++) {
+        const row = HEART[r];
+        for (let c = 0; c < 9; c++) {
+          let ch = row[c];
+          if (ch === '.') continue;
+          if (state === 'empty' && ch !== 'o') ch = 'd';
+          if (state === 'half' && c > 4 && ch !== 'o') ch = 'd';
+          let col = HEART_C[ch];
+          if (flash && ch !== 'o' && ch !== 'd') col = '#f2ead4';
+          g.fillStyle = col;
+          g.fillRect(x0 + c, y0 + r, 1, 1);
+        }
+      }
+      if (S.bleeding && i === lastLive && state !== 'empty') {      // a slow texel of blood
+        const prog = (S.time * 0.7) % 1;
+        g.fillStyle = '#b5452e';
+        g.fillRect(x0 + 4, y0 + 8 + Math.floor(prog * 4), 1, prog < 0.85 ? 2 : 1);
+      }
+    }
   }
   function hudFade(on) { $('hud').classList.toggle('faded', on && !anyModal()); }
   function savedBlink() {
@@ -101,7 +150,7 @@ const UI = (() => {
   function updatePrompts(list) {
     const el = $('prompts');
     promptList = list;
-    const htm = list.slice(0, 4).map((p, i) => `<div class="prompt" data-pi="${i}"><span class="k">${p.key}</span> ${p.label}</div>`).join('');
+    const htm = list.slice(0, 4).map((p, i) => `<div class="prompt ${p.cls || ''}" data-pi="${i}"><span class="k">${p.key}</span> ${p.label}</div>`).join('');
     if (el._last !== htm) { el._last = htm; el.innerHTML = htm; }
   }
   $('prompts') && $('prompts').addEventListener('click', e => {
@@ -171,6 +220,70 @@ const UI = (() => {
     $('cargoPanel').classList.toggle('hidden', !cargoOpen);
     if (cargoOpen) refreshCargo();
   }
+  /* ---------- item icons — the item's face, before its name, everywhere items are read ----------
+     One authored 12-texel glyph per kind. THE LAW: a mission item (order-bound, a beacon core,
+     lost cargo you signed for) is GOLD — icon and title — always, immune to every setting.
+     Everything else is neutral bone unless the player turns on colour-coding: consumables green,
+     gear and utility blue, junk grey. */
+  const ICON_GLYPHS = {
+    crate: ['OOOOOOOOOOOO', 'OPPPPPPPPPPO', 'OPssPPPPssPO', 'OPPPPxxPPPPO', 'OOOOOOOOOOOO', 'OPPPPxxPPPPO', 'OPPPPxxPPPPO', 'OPsPPxxPPsPO', 'OPPPPPPPPPPO', 'OOOOOOOOOOOO'],
+    tin: ['............', '..OOOOOOOO..', '.OPPPPPPPPO.', '.OPxxxxxxPO.', '.OPPPPPPPPO.', '.OPssssssPO.', '.OPPPPPPPPO.', '..OOOOOOOO..', '............', '............'],
+    vial: ['....OOOO....', '....OxxO....', '...OPPPPO...', '...OPssPO...', '...OPPPPO...', '...OPPPPO...', '...OPssPO...', '...OPPPPO...', '....OOOO....', '............'],
+    book: ['.OOOOOOOOO..', '.OPPPPPPPOO.', '.OPxxxxxPPO.', '.OPPPPPPPPO.', '.OPxxxPPPPO.', '.OPPPPPPPPO.', '.OPPPPPPPPO.', '.OOOOOOOOOO.', '..OOOOOOOO..', '............'],
+    boots: ['............', '..OOO.......', '..OPPO......', '..OPPO......', '..OPPO..OOO.', '..OPPOOOPPO.', '..OPPPPPPPO.', '..OsPPPPssO.', '..OOOOOOOOO.', '............'],
+    coat: ['...OOOOOO...', '..OPPOOPPO..', '.OPPPOOPPPO.', '.OPsPPPPsPO.', '.OPsPPPPsPO.', '..OPPPPPPO..', '..OPPPPPPO..', '..OPssssPO..', '..OOOOOOOO..', '............'],
+    frame: ['..OOOOOOOO..', '..OPPPPPPO..', '..OPssssPO..', '..OPPPPPPO..', '..OPssssPO..', '..OPPPPPPO..', '..OOOOOOOO..', '...OO..OO...', '...OO..OO...', '............'],
+    charm: ['.....OO.....', '....OxxO....', '....OxxO....', '...OPPPPO...', '..OPPssPPO..', '..OPPPPPPO..', '...OPPPPO...', '....OPPO....', '.....OO.....', '............'],
+    ladder: ['..OO....OO..', '..OPO..OPO..', '..OPOOOOPO..', '..OPPPPPPO..', '..OPO..OPO..', '..OPOOOOPO..', '..OPPPPPPO..', '..OPO..OPO..', '..OO....OO..', '............'],
+    kit: ['....OOOO....', '...OOPPOO...', '..OOOOOOOO..', '..OPPPPPPO..', '..OPxPPxPO..', '..OPPPPPPO..', '..OPPPPPPO..', '..OOOOOOOO..', '............', '............'],
+    cog: ['....OO.OO...', '..OOOPOPOO..', '..OPPPPPPO..', '.OOPPOOPPOO.', '..OPPOOPPO..', '.OOPPOOPPOO.', '..OPPPPPPO..', '..OOOPOPOO..', '....OO.OO...', '............'],
+    ingot: ['............', '............', '...OOOO.....', '..OPPPPO....', '.OOOOOOOOO..', '.OPPPPPPPO..', 'OOOOOOOOOOO.', 'OPPPPPPPPPO.', 'OOOOOOOOOOO.', '............'],
+    relic: ['..OOOOOOOO..', '.OPPPPPPPPO.', '.OPxOOOOxPO.', '.OPOPPPPOPO.', '.OPOPssPOPO.', '.OPOPPPPOPO.', '.OPxOOOOxPO.', '.OPPPPPPPPO.', '..OOOOOOOO..', '............'],
+  };
+  const ICON_MODES = {
+    neutral: { O: '#17130b', P: '#b8b29d', s: '#8a856f', x: '#d8d2bd' },
+    consumable: { O: '#17130b', P: '#7db06a', s: '#5a8a4c', x: '#a8d494' },
+    gear: { O: '#17130b', P: '#7da2c9', s: '#5a7ba0', x: '#a5c6e4' },
+    junk: { O: '#17130b', P: '#8a8f98', s: '#666b73', x: '#aab0b8' },
+    mission: { O: '#241708', P: '#ffd98f', s: '#c9a05a', x: '#fff2d0' },
+  };
+  function iconGlyphFor(defId, cat) {
+    if (cat === 'goods' || cat === 'core') return 'crate';
+    if (cat === 'food') return 'tin';
+    if (cat === 'use') return 'vial';
+    if (cat === 'manual') return 'book';
+    if (cat === 'junk') return 'cog';
+    if (cat === 'mat') return 'ingot';
+    if (cat === 'relic') return 'relic';
+    if (cat === 'tool') return /kit/.test(defId) ? 'kit' : 'ladder';
+    if (cat === 'gear') return /^boot/.test(defId) ? 'boots' : /^coat/.test(defId) ? 'coat' : /^pack/.test(defId) ? 'frame' : 'charm';
+    return 'crate';
+  }
+  function isMission(c) { return !!(c && (c.orderId || c.cat === 'core' || c.lostTo)); }
+  function iconModeFor(c, d) {
+    if (isMission(c)) return 'mission';
+    if (!OPTS.iconColor) return 'neutral';
+    const cat = (d && d.cat) || c.cat;
+    if (cat === 'food' || cat === 'use') return 'consumable';
+    if (cat === 'junk') return 'junk';
+    if (cat === 'gear' || cat === 'tool' || cat === 'mat' || cat === 'manual' || cat === 'relic' || cat === 'charm') return 'gear';
+    return 'neutral';
+  }
+  const iconCache = {};
+  function itemIcon(c) {
+    const d = DATA.items[c.defId] || {};
+    const glyph = iconGlyphFor(c.defId || '', d.cat || c.cat);
+    const mode = iconModeFor(c, d);
+    const key = glyph + '|' + mode;
+    if (iconCache[key]) return iconCache[key];
+    const cv2 = document.createElement('canvas'); cv2.width = 12; cv2.height = 10;
+    const g = cv2.getContext('2d');
+    const pal = ICON_MODES[mode];
+    ICON_GLYPHS[glyph].forEach((row, y) => { for (let x = 0; x < 12; x++) { const ch = row[x]; if (ch === '.') continue; g.fillStyle = pal[ch]; g.fillRect(x, y, 1, 1); } });
+    return iconCache[key] = cv2.toDataURL();
+  }
+  function iconTag(c) { return `<img class="crateChip itemIc" src="${itemIcon(c)}" alt="">`; }
+  function crateChip(defId) { return itemIcon({ defId, cat: (DATA.items[defId] || {}).cat }); }   // compat
   function refreshCargo() {
     updateHUD();
     if (!cargoOpen) return;
@@ -195,7 +308,7 @@ const UI = (() => {
       if (d.cat === 'gear') btns += `<button class="miniBtn" data-wear="${c.id}">equip</button>`;
       if (comp) btns += `<button class="miniBtn" data-give="${c.id}">give</button>`;
       btns += `<button class="miniBtn" data-drop="${c.id}">drop</button>`;
-      htm += `<div class="rowline"><div class="grow"><h4>${c.name}${c.fragile ? ' <span class="lumen" title="fragile">✦</span>' : ''}</h4>
+      htm += `<div class="rowline">${iconTag(c)}<div class="grow"><h4 class="${isMission(c) ? 'missionTx' : ''}">${c.name}${c.fragile ? ' <span class="lumen" title="fragile">✦</span>' : ''}</h4>
         <div class="desc">${U.fmtKg(c.kg)} kg${sub ? ' · ' + sub : ''}</div>
         ${c.cat === 'goods' || c.cat === 'core' || c.lostTo ? `<div class="condbar"><i class="${condCls}" style="width:${c.cond}%"></i></div>` : ''}</div>
         <div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end">${btns}</div></div>`;
@@ -203,7 +316,7 @@ const UI = (() => {
     if (comp && comp.carry.length) {
       htm += `<div class="tag" style="margin:8px 0 2px">${comp.name.split(' ')[0]} carries</div>`;
       for (const c of comp.carry) {
-        htm += `<div class="rowline"><div class="grow"><h4>${c.name}</h4><div class="desc">${U.fmtKg(c.kg)} kg · ${Math.round(c.cond)}%</div></div>
+        htm += `<div class="rowline">${iconTag(c)}<div class="grow"><h4 class="${isMission(c) ? 'missionTx' : ''}">${c.name}</h4><div class="desc">${U.fmtKg(c.kg)} kg · ${Math.round(c.cond)}%</div></div>
           <button class="miniBtn" data-take="${c.id}">take</button></div>`;
       }
     }
@@ -282,20 +395,15 @@ const UI = (() => {
   }
   function openStation(stId) {
     Snd.sfx.ui();
+    // crates on the back for THIS station? the hand-over comes first — the terminal is paperwork, not a chute
+    if (Systems.beginHandover(stId)) return;
     $('keeperLine').innerHTML = keeperGreet(stId);   // read before met flips: the hello is for strangers
     S.stations[stId].met = true;
-    const { results, connect } = Systems.handleDelivery(stId);
-    if (connect) {
-      resultQueue = results; resultAfterStation = null;
-      Systems.igniteStation(connect);
-      return;
-    }
-    if (results.length) {
-      resultQueue = results; resultAfterStation = stId;
-      showNextResult();
-      return;
-    }
     reallyOpenStation(stId);
+  }
+  function queueResults(results, afterStation) {
+    resultQueue = results; resultAfterStation = afterStation || null;
+    showNextResult();
   }
   function reallyOpenStation(stId) {
     curStation = stId; curTab = 'orders';
@@ -304,6 +412,7 @@ const UI = (() => {
   }
   function renderStation() {
     const stId = curStation, st = S.stations[stId], def = stations[stId];
+    if (!def || !st) return;                       // a deferred refresh can land after the sheet closed
     $('stationName').textContent = def.name;
     $('stationRole').textContent = def.role;
     $('stationStars').innerHTML = [0, 1, 2, 3, 4].map(i => `<span class="star ${i < st.stars ? 'on' : ''}"></span>`).join('');
@@ -379,7 +488,7 @@ const UI = (() => {
         const p = b.def;
         const kg = p.items.reduce((a, [id, n]) => a + items[id].kg * n, 0);
         const hz = hazardsFor(p.from, p.to);
-        return `<div class="orderCard prio"><div class="top"><h4>★ ${p.title}</h4><span class="tag">connection</span></div>
+        return `<div class="orderCard prio"><div class="top"><h4><span class="wbTag">PRIORITY DISPATCH</span>★ ${p.title}</h4><span class="tag">connection</span></div>
           <div class="meta">${p.brief}</div>
           <div class="meta">To <b>${stations[p.to].name}</b> · <span class="num">${kg} kg</span> · ~${U.fmtTime(hz.secs)} walk${hz.hz.length ? ' · ' + hz.hz.join(' · ') : ''}${p.items.some(([id]) => items[id].fragile) ? ' · <span class="constraint">fragile</span>' : ''}</div>
           <div class="actions"><button class="btn primary ${Guide.guided() ? 'hot' : ''}" data-accept="prio">Accept</button><span class="after num">${U.fmtKg(w + kg)} / ${cap} kg after</span></div></div>`;
@@ -391,7 +500,7 @@ const UI = (() => {
       const pay = orderPay(o);
       const over = w + kg > cap;
       const why = o.relight ? `The waylight is out. A core from here brings ${stations[o.to].name} back onto the wire.` : o.item === 'letters' ? DATA.goodsInfo.letters.why : `${stations[o.to].name} — ${o.mood === 'critical' ? 'they are out' : o.mood === 'wanting' ? 'running short' : o.mood === 'thriving' ? 'well stocked, pays little' : 'holding steady'} · ${DATA.goodsInfo[o.item] ? DATA.goodsInfo[o.item].why : ''}`;
-      return `<div class="orderCard ${o.mood === 'critical' ? 'crit' : ''} ${o.relight ? 'prio' : ''}"><div class="top"><h4>${o.relight ? '★ ' : ''}${d.name}${o.n > 1 ? ` ×${o.n}` : ''} → ${stations[o.to].name}</h4>
+      return `<div class="orderCard ${o.mood === 'critical' ? 'crit' : ''} ${o.relight ? 'prio' : ''}"><div class="top"><h4><span class="wbTag">${o.relight ? 'PRIORITY DISPATCH' : o.item === 'letters' ? 'MAILBAG' : 'WAYBILL'}</span>${o.relight ? '★ ' : ''}${d.name}${o.n > 1 ? ` ×${o.n}` : ''} → ${stations[o.to].name}</h4>
         <span>${moodTag(o.mood)}${o.express ? '<span class="constraint warn">express</span>' : ''}${d.fragile ? '<span class="constraint">fragile</span>' : ''}</span></div>
         <div class="meta">${why}</div>
         <div class="meta"><span class="num">${kg} kg</span> · pays ~<span class="num">${pay}</span> ◆${o.mood ? ` <span class="mult ${o.mood}">×${T.needMul[o.mood]}</span>` : ''} · ~${U.fmtTime(hz.secs)} walk${hz.hz.length ? ' · ' + hz.hz.join(' · ') : ''}${o.matBonus ? ` + ${Systems.fmtCost(o.matBonus)}` : ''}</div>
@@ -577,6 +686,8 @@ const UI = (() => {
       drawMap();
     }
   }
+  { const ck = $('mapPauseCk'); if (ck) { ck.checked = !!OPTS.mapPause; ck.addEventListener('change', () => { OPTS.mapPause = ck.checked; saveOpts(); Snd.sfx.ui && Snd.sfx.ui(); }); } }
+  { const ck = $('ckIconColor'); if (ck) { ck.checked = !!OPTS.iconColor; ck.addEventListener('change', () => { OPTS.iconColor = ck.checked; saveOpts(); refreshCargo(); Snd.sfx.ui && Snd.sfx.ui(); }); } }
   function drawMap() {
     const c = $('map'), ctx = c.getContext('2d');
     const dpr = devicePixelRatio;
@@ -736,6 +847,18 @@ const UI = (() => {
     let paved = 0, tot = 0;
     for (const r of DATA.roads) { tot += r.segs; paved += S.roads[r.id].filter(b => b).length; }
     $('mapRoads').textContent = `${paved} / ${tot}`;
+    { // the walk, as the sheet understands it
+      const rw = $('railWalk');
+      if (rw) {
+        let t2 = 'standing still';
+        if (S.moveTo && !S.moveTo.steer) {
+          const marks = (S.route || []).length;
+          t2 = `walking — <b>${U.fmtDist(U.dist(S.px, S.py, S.moveTo.x, S.moveTo.y))}</b> to the next mark${marks ? ` · ${marks} more after` : ''}`;
+        } else if (S.moveTo && S.moveTo.steer) t2 = 'steering by hand';
+        if (OPTS.mapPause) t2 += '<div style="margin-top:4px;color:var(--bone-faint)">the world waits while you read</div>';
+        if (rw._last !== t2) { rw._last = t2; rw.innerHTML = t2; }
+      }
+    }
     const head = $('mapHead');
     let fc = head.querySelector('.fc');
     if (S.flags.effects.forecast) {
@@ -813,13 +936,16 @@ const UI = (() => {
   function hideCineTitle() { $('cineTitle').classList.remove('show'); }
 
   /* ---------- misc ---------- */
-  function anyModal() {
+  function modalExceptMap() {
     return !$('stationOv').classList.contains('hidden') || !$('results').classList.contains('hidden') ||
-      mapOpen || !$('pause').classList.contains('hidden') || !$('helpOv').classList.contains('hidden') ||
+      !$('pause').classList.contains('hidden') || !$('helpOv').classList.contains('hidden') ||
       !$('skillsOv').classList.contains('hidden') || !$('lootOv').classList.contains('hidden') ||
       !$('traderOv').classList.contains('hidden') || !$('deathOv').classList.contains('hidden') ||
       !$('packOv').classList.contains('hidden') || !$('chargen').classList.contains('hidden');
   }
+  function anyModal() { return mapOpen || modalExceptMap(); }
+  /* the world freezes for every document EXCEPT the survey sheet — unless the player asked it to */
+  function worldFrozen() { return modalExceptMap() || (mapOpen && !!OPTS.mapPause); }
   function closeAllModals() {
     closeStation();
     $('packOv').classList.add('hidden');
@@ -844,17 +970,20 @@ const UI = (() => {
   }
   function tick() { // called every frame while playing
     updateCompass(); updateTray();
-    if (mapOpen && (S.time % 0.5) < 0.02) drawMap();
+    drawHearts();
+    if (mapOpen && (S.qte || S.struggle)) { toggleMap(false); return; }   // something has you — drop the paper
+    if (mapOpen && (S.time % (worldFrozen() ? 0.5 : 0.15)) < 0.02) drawMap();
   }
 
   return {
     updateHUD, hudFade, savedBlink, updatePrompts, toast, updateTray, updateObjective,
     showQTE, qteProgress, showStruggle, struggleProgress,
     toggleCargo, refreshCargo, toggleBuild, buildHotkey, renderBuild,
-    openStation, closeStation, renderStation, showNextResult, flushResults,
+    openStation, closeStation, renderStation, showNextResult, flushResults, queueResults,
     toggleMap, drawMap, mapPoint, setLetterbox, showCineTitle, hideCineTitle,
-    anyModal, closeAllModals, escPressed, tick, likeBurst,
+    anyModal, worldFrozen, closeAllModals, escPressed, tick, likeBurst, drawHearts, crateChip, itemIcon, iconTag, isMission,
     get mapOpen() { return mapOpen; }, get buildOpen() { return buildOpen; },
+    get prompts() { return promptList; }, get opts() { return OPTS; },
     get curStation() { return curStation; },
     get pendingResults() { return resultQueue.length > 0; },
   };

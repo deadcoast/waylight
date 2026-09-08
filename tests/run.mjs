@@ -68,7 +68,7 @@ ok('sprint drains stamina', stam < 100, `stam=${stam.toFixed(0)}`);
 
 // --- p1: haven -> elm ---
 await page.evaluate(() => { WL.calm(); WL.tp('haven'); });
-await page.evaluate(() => WL.openStation('haven'));
+await page.evaluate(() => { WL.openStation('haven'); WL.skipHandover(); });
 await page.waitForTimeout(400);
 await page.screenshot({ path: `${shots}/03_station.png` });
 ok('priority order on board', await page.locator('.orderCard.prio').count() === 1);
@@ -77,7 +77,7 @@ await page.waitForTimeout(200);
 snap = await page.evaluate(() => WL.snapshot());
 ok('p1 accepted, cargo added', snap.active === 1 && snap.cargo === 5, `cargo=${snap.cargo}`);
 await page.click('#stationClose');
-await page.evaluate(() => { WL.tp('elm'); WL.instantPar(); WL.openStation('elm'); });
+await page.evaluate(() => { WL.tp('elm'); WL.instantPar(); WL.openStation('elm'); WL.skipHandover(); });
 await page.waitForTimeout(900);
 ok('results screen shows', await page.evaluate(() => !document.getElementById('results').classList.contains('hidden')));
 await page.screenshot({ path: `${shots}/04_results.png` });
@@ -90,7 +90,7 @@ await page.evaluate(() => UI.closeAllModals());
 await page.waitForTimeout(200);
 
 // --- p2 elm -> haven ---
-await page.evaluate(() => { WL.acceptPrio(); WL.tp('haven'); WL.instantPar(); WL.openStation('haven'); });
+await page.evaluate(() => { WL.acceptPrio(); WL.tp('haven'); WL.instantPar(); WL.openStation('haven'); WL.skipHandover(); });
 await page.waitForTimeout(700);
 await page.keyboard.press('Enter');
 await page.waitForTimeout(300);
@@ -99,7 +99,7 @@ snap = await page.evaluate(() => WL.snapshot());
 ok('p2 delivered, ladders granted', snap.cargo >= 2, `cargo=${snap.cargo}`);
 
 // --- p3 haven -> elm: FIRST connection cinematic ---
-await page.evaluate(() => { WL.acceptPrio(); WL.tp('elm'); WL.instantPar(); WL.openStation('elm'); });
+await page.evaluate(() => { WL.acceptPrio(); WL.tp('elm'); WL.instantPar(); WL.openStation('elm'); WL.skipHandover(); });
 await page.waitForTimeout(2600); // mid-ignition
 await page.screenshot({ path: `${shots}/05_ignition.png` });
 await page.waitForTimeout(5500); // let full cinematic finish naturally
@@ -127,7 +127,7 @@ const lad = await page.evaluate(() => {
 ok('ladder placed over creek', lad === true, String(lad));
 
 // --- board has standard orders ---
-await page.evaluate(() => { WL.tp('haven'); WL.openStation('haven'); });
+await page.evaluate(() => { WL.tp('haven'); WL.openStation('haven'); WL.skipHandover(); });
 await page.waitForTimeout(300);
 ok('standard orders on board', await page.locator('.orderCard').count() >= 3);
 await page.screenshot({ path: `${shots}/07_board.png` });
@@ -146,7 +146,7 @@ await page.evaluate(async () => {
     WL.acceptPrio();
     WL.tp(p.to);
     WL.instantPar();
-    WL.openStation(p.to);
+    WL.openStation(p.to); WL.skipHandover();
     await new Promise(r => setTimeout(r, 350));
     WL.skipCine();
     await new Promise(r => setTimeout(r, 500));

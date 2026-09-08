@@ -186,6 +186,10 @@ const World = (() => {
      swapping CLUTs, instead of drowning under a translucent veil. */
   const lightOv = document.createElement('canvas'); lightOv.width = TW; lightOv.height = TH;    // day field
   const lightOvN = document.createElement('canvas'); lightOvN.width = TW; lightOvN.height = TH; // night field
+  // the day field split by nature: WARMTH is paint on the ground and is never punched;
+  // the DIM of the quiet is a darkness layer, and lamps burn holes in darkness
+  const lightWarm = document.createElement('canvas'); lightWarm.width = TW; lightWarm.height = TH;
+  const lightDim = document.createElement('canvas'); lightDim.width = TW; lightDim.height = TH;
   const BAY4 = [[0, 8, 2, 10], [12, 4, 14, 6], [3, 11, 1, 9], [15, 7, 13, 5]];
   const mistG = new Float32Array(LW * LH);
   let prevLightG = null, terrainReady = false;
@@ -202,9 +206,11 @@ const World = (() => {
     const w = tx1 - tx0, h = ty1 - ty0;
     if (w <= 0 || h <= 0) return;
     const dxD = lightOv.getContext('2d'), dxN = lightOvN.getContext('2d');
+    const dxW = lightWarm.getContext('2d'), dxM = lightDim.getContext('2d');
     const td = tc.getContext('2d').getImageData(tx0, ty0, w, h).data;   // the ground itself — light recolours it
     const idD = dxD.createImageData(w, h), idN = dxN.createImageData(w, h);
-    const dD = idD.data, dN = idN.data;
+    const idW = dxW.createImageData(w, h), idM = dxM.createImageData(w, h);
+    const dD = idD.data, dN = idN.data, dW = idW.data, dM = idM.data;
     const F = 255;
     for (let py = 0; py < h; py++) {
       const wy = (ty0 + py) * TS + TS / 2;
@@ -216,8 +222,9 @@ const World = (() => {
         const i = (py * w + px) * 4;
         const tr = td[i], tg = td[i + 1], tb = td[i + 2];
         // the coastline: the wraith-burn threshold drawn as a dithered golden shore, day and night
+        // — it is safety cartography, so it lives with the WARMTH and no lamp can erase it
         if (Math.abs(L - 0.30) < 0.020 && bay < 0.42) {
-          dD[i] = dN[i] = 255; dD[i + 1] = dN[i + 1] = 232; dD[i + 2] = dN[i + 2] = 170; dD[i + 3] = dN[i + 3] = 255;
+          dD[i] = dN[i] = dW[i] = 255; dD[i + 1] = dN[i + 1] = dW[i + 1] = 232; dD[i + 2] = dN[i + 2] = dW[i + 2] = 170; dD[i + 3] = dN[i + 3] = dW[i + 3] = 255;
           continue;
         }
         // Bayer jitters the light value, not the colour: bands stay solid, their EDGES dither.
@@ -236,9 +243,13 @@ const World = (() => {
         else { rN = tr * 1.24 + 20; gN = tg * 1.13 + 9; bN = tb * 0.88; }
         dD[i] = Math.min(F, r); dD[i + 1] = Math.min(F, g); dD[i + 2] = Math.min(F, b2); dD[i + 3] = a;
         dN[i] = Math.min(F, rN); dN[i + 1] = Math.min(F, gN); dN[i + 2] = Math.min(F, bN); dN[i + 3] = aN;
+        // the split: warm bands are paint, dim bands are darkness a lamp can burn through
+        if (a === 255 && Lq >= 0.47) { dW[i] = dD[i]; dW[i + 1] = dD[i + 1]; dW[i + 2] = dD[i + 2]; dW[i + 3] = 255; }
+        else if (a === 255) { dM[i] = dD[i]; dM[i + 1] = dD[i + 1]; dM[i + 2] = dD[i + 2]; dM[i + 3] = 255; }
       }
     }
     dxD.putImageData(idD, tx0, ty0); dxN.putImageData(idN, tx0, ty0);
+    dxW.putImageData(idW, tx0, ty0); dxM.putImageData(idM, tx0, ty0);
   }
   let pend = null, lastPaintT = -9, flushTimer = null;
   function flushPend() {
@@ -275,6 +286,99 @@ const World = (() => {
     if (flushTimer) { clearTimeout(flushTimer); flushTimer = null; }
     flushPend();
   }
+  /* =============== desire paths: the ground remembers your feet ===============
+     Every stretch of grass walked often enough wears, in the terrain paint itself — first trampled
+     yellow-green, then bare packed earth, dithered in the ground's own ramps. Worn ground walks a
+     touch faster. Death Stranding's paths, drawn the way 1996 would have drawn them. */
+  const WSC = 10;                                       // wear cell = 2×2 texels
+  const WW = Math.ceil(W / WSC), WH = Math.ceil(H / WSC);
+  const wear = new Uint8Array(WW * WH);
+  const wearDirty = new Set();
+  const W_TRAMPLE = 24, W_BARE = 64;
+  const wearIdx = (x, y) => {
+    const cx2 = (x / WSC) | 0, cy2 = (y / WSC) | 0;
+    return (cx2 >= 0 && cy2 >= 0 && cx2 < WW && cy2 < WH) ? cy2 * WW + cx2 : -1;
+  };
+  function wearAt(x, y) { const i = wearIdx(x, y); return i < 0 ? 0 : wear[i]; }
+  function addWear(x, y, amt) {
+    const c = classAt(x, y);
+    if (c !== MEADOW && c !== MARSH) return 0;
+    const i = wearIdx(x, y);
+    if (i < 0) return 0;
+    wear[i] = Math.min(255, wear[i] + amt);
+    wearDirty.add(i);
+    // the tread spreads a little: neighbours take a lighter print
+    for (const di of [-1, 1, -WW, WW]) {
+      const j = i + di;
+      if (j >= 0 && j < WW * WH && wear[j] < wear[i]) { wear[j] = Math.min(255, wear[j] + Math.max(1, amt >> 1)); wearDirty.add(j); }
+    }
+    return wear[i];
+  }
+  const WEAR_COLS = {
+    tr: [[88, 98, 54], [76, 86, 48]],     // trampled: yellowed, flattened grass
+    ba: [[124, 111, 79], [105, 94, 66]],  // bare: packed earth, the meadow's own scree
+  };
+  const wearOrig = new Map();   // the grass as it was, kept so a new valley can grow it back
+  function paintWearCells(cells) {
+    const g = tc.getContext('2d');
+    let bx0 = 1e9, by0 = 1e9, bx1 = -1e9, by1 = -1e9;
+    for (const i of cells) {
+      const w = wear[i];
+      if (w < W_TRAMPLE) continue;
+      const cx2 = i % WW, cy2 = (i / WW) | 0;
+      const tx0 = Math.round(cx2 * WSC / TS), ty0 = Math.round(cy2 * WSC / TS);
+      if (!wearOrig.has(i) && tx0 + 1 < TW && ty0 + 1 < TH) wearOrig.set(i, g.getImageData(tx0, ty0, 2, 2));
+      const ramp = w >= W_BARE ? WEAR_COLS.ba : WEAR_COLS.tr;
+      // between the two stages the newer stage dithers in over the old
+      const mix = w >= W_BARE ? U.clamp((w - W_BARE) / 48, 0.55, 1) : U.clamp((w - W_TRAMPLE) / (W_BARE - W_TRAMPLE), 0.45, 1);
+      for (let ty2 = 0; ty2 < 2; ty2++) for (let tx2 = 0; tx2 < 2; tx2++) {
+        const px = tx0 + tx2, py = ty0 + ty2;
+        if (px >= TW || py >= TH) continue;
+        if (BAYER[py & 3][px & 3] / 16 >= mix) continue;   // young paths are broken, old paths are solid
+        const col = ramp[(px + py) & 1];
+        g.fillStyle = `rgb(${col[0]},${col[1]},${col[2]})`;
+        g.fillRect(px, py, 1, 1);
+      }
+      if (tx0 < bx0) bx0 = tx0; if (ty0 < by0) by0 = ty0;
+      if (tx0 > bx1) bx1 = tx0; if (ty0 > by1) by1 = ty0;
+    }
+    if (bx1 >= 0) paintLightRegion(bx0 - 1, by0 - 1, bx1 + 3, by1 + 3);   // the light field holds a copy of this ground
+  }
+  let wearFlushT = 0;
+  function flushWear(dt) {
+    wearFlushT -= dt;
+    if (wearFlushT > 0 || !wearDirty.size || !terrainReady) return;
+    wearFlushT = 0.4;
+    const cells = [...wearDirty]; wearDirty.clear();
+    paintWearCells(cells);
+  }
+  function packWear() {
+    const out = [];
+    for (let i = 0; i < wear.length && out.length < 24000; i++) if (wear[i] >= W_TRAMPLE) out.push(i, wear[i]);
+    return out;
+  }
+  function loadWear(pairs) {
+    if (!pairs || !pairs.length) return;
+    const cells = [];
+    for (let k = 0; k + 1 < pairs.length; k += 2) { wear[pairs[k]] = pairs[k + 1]; cells.push(pairs[k]); }
+    // paint in strips so one giant putImage region never happens
+    for (let a = 0; a < cells.length; a += 800) paintWearCells(cells.slice(a, a + 800));
+  }
+  function clearWear() {
+    // a fresh valley grows its grass back
+    const g = tc.getContext('2d');
+    let bx0 = 1e9, by0 = 1e9, bx1 = -1e9, by1 = -1e9;
+    for (const [i, img] of wearOrig) {
+      const cx2 = i % WW, cy2 = (i / WW) | 0;
+      const tx0 = Math.round(cx2 * WSC / TS), ty0 = Math.round(cy2 * WSC / TS);
+      g.putImageData(img, tx0, ty0);
+      if (tx0 < bx0) bx0 = tx0; if (ty0 < by0) by0 = ty0;
+      if (tx0 > bx1) bx1 = tx0; if (ty0 > by1) by1 = ty0;
+    }
+    if (bx1 >= 0) paintLightRegion(bx0 - 1, by0 - 1, bx1 + 3, by1 + 3);
+    wear.fill(0); wearOrig.clear(); wearDirty.clear();
+  }
+
   function coverage() {
     let lit = 0, land = 0;
     for (let cy = 0; cy < LH; cy++) for (let cx = 0; cx < LW; cx++) {
@@ -531,7 +635,8 @@ const World = (() => {
     W, H, MEADOW, FOREST, SCREE, ROCK, SNOW, MARSH, SHALLOW, DEEP, CLIFF, CP,
     bake, hgtAt, slopeAt, classAt, terrainAt, riverAt,
     setSources, lightAt, mistAt, mistBase, rebuildLight, coverage, lightG, LW, LH, LS,
-    tc, rc, thumb, TS, veilC, glowC, mistC, overlayC, lightOv, lightOvN, rebuildThumb, repaintRoads,
+    tc, rc, thumb, TS, veilC, glowC, mistC, overlayC, lightOv, lightOvN, lightWarm, lightDim, rebuildThumb, repaintRoads,
+    addWear, wearAt, flushWear, packWear, loadWear, clearWear, W_TRAMPLE, W_BARE,
     paintRoadSegment, paverPos, roadSegPts, pathTime, buildPathGrid, pathCell, PS,
   };
 })();

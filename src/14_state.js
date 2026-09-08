@@ -8,6 +8,7 @@ const State = (() => {
   const { T, stations, stationOrder, items } = DATA;
 
   function newGame() {
+    World.clearWear();   // a fresh valley grows its grass back
     const st = {};
     for (const id of stationOrder) st[id] = { connected: !!stations[id].prelit, litT: stations[id].prelit ? 1 : 0, likesTo: 0, stars: 0, storage: [] };
     S = {
@@ -125,7 +126,7 @@ const State = (() => {
       S.level++;
       Snd.sfx.levelup();
       const was = titleFor(S.level - 1), now = titleFor(S.level);
-      if (now !== was) { Render.announce(DATA.dispatch.promo.replace('%RANK%', now.toUpperCase())); UI.toast(`<b>${now}.</b> The Order would pin something on you, if the Order still had pins.`, 'gold', 6000); }
+      if (now !== was) { Render.crtTitle(`FIELD PROMOTION — ${now.toUpperCase()}`, 'by order of the dispatch · the coat fits better already'); UI.toast(`<b>${now}.</b> The Order would pin something on you, if the Order still had pins.`, 'gold', 6000); }
       else UI.toast(`<b>Level ${S.level}.</b> The valley talks about you now — try living up to the version they tell.`, 'gold');
     }
     UI.updateHUD();
@@ -139,7 +140,8 @@ const State = (() => {
   /* ---------- save / load ---------- */
   function save() {
     try {
-      const s = { ...S, wraiths: [], qte: null, struggle: null, zip: null, cine: null, state: 'walk', savedAt: Date.now(), event: null, surgeT: 0, stormT: 0, moveTo: null, route: [] };
+      const s = { ...S, wraiths: [], qte: null, struggle: null, handover: null, zip: null, cine: null, state: 'walk', savedAt: Date.now(), event: null, surgeT: 0, stormT: 0, moveTo: null, route: [] };
+      s.wearSave = World.packWear();   // the paths your feet wore — the valley keeps them across lives
       s.camps = {};
       for (const [k, v] of Object.entries(S.camps)) s.camps[k] = { pacified: v.pacified, alert: 0, stash: v.stash, runners: [] };
       localStorage.setItem(SAVE_KEY, JSON.stringify(s));
@@ -166,6 +168,7 @@ const State = (() => {
       refreshSources(true);
       Systems.rebuildZipLinks();
       World.repaintRoads(S.roads);
+      if (S.wearSave) { World.loadWear(S.wearSave); delete S.wearSave; }
       return true;
     } catch (e) { return false; }
   }

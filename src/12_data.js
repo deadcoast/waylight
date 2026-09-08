@@ -412,6 +412,7 @@ const DATA = (() => {
   /* what the Walker says to nobody in particular — dry, quiet, out loud */
   const barks = {
     night: ['Dark comes fast out here.', 'And there goes the sun. Wonderful.', 'Night shift. My favorite. Said nobody.'],
+    firstpath: ['Look at that. The ground remembers my feet.', 'A road nobody paid for. Mine.', 'Walk a line often enough and the valley agrees with you.'],
     dawn: ['Made it. Morning.', 'Still here. Still walking.', 'Morning, valley. Miss me?'],
     wade: ['Cold. Cold cold cold.', 'Boots were dry a whole day. Personal record.', 'The river charges a toll. The toll is dignity.'],
     drop: ['No no no — not the cargo.', 'That better not have been the medicine.', 'Ten years of practice. Gravity: still undefeated.'],

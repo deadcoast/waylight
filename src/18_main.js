@@ -10,6 +10,72 @@
   let hudTimer = 0;
 
   /* ---------- boot ---------- */
+  /* the WAYLIGHT wordmark, drawn letter by letter — ours, not a font */
+  function drawLogo() {
+    const LG = {
+      W: ['10001','10001','10001','10101','10101','11011','10001'],
+      A: ['01110','10001','10001','11111','10001','10001','10001'],
+      Y: ['10001','10001','01010','00100','00100','00100','00100'],
+      L: ['10000','10000','10000','10000','10000','10000','11111'],
+      I: ['11111','00100','00100','00100','00100','00100','11111'],
+      G: ['01111','10000','10000','10111','10001','10001','01110'],
+      H: ['10001','10001','10001','11111','10001','10001','10001'],
+      T: ['11111','00100','00100','00100','00100','00100','00100'],
+    };
+    const cvL = $('logoCv'); if (!cvL) return;
+    const g = cvL.getContext('2d');
+    g.clearRect(0, 0, 47, 11);
+    const word = 'WAYLIGHT';
+    const put = (x, y, col) => { g.fillStyle = col; g.fillRect(x, y, 1, 1); };
+    for (let pass = 0; pass < 2; pass++) {
+      const o = pass === 0 ? 1 : 0;                       // hard shadow first
+      for (let i = 0; i < word.length; i++) {
+        const rows = LG[word[i]];
+        const col = pass === 0 ? '#0a0e14' : i < 3 ? '#f2ead4' : '#ffb54f';
+        for (let r = 0; r < 7; r++) for (let c2 = 0; c2 < 5; c2++)
+          if (rows[r][c2] === '1') put(i * 6 + c2 + o, r + 4 + o, col);
+      }
+    }
+    // the beacon burns over the I — the one light in the word
+    put(26, 0, '#fff2d0'); put(25, 1, '#ffd98f'); put(26, 1, '#ffd98f'); put(27, 1, '#ffd98f'); put(26, 2, '#ffb54f');
+  }
+  /* Mara Voss, quartermaster — a personnel-file photo, authored texel by texel.
+     Leather-brown greatcoat, bone shirt, one gold pin the Order supposedly ran out of. */
+  function drawMara() {
+    const cvM = $('maraCv'); if (!cvM) return;
+    const ROWS = [
+      '........HHHHHH..........',
+      '.......HHHHHHHHH........',
+      '.......OHHHHHHHOH.......',
+      '.......OHFFFFFHO........',
+      '......OHFFFFFFFHO.......',
+      '......OFGFFFFFGFO.......',
+      '......OFEFFFFFEFO.......',
+      '......OFFFFFFFFFO.......',
+      '......OGFFFFFFFGO.......',
+      '.......OGFGGGFGO........',
+      '.......OOFFFFFOO........',
+      '........OFFFFFO.........',
+      '.......OOSGFGSOO........',
+      '.....OOLLSSSSSLLOO......',
+      '....OLLLLOSSSOLLLLO.....',
+      '...OLWCCCOSSSOCCCLLO....',
+      '..OLCCCCCOSSSOCCCCCLO...',
+      '..OCCCCCCOSMSOCCCCCCO...',
+      '.OCCCCCCCOSSSOCCCCCCCO..',
+      '.OCCCCCCCCOSOCCCCCCCCO..',
+      '.OCCCCCCCCOSOCCCCCCCCO..',
+      '.OCCDCCCCCCOCCCCCCDCCO..',
+      '.OCCDCCCCCCCCCCCCCDCCO..',
+      '.OCCDCCCCCCCCCCCCCDCCO..',
+      '.OCCCCCCCCCCCCCCCCCCCO..',
+      '.OOOOOOOOOOOOOOOOOOOOO..',
+    ];
+    const C = { O: '#17110a', H: '#8d979c', F: '#cfa87e', G: '#a87f5c', E: '#2a2118', S: '#d8d2bd', L: '#8a6534', C: '#6b4a30', D: '#503722', M: '#241708', W: '#ffd98f' };
+    const g = cvM.getContext('2d');
+    g.fillStyle = '#141a22'; g.fillRect(0, 0, 24, 26);
+    ROWS.forEach((row, y) => { for (let x = 0; x < 24; x++) { const ch = row[x]; if (ch === '.') continue; g.fillStyle = C[ch] || '#f0f'; g.fillRect(x, y, 1, 1); } });
+  }
   async function boot() {
     const foot = $('titleFoot');
     const baseFoot = foot.textContent;
@@ -17,9 +83,12 @@
     World.buildPathGrid();
     baked = true;
     foot.textContent = baseFoot;
-    // live preview world behind the title — beacon composed upper-left, clear of the menu
+    // the title screen IS the ledger: your saved valley — its lights, its worn paths — drifts past the menu
     S = State.newGame();
-    S.px += 400; S.py += 310;
+    if (State.hasSave()) State.load();
+    else { S.px += 400; S.py += 310; }
+    Render.setTitleDrift(true);
+    drawLogo(); drawMara();
     if (State.hasSave()) $('btnContinue').classList.remove('hidden');
     // attract mode: the tagline turns over like a box quote; the Roll keeps the Order's dead in view
     const tl = $('tagline');
@@ -51,7 +120,7 @@
 
   function enterWorld(fresh) {
     applyCheats();
-    $('titleScreen').classList.add('hidden');
+    $('titleScreen').classList.add('hidden'); Render.setTitleDrift(false);
     $('introCard').classList.add('hidden');
     $('hud').classList.remove('hidden');
     playing = true;
@@ -74,7 +143,7 @@
     if (!baked) return;
     if (fresh) {
       S = State.newGame();
-      $('titleScreen').classList.add('hidden');
+      $('titleScreen').classList.add('hidden'); Render.setTitleDrift(false);
       $('introCard').classList.add('hidden');
       UI2.showBriefing(() => UI2.openCharGen(p => {
         Porter.applyToState(p);
@@ -88,7 +157,7 @@
     if (S.flags.needsChargen) {
       // a v1 world coming forward: the network kept everything — now choose who carries it
       const keep = { equip: S.equip, cargo: S.cargo, flares: S.gear.flares, skills: S.skills, oldLevel: S.level };
-      $('titleScreen').classList.add('hidden');
+      $('titleScreen').classList.add('hidden'); Render.setTitleDrift(false);
       UI2.showBriefing(() => UI2.openCharGen(p => {
         Porter.applyToState(p);
         S.equip = keep.equip; S.cargo = keep.cargo; S.gear.flares = keep.flares;
@@ -135,7 +204,7 @@
       case 'Enter':
         if (!$('results').classList.contains('hidden')) UI.showNextResult();
         break;
-      case 'KeyE': if (!UI.anyModal() && !S.cine) Systems.doInteract(); break;
+      case 'KeyE': Render.noteE(true); if (!UI.anyModal() && !S.cine) Systems.doInteract(); break;
       case 'KeyB': if (!UI.anyModal() && !S.cine) UI.toggleBuild(); break;
       case 'KeyF': if (!UI.anyModal() && !S.cine) Systems.useFlare(); break;
       case 'KeyM': case 'Tab': if (!S.cine) UI.toggleMap(); break;
@@ -164,6 +233,7 @@
     if (k) input[k] = false;
     if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') input.shift = false;
     if (e.code === 'Space') input.space = false;
+    if (e.code === 'KeyE') Render.noteE(false);
   });
   addEventListener('blur', () => {
     input.up = input.down = input.left = input.right = input.shift = input.space = false;
@@ -272,7 +342,7 @@
       if (!S) return;
       const __t0 = window.__stepProf ? performance.now() : 0;
       if (playing && !paused) {
-        const frozen = UI.anyModal();
+        const frozen = UI.worldFrozen();   // the survey sheet no longer stops the world unless asked to
         if (input.ml) updateMouseWorld();
         if ((!frozen || S.cine) && !S.dead) Systems.update(dt, input);
         UI.tick();
@@ -312,6 +382,7 @@
       instantPar() { for (const o of S.orders.active) o.t0 = S.time; },
       calm(v = true) { S.flags.calm = v; },
       skipCine() { Systems.finishCine(); },
+      skipHandover() { for (let i = 0; i < 60 && S.handover; i++) Systems.update(0.12, {}); },   // tests fast-forward the hand-over like they skip cinematics
       worldToScreen(x, y) { const c = Render.cam; return { x: innerWidth / 2 + (x - c.x) * c.z, y: innerHeight / 2 + (y - c.y) * c.z }; },
       moveTo(x, y) { return Systems.moveTo(x, y); },
       kill(cause = 'bleed') { Porter.damage(9999, cause); },

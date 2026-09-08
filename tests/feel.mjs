@@ -182,7 +182,7 @@ ok('scrappers yell when the chase starts — the bad guys have manners from Muta
 r = await page.evaluate(() => {
   S.cargo = []; S.orders.active = []; WL.tp('elm'); S.stations.elm.met = true; S.stations.mill.met = true; S.stations.mill.stock.food = 5;
   Systems.acceptOrder(Economy.ordersFor('elm').find(x => x.item === 'food' && x.to === 'mill'), false);
-  WL.tp('mill'); WL.openStation('mill');
+  WL.tp('mill'); WL.openStation('mill'); WL.skipHandover();
   const shown = !document.getElementById('results').classList.contains('hidden');
   const body = shown ? document.getElementById('scoreRows').innerText : '';
   const stamp = document.getElementById('gradeLine').textContent;
@@ -196,14 +196,14 @@ r = await page.evaluate(() => {
   S.cargo = []; S.orders.active = []; S.trip = { n: 1, lastT: S.time };   // one stop already landed this trip
   WL.tp('elm'); S.stations.haven.stock.food = 30;
   Systems.acceptOrder(Economy.ordersFor('elm').find(x => x.item === 'food' && x.to === 'haven'), false);
-  WL.tp('haven'); WL.openStation('haven');
+  WL.tp('haven'); WL.openStation('haven'); WL.skipHandover();
   const a = document.getElementById('announce').textContent;
   document.getElementById('resultsClose').click();
   return { a };
 });
 ok('second stop of one trip — the Dispatch calls it: "DOUBLE DROP. THE WIRE NOTICES."', /DOUBLE DROP/.test(r.a), r.a);
-r = await page.evaluate(() => { State.grantLikes(1700 - S.likes); return { a: document.getElementById('announce').textContent, lvl: S.level }; });
-ok('crossing a rank: "ORDER OF WAYLIGHTERS — FIELD PROMOTION" slams across the screen', /FIELD PROMOTION/.test(r.a) && /MUDFOOT/.test(r.a), `${r.a} (lv ${r.lvl})`);
+r = await page.evaluate(() => { State.grantLikes(1700 - S.likes); const t = Render.crtText(); return { a: t ? t.big + ' | ' + t.small : '', lvl: S.level }; });
+ok('crossing a rank: FIELD PROMOTION takes the big CRT voice, dispatch subtitle under it', /FIELD PROMOTION/.test(r.a) && /MUDFOOT/.test(r.a) && /DISPATCH/.test(r.a), `${r.a} (lv ${r.lvl})`);
 
 /* 9. accepting an order gives visible feedback: the card flashes and slides */
 r = await page.evaluate(() => {

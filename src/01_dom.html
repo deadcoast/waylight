@@ -3,10 +3,10 @@
 
   <div id="hud" class="hidden">
     <div id="vitals">
+      <div class="tag">Health</div>
+      <canvas id="hpHearts" width="63" height="13"></canvas>
       <div class="tag">Stamina</div>
       <div class="meter"><i id="stamFill" style="width:100%"></i></div>
-      <div class="tag">Health</div>
-      <div class="meter slim"><i id="hpFill" style="width:100%"></i></div>
       <div id="weightRow"><span class="tag">Load</span><span class="num" id="weightNum">0.0 / 60 kg</span></div>
       <div class="meter"><i id="weightFill" style="width:0%"></i></div>
       <div style="display:flex; justify-content:space-between"><span class="tag">Food</span><span class="tag hidden" id="warmTag">Warmth</span></div>
@@ -36,7 +36,7 @@
     <div id="orderTray"></div>
     <div id="qte" class="hidden">
       <div class="ring">
-        <svg width="74" height="74"><circle id="qteArc" cx="37" cy="37" r="33" fill="none" stroke="#e0654a" stroke-width="3" stroke-dasharray="207" stroke-dashoffset="0"></circle></svg>
+        <svg width="74" height="74"><rect id="qteArc" x="4" y="4" width="66" height="66" fill="none" stroke="#e0654a" stroke-width="4" pathLength="207" stroke-dasharray="207" stroke-dashoffset="0"></rect></svg>
         <span class="key">SPACE</span>
       </div>
       <div class="lbl">Steady! &mdash; space or click</div>
@@ -87,7 +87,7 @@
 
   <div id="results" class="overlay hidden">
     <div class="sheet glass">
-      <header><div><h2>Delivery complete</h2><div class="tag" id="resultRoute"></div></div></header>
+      <header><div><h2>Waybill — Delivered</h2><div class="tag" id="resultRoute"></div><div id="slipStamp">OFFICE OF THE DISPATCH · THE ORDER OF WAYLIGHTERS</div></div></header>
       <div class="sheetBody">
         <div id="gradeWrap"><span id="gradeStamp">S</span><div id="gradeRing"></div></div>
         <div class="scoreRows" id="scoreRows"></div>
@@ -96,6 +96,7 @@
         <div id="likesTotal">+ 0 &#9670;</div>
         <div id="starUpNote" class="hidden"></div>
         <div id="resultFoot"><button class="btn primary" id="resultsClose">Carry on <span class="k" style="margin:0 0 0 6px">Enter</span></button></div>
+        <div class="docFoot">FILE UNDER &middot; <b>DELIVERED</b> &mdash; THE VALLEY REMEMBERS WHO WALKED</div>
       </div>
     </div>
   </div>
@@ -103,20 +104,36 @@
   <div id="mapWrap" class="hidden">
     <div id="mapHead">
       <h2>The Valley</h2>
+      <span class="tag">Survey sheet &middot; the Order of Waylighters</span>
+      <span style="flex:1"></span>
       <span class="tag">Waylight coverage <span class="num" id="mapCov">0%</span></span>
       <span class="tag">Roads paved <span class="num" id="mapRoads">0 / 24</span></span>
-      <span style="flex:1"></span>
-      <span class="tag"><b>click</b> walk there &middot; <b>shift-click</b> string a route around trouble &middot; drag to pan &middot; scroll to zoom &middot; <b>M</b> to close</span>
     </div>
-    <div id="mapCanvasWrap"><canvas id="map"></canvas><div id="mapTip" class="glass"></div>
-      <div id="mapLegend" class="glass">
-        <div><span class="sw" style="background:#ffc978"></span>Waylight station</div>
-        <div><span class="sw" style="background:#5a6472"></span>Dark station</div>
-        <div><span class="sw" style="background:#6fe3d2"></span>Your structures</div>
-        <div><span class="sw" style="background:#d96b4f"></span>Scrapper territory</div>
-        <div><span class="sw" style="background:#3a4a66"></span>Deep grey &mdash; wraiths</div>
+    <div id="mapMain">
+      <div id="mapRail">
+        <div class="railSec">
+          <div class="railHead">Legend</div>
+          <div id="mapLegend">
+            <div><span class="sw" style="background:#ffc978"></span>Waylight station</div>
+            <div><span class="sw" style="background:#5a6472"></span>Dark station</div>
+            <div><span class="sw" style="background:#6fe3d2"></span>Your structures</div>
+            <div><span class="sw" style="background:#d96b4f"></span>Scrapper territory</div>
+            <div><span class="sw" style="background:#3a4a66"></span>Deep grey &mdash; wraiths</div>
+          </div>
+        </div>
+        <div class="railSec">
+          <div class="railHead">The walk</div>
+          <div id="railWalk" class="desc">standing still</div>
+        </div>
+        <div class="railSec">
+          <div class="railHead">Field options</div>
+          <label class="pxCheck"><input type="checkbox" id="mapPauseCk"><span>Pause Movement on Map</span></label>
+          <div class="desc" style="margin-top:7px; font-size:11px; color:var(--bone-faint); text-transform:none; letter-spacing:0">unchecked, your boots keep walking while you read the sheet</div>
+        </div>
       </div>
+      <div id="mapCanvasWrap"><canvas id="map"></canvas><div id="mapTip" class="glass"></div></div>
     </div>
+    <div id="mapFoot"><span class="k">click</span>walk there <span class="k">&#8679;click</span>string a route around trouble <span class="k">drag</span>pan <span class="k">scroll</span>zoom <span class="k">M</span>close the sheet</div>
   </div>
 
   <div id="pause" class="overlay hidden">
@@ -126,6 +143,8 @@
         <div class="setRow"><span>Sound</span><button class="btn quiet" id="sndBtn">On</button></div>
         <div class="setRow"><span>Volume</span><input type="range" id="volSlider" min="0" max="100" value="70"></div>
         <div class="setRow"><span>Screen effects (grain, shake)</span><button class="btn quiet" id="fxBtn">On</button></div>
+        <div class="setRow"><span>Colour-code item icons <span class="tag" style="display:block; letter-spacing:.06em">consumables green &middot; gear blue &middot; junk grey &middot; mission always gold</span></span>
+          <label class="pxCheck"><input type="checkbox" id="ckIconColor"></label></div>
         <div class="setRow"><span>Controls</span><button class="btn quiet" id="helpBtn2">View</button></div>
         <div class="setRow"><span>Abandon this valley (wipe save)</span><button class="btn quiet" id="wipeBtn">Wipe</button></div>
         <div style="padding-top:16px; text-align:center"><button class="btn primary" id="resumeBtn">Resume</button></div>
@@ -135,7 +154,8 @@
 
   <div id="helpOv" class="overlay hidden">
     <div class="sheet glass">
-      <header><h2>Field manual</h2></header>
+      <header><div><h2>Field manual</h2>
+        <div class="docStamp" style="text-align:left; margin-top:5px">FM-1 &middot; PROPERTY OF THE ORDER &middot; READ BY FIRELIGHT, CARRIED ANYWAY</div></div></header>
       <div class="sheetBody">
         <div class="helpCols">
           <div class="rowline"><span><span class="k">M1</span></span><span class="desc">Click a place &mdash; walk there. Click a terminal, ruin, crate or your walking partner &mdash; walk there and use it</span></div>
@@ -163,8 +183,9 @@
 
   <div id="skillsOv" class="overlay hidden">
     <div class="sheet glass">
-      <header><div><h2 id="skillsName">Porter</h2><div class="tag" id="skillsSub"></div></div>
-        <img id="skillsPortrait" width="64" height="64" alt=""></header>
+      <header><div><h2 id="skillsName">Porter</h2><div class="tag" id="skillsSub"></div>
+          <div class="docStamp" style="text-align:left; margin-top:5px">SERVICE RECORD &middot; WHAT THE BODY KNOWS, THE BODY KEEPS</div></div>
+        <div class="filePhoto"><img id="skillsPortrait" width="64" height="64" alt=""></div></header>
       <div class="sheetBody" id="skillsBody"></div>
       <div style="padding:8px 22px 16px; text-align:right"><button class="btn quiet" id="skillsClose">Close <span class="k" style="margin:0 0 0 6px">K</span></button></div>
     </div>
@@ -191,22 +212,28 @@
   </div>
 
   <div id="deathOv" class="overlay hidden">
-    <div class="sheet glass" style="width:min(560px,92vw); text-align:center">
+    <div class="sheet glass" style="width:min(600px,92vw); text-align:center">
+      <header style="justify-content:center; text-align:center"><div>
+        <h2 style="font:800 19px var(--ui); letter-spacing:.16em; text-transform:uppercase">Certificate of Passage</h2>
+        <div class="docStamp">OFFICE OF THE DISPATCH &middot; THE ORDER OF WAYLIGHTERS</div>
+      </div></header>
       <div class="sheetBody">
-        <img id="deathPortrait" width="80" height="80" alt="" style="margin-top:14px; filter:grayscale(0.8)">
-        <h2 id="deathName" style="font:600 34px var(--disp); margin-top:8px">A porter fell</h2>
-        <div id="deathCause" class="tag" style="margin-top:4px"></div>
-        <hr class="hairline" style="margin:16px 40px">
+        <div class="filePhoto" style="margin:10px auto 2px"><img id="deathPortrait" width="80" height="80" alt="" style="filter:grayscale(0.8)"></div>
+        <h2 id="deathName" style="font:600 32px var(--disp); margin-top:8px">A porter fell</h2>
+        <div class="certRow"><span class="certLbl">Taken by</span><span id="deathCause" class="tag" style="color:var(--bone-dim)"></span></div>
+        <hr class="hairline" style="margin:14px 40px">
         <div id="deathStats" style="color:var(--bone-dim); font-size:14px; line-height:1.8"></div>
         <p id="deathNote" style="font:16px/1.6 var(--disp); color:var(--gold-hot); margin:14px 30px 6px"></p>
-        <div style="padding:14px 0 20px"><button class="btn primary" id="deathContinue">The valley remembers · another answers</button></div>
+        <div style="padding:14px 0 4px"><button class="btn primary" id="deathContinue">The valley remembers · another answers</button></div>
+        <div class="docFoot">FILE UNDER &middot; <b>THE ROLL OF THE ORDER</b> &mdash; WHAT WAS CARRIED, WAITS</div>
       </div>
     </div>
   </div>
 
   <div id="briefOv" class="overlay hidden">
     <div class="sheet glass" style="width:min(600px,92vw)">
-      <header><div><h2>What Mara Voss tells every new Waylighter at the fire</h2><div class="tag">read once · the rest you learn by walking</div></div></header>
+      <header><div><h2>What Mara Voss tells every new Waylighter at the fire</h2><div class="tag">read once · the rest you learn by walking</div></div>
+        <div id="maraPhoto"><canvas id="maraCv" width="24" height="26"></canvas><div class="tag">M. VOSS · HAVEN</div></div></header>
       <div class="sheetBody" id="briefBody">
         <div class="briefLine"><b>Every station is short of something another one makes.</b> The terminal board says who is out of what; a crate is worth more the worse they need it, and several crates one way pay more together. Accept, walk, press <span class="k">E</span> at the station named. <b>Click</b> anywhere to walk there &mdash; click a terminal to walk in and use it; hold both mouse buttons to sprint. <span class="k">W A S D</span> when you want your hands on the wheel. The gold line at the top of the screen always says what to do next and points the way.</div>
         <div class="briefLine"><b>Connection is a wire, not a light.</b> Enough deliveries and a station joins the wire: from then on what it makes moves to the others without you &mdash; faster over roads you pave and routes you charter &mdash; and the quiet pulls back from its ground. Let a station on the wire run dry and it dims, loses people, and falls silent again. Deliveries earn <b>&#9670; trust</b> &mdash; trust is what a station remembers your name by.</div>
@@ -222,7 +249,8 @@
 
   <div id="chargen" class="overlay hidden">
     <div class="sheet glass" style="width:min(880px,96vw)">
-      <header><div><h2>Another Waylighter answers</h2><div class="tag">the network is waiting — it kept everything</div></div>
+      <header><div><h2>Another Waylighter answers</h2><div class="tag">the network is waiting — it kept everything</div>
+          <div class="docStamp" style="text-align:left; margin-top:5px">ENLISTMENT &middot; THE ORDER TAKES WHOEVER COMES</div></div>
         <button class="btn quiet" id="cgRoll">Roll a stranger</button></header>
       <div class="sheetBody">
         <div id="cgTop">
@@ -254,7 +282,7 @@
   <div id="titleScreen">
     <div class="veil"></div>
     <div id="logo">
-      <h1>WAY<b>LIGHT</b></h1>
+      <canvas id="logoCv" width="47" height="11"></canvas>
       <div class="sub">somebody has to walk it</div>
       <div id="tagline"></div>
     </div>

@@ -3,13 +3,14 @@
 
 const Systems = (() => {
   const { T, stations, stationOrder, items, structures: SDEF } = DATA;
-  let promptTimer = 0, ambientTimer = 0, echoTimer = 200, saveTimer = 0;
+  let promptTimer = 0, ambientTimer = 0, echoTimer = 200, saveTimer = 0, wearAcc = 0;
   const rand = () => Math.random();
 
   /* =============== per-frame =============== */
   function update(dt, input) {
     if (S.dead) return;
     S.time += dt; S.playtime += dt;
+    World.flushWear(dt);   // paths worn this stretch land in the terrain paint
     { const ph = Economy.dayPhase();
       if (ph.night && !S.wasNight) { S.wasNight = true; if (!nearStation(200)) bark('night'); }
       else if (ph.dawn && S.wasNight) { S.wasNight = false; if (!nearStation(200)) bark('dawn'); }
@@ -90,6 +91,7 @@ const Systems = (() => {
   function updatePlayer(dt, input) {
     if (S.stagger > 0) { S.stagger -= dt; S.speed = 0; return; }
     if (S.struggle) { updateStruggle(dt); return; }
+    if (S.handover) { updateHandover(dt); S.speed = 0; return; }   // both hands are full of crate
 
     let ix = (input.right ? 1 : 0) - (input.left ? 1 : 0);
     let iy = (input.down ? 1 : 0) - (input.up ? 1 : 0);
@@ -124,6 +126,7 @@ const Systems = (() => {
         if (up > 0) sp *= 1 / (1 + up * 2.6 * e.slopeMul);
         else sp *= Math.min(1.25, 1 - up * 0.55);
       }
+      if (World.wearAt(S.px, S.py) >= World.W_BARE) sp *= 1.07;   // packed earth: your own path walks faster
     }
     if (S.sprinting) sp *= T.sprintMul;
     if (S.braced) sp *= T.braceMul;
@@ -144,6 +147,19 @@ const Systems = (() => {
       if (moved) {
         S.speed = sp;
         S.advance = Math.hypot(S.px - (nx - ix * sp * dt), S.py - (ny - iy * sp * dt)) / Math.max(dt, 1e-6);   // what the feet actually covered (sliding along a wall covers less)
+        // desire paths: every six metres of grass underfoot leaves a print the valley keeps
+        wearAcc += sp * dt;
+        if (wearAcc >= 6 && !road && !here.crossing) {
+          wearAcc = 0;
+          const w = World.addWear(S.px, S.py, 3);
+          const cn2 = NPC.companion();
+          if (cn2 && S.compPos) World.addWear(S.compPos.x, S.compPos.y, 1);
+          if (w >= World.W_BARE && !S.flags.pathWorn) {
+            S.flags.pathWorn = true;
+            UI.toast('The ground remembers your route — worn paths walk a little faster.', 'gold');
+            bark('firstpath');
+          }
+        }
         if (here.crossing) {   // a ladder is narrow; feet find the rungs — ease toward the span's axis
           const cr = here.crossing, c2 = Math.cos(cr.ang), s2 = Math.sin(cr.ang);
           const ly = -(S.px - cr.x) * s2 + (S.py - cr.y) * c2;
@@ -437,7 +453,10 @@ const Systems = (() => {
     w.t -= dt;
     if (w.t <= 0) {
       if (w.state === 'clear') { w.state = 'veil'; w.t = 40 + rand() * 30; w.intensity = 0.25; }
-      else if (w.state === 'veil') { w.state = 'grey'; w.t = 60 + rand() * 60; w.intensity = 0.6 + rand() * 0.4; tutIfRaining(); }
+      else if (w.state === 'veil') {
+        w.state = 'grey'; w.t = 60 + rand() * 60; w.intensity = 0.6 + rand() * 0.4; tutIfRaining();
+        if (!S.flags.sawGreyfall && !S.cine) { S.flags.sawGreyfall = true; Render.crtTitle('GREYFALL', 'the rain that eats · cargo rots in the dark — light protects'); }
+      }
       else { w.state = 'clear'; w.t = 100 + rand() * 120; w.intensity = 0; }
     }
   }
@@ -544,7 +563,10 @@ const Systems = (() => {
           const noise = (S.speed / T.walk) * (S.braced ? 0.3 : 1) * (S.sprinting ? 1.6 : 1) * Porter.eff().senseMul;
           if (Porter.eff().bellWarn && !w.warned && w.alert > 0.3) { w.warned = true; Snd.sfx.alarm(); UI.toast('The glass bell rings, once.', '', 2500); }
           w.alert += noise * (1 - d / T.wraithSense) * dt * 1.15;
-          if (w.alert >= 1) { w.state = 'hunt'; Snd.sfx.alarm(); tut('firstWraith'); }
+          if (w.alert >= 1) {
+            w.state = 'hunt'; Snd.sfx.alarm(); tut('firstWraith');
+            if (!S.flags.sawKept) { S.flags.sawKept = true; Render.crtTitle('THE KEPT HAVE FOUND YOU', 'they hunt movement · walk braced, or burn a flare', { hold: 3.8 }); }
+          }
         } else w.alert = Math.max(0, w.alert - dt * 0.25);
         // drift — slow, hungry, remembering where you were
         w.ph += dt;
@@ -737,8 +759,15 @@ const Systems = (() => {
   function getInteractions() {
     const out = [];
     if (S.state !== 'walk' || S.cine) return out;
+    if (S.handover) return out;                       // both hands full — the moment plays out
     const stId = nearStation(96);
-    if (stId) out.push({ key: 'E', label: `Terminal — <b>${stations[stId].name}</b>`, fn: () => UI.openStation(stId) });
+    if (stId) {
+      const dels = deliverablesAt(stId), lost = lostForStation(stId);
+      if (dels.length || lost.length) {
+        const nC = dels.reduce((a, o) => a + o.items.length, 0) + lost.length;
+        out.push({ key: 'E', label: `DELIVER — <b>${nC} crate${nC > 1 ? 's' : ''}</b> to ${stations[stId].name}`, fn: () => beginHandover(stId), cls: 'deliver' });
+      } else out.push({ key: 'E', label: `Terminal — <b>${stations[stId].name}</b>`, fn: () => UI.openStation(stId) });
+    }
     // paver
     if (!stId) {
       const pv = nearestPaver();
@@ -1150,6 +1179,48 @@ const Systems = (() => {
   function deliverablesAt(stId) {
     return S.orders.active.filter(o => o.to === stId && o.items.every(id => S.cargo.some(c => c.id === id)));
   }
+
+  /* =============== the DELIVER moment ===============
+     The reward is a hand-over, not a doorway. Nothing is turned in silently: the player presses
+     DELIVER, roots for a breath, and the crates leave the pack one by one — each one an arc, a
+     thud, one fewer on the back — then the paperwork lands. What stays on the pack is announced. */
+  function beginHandover(stId) {
+    const dels = deliverablesAt(stId), lost = lostForStation(stId);
+    if (!dels.length && !lost.length) return false;
+    const ids = [...new Set([...dels.flatMap(o => o.items), ...lost.map(c => c.id)])];
+    const looks = ids.map(id => { const c = S.cargo.find(x => x.id === id); return c ? { kg: c.kg, cat: c.lostTo ? 'lost' : c.cat } : null; }).filter(Boolean);
+    const { results, connect } = handleDelivery(stId);       // the ledger settles now; the hands catch up
+    S.handover = { stId, looks, t: 0, next: 0.22, results, connect, landed: 0, total: looks.length };
+    S.moveTo = null; S.route = [];
+    Snd.sfx.ui();
+    return true;
+  }
+  function updateHandover(dt) {
+    const h = S.handover;
+    h.t += dt;
+    if (h.looks.length && h.t >= h.next) {
+      const lk = h.looks.shift();
+      h.next = h.t + 0.26;
+      h.landed++;
+      const d = stations[h.stId];
+      const a = Math.atan2(d.y - S.py, d.x - S.px);
+      const spread = (h.landed % 2 ? 1 : -1) * (0.28 + (h.landed % 3) * 0.24);
+      const dist = 30 + (h.landed % 3) * 10;
+      Render.hopCrate(S.px, S.py - 22, S.px + Math.cos(a + spread) * dist, S.py + Math.sin(a + spread) * dist, lk.cat);
+      Snd.sfx.build();
+    }
+    if (!h.looks.length && h.t >= h.next + 0.38) {
+      S.handover = null;
+      Render.say(S.px, S.py - 6, `RECEIVED — ${h.total} CRATE${h.total > 1 ? 'S' : ''}`, '255,217,143');
+      Snd.sfx.grade(h.results.some(r => r.grade === 'S') ? 'S' : 'A');
+      const w = State.weight();
+      UI.toast(S.cargo.length
+        ? `Still on the pack: <b>${S.cargo.length}</b> item${S.cargo.length > 1 ? 's' : ''} · <b>${U.fmtKg(w)} kg</b>`
+        : 'The pack rides empty. Light feet.', '', 3800);
+      if (h.connect) { UI.queueResults(h.results, null); igniteStation(h.connect); }
+      else if (h.results.length) UI.queueResults(h.results, h.stId);   // slips first, then the board — you are standing right there
+    }
+  }
   function lostForStation(stId) { return S.cargo.filter(c => c.lostTo === stId); }
 
   function gradeOrder(o) {
@@ -1186,7 +1257,7 @@ const Systems = (() => {
     if (o.item && !o.prio && o.item !== 'letters' && o.item !== 'core') need = Economy.onDeliver(stId, o.item, o.n || o.items.length);
     else if (o.prio) { const pd = DATA.priority.find(p => p.id === o.id); if (pd) for (const [it, n] of pd.items) if (it !== 'core' && it !== 'coreHeavy') { const r = Economy.onDeliver(stId, it, n); if (r.mood) need = r; } }
     const chain = Economy.chainStep();
-    { const c = DATA.dispatch.chain[Math.min(S.trip.n, DATA.dispatch.chain.length - 1)]; if (S.trip.n >= 2 && c) { Render.announce(c); Snd.sfx.grade(S.trip.n >= 4 ? 'S' : 'A'); } }
+    { const c = DATA.dispatch.chain[Math.min(S.trip.n, DATA.dispatch.chain.length - 1)]; if (S.trip.n >= 2 && c) { Render.announce(c); Snd.sfx.grade(S.trip.n >= 4 ? 'S' : 'A'); } }   // chains stay mid-tier — the big voice is not for streaks
     let likes = Math.round(g.likes * need.mul * chain);
     g.needMul = need.mul; g.needMood = need.mood; g.chain = chain; g.chainN = S.trip.n; g.likes = likes;
     if (o.item === 'letters') g.letter = Economy.letterLine();
@@ -1329,7 +1400,7 @@ const Systems = (() => {
         st.litT = 1;
         State.refreshSources();
         { const def = stations[c.stId]; const feeds = stationOrder.filter(s => s !== c.stId && S.stations[s].connected && stations[s].makes.some(m => def.needs.includes(m))).map(s => stations[s].name);
-          UI.showCineTitle(`${def.name.toUpperCase()} — ON THE WIRE`, feeds.length ? `${feeds.join(' and ')} now send what ${def.name} lacks · coverage ${Math.round(S.cov * 100)}%` : `waylight coverage ${Math.round(S.cov * 100)}%`); }
+          Render.crtTitle(`${def.name.toUpperCase()} — ON THE WIRE`, feeds.length ? `${feeds.join(' and ')} now send what ${def.name} lacks · coverage ${Math.round(S.cov * 100)}%` : `waylight coverage ${Math.round(S.cov * 100)}%`, { low: true, hold: 4.2 }); }
       }
     } else if (c.phase === 2) {
       if (c.t > 2.6) {
@@ -1543,7 +1614,7 @@ const Systems = (() => {
   return {
     addStationLikes, finishCine, scrapJunk, eatQuick, postCrisis, pacifiedCampNear, crossingAt, moveTo, cancelMove, queueMove, clickTarget, walkOpts,
     update, doInteract, getInteractions, steadyOk, struggleMash, useFlare,
-    buildOptions, tryBuild, boardFor, acceptOrder, abandonOrder, deliverablesAt, lostForStation, handleDelivery, bark,
+    buildOptions, tryBuild, boardFor, acceptOrder, abandonOrder, deliverablesAt, lostForStation, handleDelivery, beginHandover, bark,
     igniteStation, onLightChanged, rebuildZipLinks, fabList, fabricate, donateCarried,
     awayLikes, addMail, gradeOrder, spawnEchoes, paverCost, nearestPaver, fmtCost,
     rainAt, inAura, nearStation, checkMilestones,

@@ -25,7 +25,8 @@ ok('nobody is known yet, so Haven’s board is only the ★ first order', r.boar
 
 /* 2. price follows need; delivery fills stock */
 await ev(() => { WL.acceptPrio(); WL.tp('elm'); WL.S.flags.calm = true; });
-await page.keyboard.press('e'); await page.waitForTimeout(400);
+await page.keyboard.press('e'); await page.waitForTimeout(150);
+await ev(() => WL.skipHandover());
 r = await ev(() => ({ rows: [...document.querySelectorAll('#scoreRows .rowline')].map(x => x.textContent.replace(/\s+/g, ' ').trim()), meds: WL.S.stations.elm.stock.meds, likes: WL.S.likes }));
 ok('the results say why it paid: "Elm Farm was out of this ×2.2"', r.rows.some(x => /out of this.*×2.2/.test(x)), r.rows.join(' | '));
 ok('one crate of medicine lifts Elm from 8 to ~36 stock (critical → steady)', r.meds > 30 && r.meds < 40, `meds ${r.meds.toFixed(1)}`);
@@ -84,7 +85,7 @@ ok('… and with none left falls silent: off the wire', !r.connected && r.quiet,
 r = await ev(() => { const o = Economy.ordersFor('haven').find(x => x.relight === 'elm'); return o ? { title: o.title, item: o.item } : null; });
 ok('every lit terminal posts "Relight Elm Farm" — a core to carry', r && r.item === 'core', JSON.stringify(r));
 await ev(() => { WL.tp('haven'); const o = Economy.ordersFor('haven').find(x => x.relight === 'elm'); Systems.acceptOrder(o, false); WL.tp('elm'); });
-await page.keyboard.press('e'); await page.waitForTimeout(600);
+await page.keyboard.press('e'); await page.waitForTimeout(150); await ev(() => WL.skipHandover()); await page.waitForTimeout(200);
 await ev(() => WL.skipCine()); await page.waitForTimeout(300);
 r = await ev(() => ({ connected: S.stations.elm.connected, quiet: !!(S.quiet && S.quiet.elm) }));
 ok('delivering the core relights Elm and puts it back on the wire', r.connected && !r.quiet, JSON.stringify(r));

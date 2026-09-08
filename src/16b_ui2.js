@@ -57,6 +57,40 @@ const UI2 = (() => {
     Snd.sfx.ui();
     renderCG();
   });
+  /* ---------- the die — rolling is the one place a die belongs ----------
+     a 12-texel d20, background long gone, tumbling three faces when a stranger is rolled */
+  function dieFrame(rot) {
+    const c = document.createElement('canvas'); c.width = 12; c.height = 12;
+    const g = c.getContext('2d');
+    const O = '#14100a', pal = [['#b8b29d', '#f2ead4', '#8d8873'], ['#8d8873', '#b8b29d', '#f2ead4'], ['#f2ead4', '#8d8873', '#b8b29d']][rot];
+    const hex = [[4, 4], [3, 6], [2, 8], [1, 10], [1, 10], [1, 10], [1, 10], [2, 8], [3, 6], [4, 4]];
+    hex.forEach((rw, i) => { g.fillStyle = O; g.fillRect(rw[0], 1 + i, rw[1], 1); });
+    hex.forEach((rw, i) => {
+      if (i === 0 || i === hex.length - 1) return;
+      const x = rw[0] + 1, w = rw[1] - 2;
+      if (w <= 0) return;
+      const t3 = Math.max(1, Math.floor(w / 3));
+      g.fillStyle = pal[0]; g.fillRect(x, 1 + i, t3, 1);
+      g.fillStyle = pal[1]; g.fillRect(x + t3, 1 + i, w - 2 * t3, 1);
+      g.fillStyle = pal[2]; g.fillRect(x + w - t3, 1 + i, t3, 1);
+    });
+    const tri = [[3, 6], [3, 6], [4, 4], [4, 4], [5, 2], [5, 2]];
+    tri.forEach((rw, i) => { g.fillStyle = O; g.fillRect(rw[0] - 1, 3 + i, rw[1] + 2, 1); });
+    tri.forEach((rw, i) => { g.fillStyle = pal[1]; g.fillRect(rw[0], 3 + i, rw[1], 1); });
+    g.fillStyle = '#ffd98f'; g.fillRect(5, 4, 2, 1);
+    return c.toDataURL();
+  }
+  const D20F = [0, 1, 2].map(dieFrame);
+  function d20Mount(btnId) {
+    const b = $(btnId); if (!b) return;
+    const i = document.createElement('i'); i.className = 'd20'; i.style.backgroundImage = `url(${D20F[0]})`;
+    b.prepend(i);
+    b.addEventListener('click', () => {
+      let n = 0;
+      const iv = setInterval(() => { n++; i.style.backgroundImage = `url(${D20F[n % 3]})`; if (n >= 6) { clearInterval(iv); i.style.backgroundImage = `url(${D20F[0]})`; } }, 55);
+    });
+  }
+  d20Mount('cgRoll'); d20Mount('cgReName');
   $('cgReName').addEventListener('click', () => { cg.name = Porter.randomName(); cg.seed = (Math.random() * 1e9) | 0; cg.line = U.pick(Math.random, CHAR.QUIRKS); renderCG(); });
   $('cgName').addEventListener('input', () => { cg.name = $('cgName').value || 'Walker'; });
   $('cgRoll').addEventListener('click', () => {
@@ -144,7 +178,6 @@ const UI2 = (() => {
     const el = $('moodles');
     const htm = list.map(m => `<span class="moodle ${m.good ? 'good' : 'sev' + (m.sev || 1)}" title="${m.name} — ${m.desc}">${MOODLE_GLYPH[m.id] || '·'}</span>`).join('');
     if (el._last !== htm) { el._last = htm; el.innerHTML = htm; }
-    $('hpFill').style.width = S.health + '%';
     $('foodFill').style.width = S.food + '%';
     const wm = $('warmMeter');
     const showWarm = S.warmth < 85;
@@ -186,7 +219,7 @@ const UI2 = (() => {
     $('txYouFill').style.width = Math.min(100, yourKg / yourCap * 100) + '%';
     $('txThemFill').style.width = Math.min(100, theirKg / theirCap * 100) + '%';
     $('txYouFill').classList.toggle('over', yourKg > yourCap);
-    const row = (c, dir, stuck) => `<div class="txRow ${stuck ? 'stuck' : ''}" data-${dir}="${c.id}"><div><div class="nm">${c.name}</div><div class="sub">${U.fmtKg(c.kg)} kg${c.cat === 'goods' || c.cat === 'core' || c.lostTo ? ' · ' + Math.round(c.cond) + '%' : ''}${stuck ? ' · too heavy for them' : ''}</div></div><span class="arrow">${dir === 'txgive' ? '→' : '←'}</span></div>`;
+    const row = (c, dir, stuck) => `<div class="txRow ${stuck ? 'stuck' : ''}" data-${dir}="${c.id}">${UI.iconTag(c)}<div style="flex:1"><div class="nm ${UI.isMission(c) ? 'missionTx' : ''}">${c.name}</div><div class="sub">${U.fmtKg(c.kg)} kg${c.cat === 'goods' || c.cat === 'core' || c.lostTo ? ' · ' + Math.round(c.cond) + '%' : ''}${stuck ? ' · too heavy for them' : ''}</div></div><span class="arrow">${dir === 'txgive' ? '→' : '←'}</span></div>`;
     $('txYou').innerHTML = S.cargo.map(c => row(c, 'txgive', theirKg + c.kg > theirCap)).join('') || '<div class="desc">Nothing but the pack straps.</div>';
     $('txThem').innerHTML = n.carry.map(c => row(c, 'txtake', false)).join('') || `<div class="desc">${n.name.split(' ')[0]} carries nothing yet. Click a crate of yours.</div>`;
   }
@@ -205,7 +238,7 @@ const UI2 = (() => {
     $('lootSub').textContent = sub || '';
     $('lootBody').innerHTML = items.length ? items.map(it => {
       const d = DATA.items[it.defId] || {};
-      return `<div class="rowline"><div class="grow"><h4>${it.name}</h4><div class="flavor">${d.flavor || ''}</div></div><span class="num" style="color:var(--bone-dim)">${U.fmtKg(it.kg)} kg</span></div>`;
+      return `<div class="rowline">${UI.iconTag(it)}<div class="grow"><h4 class="${UI.isMission(it) ? 'missionTx' : ''}">${it.name}</h4><div class="flavor">${d.flavor || ''}</div></div><span class="num" style="color:var(--bone-dim)">${U.fmtKg(it.kg)} kg</span></div>`;
     }).join('') : '<p class="desc" style="color:var(--bone-faint)">Picked clean. The story stays.</p>';
     $('lootOv').classList.remove('hidden');
   }

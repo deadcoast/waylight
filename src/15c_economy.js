@@ -51,6 +51,7 @@ const Economy = (() => {
     return worst;
   }
   function needMul(id, good) { const m = needMood(id, good); return m ? T.needMul[m] : 1; }
+  const pulses = [], pulseT = {};   // light caravans on the wire — the flow, drawn
   function makersOf(good) { return stationOrder.filter(id => stations[id].makes.includes(good)); }
   function dim(id) { return stationMood(id) === 'critical'; }
   /* how strongly the wire carries between two connected stations: roads and chartered porters multiply it */
@@ -82,8 +83,18 @@ const Economy = (() => {
         for (const g of def.needs) {
           for (const src of makersOf(g)) {
             if (src === id || !S.stations[src].connected) continue;
-            const gain = T.wireFlow * flowMul(src, id) * dt;
-            if (st.stock[g] < 100) { st.stock[g] = Math.min(100, st.stock[g] + gain); S.wireLog[id] = (S.wireLog[id] || 0) + gain; }
+            const fm = flowMul(src, id);
+            const gain = T.wireFlow * fm * dt;
+            if (st.stock[g] < 100) {
+              st.stock[g] = Math.min(100, st.stock[g] + gain); S.wireLog[id] = (S.wireLog[id] || 0) + gain;
+              // LEDGERLIGHT: the flow is drawn, not implied — spawn a light caravan down the wire
+              const pk = src + '>' + id;
+              pulseT[pk] = (pulseT[pk] || Math.random() * 4) - dt;
+              if (pulseT[pk] <= 0 && pulses.length < 24) {
+                pulseT[pk] = U.clamp(9 / fm, 3.5, 9);
+                pulses.push({ a: src, b: id, t: 0 });
+              }
+            }
           }
         }
         if (!st.wireTold && (S.wireLog[id] || 0) > 6 && known(id)) { st.wireTold = true; UI.toast(`<b>${def.name}</b> is being fed by the wire now — ${stationOrder.filter(s => s !== id && S.stations[s].connected && stations[s].makes.some(m => def.needs.includes(m))).map(s => stations[s].name).join(', ')} send what they can on their own`, 'gold', 6500); }
@@ -187,5 +198,5 @@ const Economy = (() => {
     return { t, night: t > 0.6, dusk: t > 0.52 && t <= 0.6, dawn: t < 0.06, label: t < 0.06 ? 'dawn' : t < 0.52 ? 'day' : t <= 0.6 ? 'dusk' : 'night', nightness: t > 0.6 ? Math.min(1, (t - 0.6) / 0.08) * Math.min(1, (1 - t) / 0.05 + 0.01) : 0 };
   }
 
-  return { seed, ensure, update, onAccept, moodOf, stockOf, needMood, stationMood, needMul, makersOf, dim, flowMul, onDeliver, chainStep, ordersFor, needsOf, letterLine, crash, goQuiet, dayPhase, MOOD_RANK };
+  return { seed, ensure, update, onAccept, moodOf, stockOf, needMood, stationMood, needMul, makersOf, dim, flowMul, onDeliver, chainStep, ordersFor, needsOf, letterLine, crash, goQuiet, dayPhase, MOOD_RANK, pulses };
 })();
