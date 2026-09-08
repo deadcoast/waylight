@@ -1,6 +1,9 @@
-# ADDITIONS OVERVIEW
+# ADDITIONS REQUEST HISTORY LOG
 
 ## USER SATISFACTION IN COMPLETION
+
+[1]
+---
 
 1. you are robbing users of literally the only mission based system in this game. literally the only reward they get; you have automated. Users should have a 'DELIVER' BUTTON when they get into range of their destination city. We also should make this process feel satisfying. most of the game is them travelling around, this is the reward phase that, as it currently stands, is them getting close to the city, entering the city and being rewarded. its fucking confusing too. like oh i guess i handed it all in? wait did i? whats still on my back? which leads me to [2]
 2. ITEMS THAT ARE MISSION ITEMS, OR REQUIRED FOR A MISSION, SHOULD NOT BE THE SAME COLOR AS RANDOM ITEMS FOUND OR PURCHASED.
@@ -16,6 +19,9 @@
 
 ---
 
+[2]
+---
+
 ## DIVERSIFICATION IN PROGRESSION MECHANICS
 
 1. one thing i hate more than anything is missions or deliveries that mean nothing and are clearly just filler incase you are broke. for this; a large addition; but one tied into the systems already. Letters are repeated almost everywhere, city to city. they neeed to mean more for the delivery. why are we not setting up routes? why are we not managing waylighters to delivery letters IN THE CITY; for THE PLAYER TO PICK UP and DELIVER to other cities. this creates manager inner city; allows us to hire workers; and TRAIN THEM. Our NPC workers working INNER CITY should GAIN XP.
@@ -29,6 +35,9 @@
 3. there is no way to reset the actual world and start fresh, so its hard for me to retest things. the main menu should have an option to reset the world, and it should always have a confirm prompt explainign what it is, and that this isnt the `new waylighter` button.
 4. we have to revisit the gameplay loop and start intertwining these systems with correct progression. currently also we need to balance the price of things. ALTHOUGHT MY GAMEPLAY EXPERIENCE IS SKEWED BECAUSE IT HAS BEEN OVER DEVELOPMENT WITH TONS OF CHANGES; `THINGS FEEL UNATTAINABLE, COMPANIONS FEEL LIKE A FOLLOWING BAG, THE ITEMS DONT FEEL LIKE THEY MATTER, THE DELIVERIES DONT REALLY FEEL ALL THAT SATISFYING, IT FEELS LIKE GO HERE, GO HERE, GO HERE, GO HERE. THATS NOT A GOOD LOOP. THE PROGRESSION SHOULD INTRODUCE THESE MECHANICS; AND ALSO INTRODUCE A MOPVEMENT MECHANIC EARLY; TO SIGNAL THAT THE ENTIRE GAME ISNT ONE SPEED OR THING. MOST MECHANICS SHOULD BE INTRODUCED IN A LINEAR LINE; NOT OVER LONG PERIODS OF TIME. THEY USERS SHOULD KNOW THE GAME NOT RIGHT AWAY, NOT AT THE END, THEY SHOULD BE ABLE TO SEE ATLEAST EARLY FORMS OF MECHANICS EARLY; AND THEY SHOULD SEE OTHER MECHANICS AROUND THEM  OPERATITE. THE USER IS NOT THE ONLY WAYLIGHTER, OR PERSON IN THE WORLD. WE NEED TO DIVERSIFY; PROGRESSION, NPC, WORLD LIFE, TRANSPORTATION. SO THEY HAVE THINGS TO WANT LATER.THINGS ARE STILL EXPENSIVE.
 
+---
+
+[3]
 ---
 
 ## Post testing notes
@@ -65,6 +74,11 @@
     * THESE STATIONS SHOULD **FEEL** USEFUL TO PLACE; NOT **REQUIRED** TO PLACE, BUT SOMETHING THAT **HELPS**. UPGRADING THOSE BUILDS SHOULD BE CHEAP AT FIRST, AND HAVE USEFUL TRAITS WHEN UPGRADED. UPGRADING THEM IN FULL SHOULD PROVIDE VERY HELPFUL TRAITS, BUT REQUIRE ACTUAL JOB WORK AND INTENT TO MAKE MONEY TO BUY. FULLY UPGRADED THINGS SHOULD FEEL EARNED.
   * ANY BUILDING LARGE ENOUGH TO HOUSE A ROOM, THE PLAYER SHOULD BE ABLE TO ENTER FOR SAFETY, PLACE ITEMS, ETC. BUT THEY SHOULD COST THE RELEVANT SAFETY THEY PROVIDE. ADDITIONALLY, THERE SHOULD BE CHEAPER OPTIONS LIKE 'POBOXES' WHERE YOU CAN DUMP ITEMS, LEAVE SOME THERE FOR DONATION, ETC.
     * THE DONATION SYSTEM NEEDS TO FEEL MORE SIGNIFICANT AND OR INTERACTIVE. I WANT TO KNOW WHAT IM DONATING IS DOING SOMETHING, OR SEE PROGRESSION FROM IT. IF AN NPC WAYLIGHTER PCIKS UP A WEAPON FOR EXAMPLE, COOL THEN THATS ONE MORE GOOD GUY ARMED. IF 10 DO, THE AREA SHOULD FEEL MUCH SAFER, THE PLAYER SHOULD BE TOLD THAT THE AREA IS SAFER BECAUSE OF IT. THIS BRINGS US TO THE SECOND PHAZE OF WAYLIGHTER; [FARKEEPER].
+
+---
+
+[4]
+---
 
 ## THE FACTION AND DIPLOMACY SOCIAL SYSTEM
 
