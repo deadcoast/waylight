@@ -1,6 +1,6 @@
 # WAYLIGHT — Shipped Design Doc (v3.15 · LEDGERLIGHT · Light Has a Body)
 
-Playable build: **https://claude.ai/code/artifact/9ed799db-2103-4667-b424-0de78dce88c5** (single-file HTML5, canvas, ~8,700 lines, no libraries; saves to localStorage per browser; v1/v2 saves migrate and are seeded with stock). Future sessions: republish to this URL via the Artifact tool's `url` parameter (read the live version first — the tool requires it). Source parts live in the session workspace at `waylight/src/*` assembled by `build.py`; that workspace is ephemeral — the artifact is the durable copy. Companion docs: `research-death-stranding-delivery-mechanics.md`, `research-loop-psychology.md`, `research-zomboid-permadeath.md`, `game-approaches.md`, `waylight-expansion-design.md`.
+Playable build: **<https://claude.ai/code/artifact/9ed799db-2103-4667-b424-0de78dce88c5>** (single-file HTML5, canvas, ~8,700 lines, no libraries; saves to localStorage per browser; v1/v2 saves migrate and are seeded with stock). Future sessions: republish to this URL via the Artifact tool's `url` parameter (read the live version first — the tool requires it). Source parts live in the session workspace at `waylight/src/*` assembled by `build.py`; that workspace is ephemeral — the artifact is the durable copy. Companion docs: `research-death-stranding-delivery-mechanics.md`, `research-loop-psychology.md`, `research-zomboid-permadeath.md`, `game-approaches.md`, `waylight-expansion-design.md`.
 
 ## Three lessons, all kept
 
@@ -49,7 +49,7 @@ Two-stage lesson, recorded because the first stage repeated the project's recurr
 
 Evidence standard for this pass: same-frame before/after screenshots against the previously published build (`tests/artshot.mjs` boots both, lights the Greenhouse, and shoots the identical composition), because the v3.1 lesson — *every mechanical claim had a bot, the pixel claim had none* — now applies to art claims too.
 
-## v3.6 — one law: no alpha in the world. Light is palette; transparency is dither.
+## v3.6 — one law: no alpha in the world. Light is palette; transparency is dither
 
 v3.5 drew the world in pixels but still LIT it like 2020: translucent veils, radial-gradient glows, an alpha night screen — modern compositing airbrushed over authored art. v3.6 states one art law and enforces it on every world-layer element: **nothing in the world is translucent. Light is a palette change; transparency is ordered dither.** The fusion this buys is the project's founding sentence made literal — the network's reach is not a glow over the picture, it IS the picture's palette:
 

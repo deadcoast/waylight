@@ -5,8 +5,10 @@ colour — each line is a directive from play. Details not specified are to be c
 theme and per common management/diplomacy mechanics (named references: Crusader Kings 3, Bannerlord 2).
 
 ## v3.19 — THE BODY REMEMBERS (in build)
+
 The game must feel alive through INTERACTION, never through effect-spam. Screen shake and motion blur
 are the things players turn off; MIVIM environment effects are interactive or they are cut.
+
 - Cargo visuals on the player: complete overhaul. Authored looks for the default spawn items and a
   thorough base set; gear (boots/coat/pack) visibly worn on the rig. Pixel methods per
   `research-pixel-art-systems.md` (attachment swaps, cluster discipline, palette ramps).
@@ -26,6 +28,7 @@ are the things players turn off; MIVIM environment effects are interactive or th
   never just one way to accomplish this.
 
 ## v3.20 — THE WORKING WORLD
+
 - LIVING PATHS: deliveries between two areas wear a natural foot path along the assumed traffic line
   regardless of the player's walked route. The player's own steps accelerate wear visibly: trampled →
   bare dirt → permanent (human intervention to regrow; grass dies, sharp rock smooths into vague
@@ -42,6 +45,7 @@ are the things players turn off; MIVIM environment effects are interactive or th
   bringing large resource loads home to sell/build with.
 
 ## v3.21 — THE BUILDS EARN THEIR GROUND
+
 - "I only use ladders." Structures must FEEL useful, never be required. NPC strongholds did nothing
   while scrappers chased the player straight through them — builds act on pursuers.
 - Upgrade ladder per structure: cheap first upgrades with useful traits; full upgrades very helpful
@@ -52,6 +56,7 @@ are the things players turn off; MIVIM environment effects are interactive or th
   ten armed and the area is measurably safer — and the player is told it is safer because of them.
 
 ## v3.22 — KARMA & THE REPUBLIC (research first: CK3 / Bannerlord-class systems)
+
 - KARMA oversees two independent currencies: APPRECIATION (exists) and RENEGADE (new). Not good/bad —
   each biased but independent (cowboys weren't universally hated; Han Solo was hated by many and loved
   by few, until he was loved by many and hated by few). Renegade acts may leave appreciation
@@ -84,13 +89,15 @@ are the things players turn off; MIVIM environment effects are interactive or th
   the Farkeepers' homeland with the allies won on the current map.
 
 ## Standing laws gathered from these notes
+
 - Alive = interaction. No cheap ambient effects the player neither cares about nor touches.
 - New integrations require targeted identity, visually and conceptually. Factions require identities
   in culture and design recognition.
 - Fill unlisted operational detail from genre knowledge, always bent to the theme.
 
 ## PIXELLAB MCP — INTEGRATED (v3.20)
-The PixelLab MCP (https://api.pixellab.ai/mcp) is reachable from this cloud session by direct
+
+The PixelLab MCP (<https://api.pixellab.ai/mcp>) is reachable from this cloud session by direct
 JSON-RPC over HTTP — `tools/pixellab.mjs` wraps it (list tools · call any tool · queue a character ·
 poll and save the PNG). Toolkit: characters (humanoid + quadruped with a HORSE template — the breed
 data and donkey), animations, top-down tilesets, PATH TILES, building kits, UI assets.
@@ -100,6 +107,7 @@ fires the moment credits land. Asset law: generate → quantize to the game's pa
 user's 32×32 sheet as style reference), pack donkey, horse breeds, Farkeeper classes.
 
 ## v3.23 — THE MYTH IN THE FLESH (captured from MIVIM's Postman notes, 2026-09-08)
+
 - THE POSTMAN's return-to-the-city beat: the founder treated as a myth in the flesh ("I saw him
   once, before the light, when I lived in unlit [city]"). Carry the spirit through GAMEPLAY —
   the world reacts to the walker's LEGEND, citing the player's ACTUAL record, never through

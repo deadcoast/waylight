@@ -4,27 +4,27 @@
 
 The four areas in the brief are technically useful, but the research does **not** support every game-specific attribution as originally stated. For an AI agent, this distinction matters: undocumented assumptions should not become “facts” that the agent later reproduces as engine requirements.
 
-| Proposed claim | Research finding | Confidence | What the AI agent should retain |
-| --- | --- | ---: | --- |
-| *Noita* treats world pixels as simulated material cells | Strongly documented. Nolla describes the game as a falling-sand system based on “complex cellular automata”; its GDC presentation specifically covers scaling that simulation and coupling it to destructible rigid bodies. citeturn16search0turn20view4 | **Very high** | Per-cell simulation, material rules, dirty chunks, spatially phased multithreading, rigid-body conversion |
-| *Noita* uses 64×64 chunks and a four-phase checkerboard-like threading scheme | Explicitly described by Petri Purho/Nolla: 64×64 chunks, dirty rectangles, four update rounds, and cross-shaped exclusive update domains extending 32 pixels from a chunk. citeturn20view0 | **Very high** | This is one of the most valuable directly documented architectural patterns |
-| Every *Noita* pixel separately stores density, flammability, melting point, etc. | **Not established.** The material rules are documented, but that does not imply every cell duplicates every material property. citeturn20view4turn20view5 | **Low for the storage claim** | Store immutable material properties in a material table and only mutable state per cell |
-| *Noita* couples changing pixel material to rigid bodies | Explicitly documented: rigid-body pixels know their body membership and local position, and damaged shapes can be recalculated or split. citeturn20view3 | **Very high** | Occupancy grid ↔ contour/components ↔ rigid body bridge |
-| *Metal Slug Attack Reloaded* specifically uses hierarchical skeletal sprite mapping | I found **no first-party technical source establishing this**. SNK describes the title as retaining the franchise's detailed 2D pixel-art presentation, but does not document this runtime animation architecture. citeturn14search0 | **Unverified** | Treat modular hierarchical sprite rigs as a useful *general technique*, not as confirmed SNK technology |
-| Modern large sprites primarily solve an old “sprite-sheet memory cap” | Too simplistic. Modern engines still face texture memory and maximum texture-size constraints, but modularization is also about reuse, animation authoring, batching, variants, and reducing duplicated raster data. Sprite atlases can reduce GPU draw calls. citeturn18view5 | **High** | Optimize storage **and** render state, draw calls, transforms, texture locality, authoring |
-| *Arco* specifically uses the described sub-pixel color-shifting method | *Arco*'s official material confirms Franek Nowotniak as its pixel artist, but I found no primary technical description identifying this exact technique. citeturn17search0turn17search3 | **Unverified** | Use *Arco* as visual reference, not as proof of implementation |
-| *Owlboy*'s artist works with “sub-pixelling” | Directly supported. Simon Stafsnes Andersen discusses choosing colors that pair effectively for anti-aliasing and “sub-pixelling,” and describes studying sprite animation frame-by-frame to understand contortions and shading. citeturn19view0turn19view2 | **High** | Palette-aware edge transitions, cluster manipulation, shading-based motion cues |
-| *Eastward* is purely 2D with normal maps | **Incorrect.** Lead programmer Tommo Zhou explicitly describes *Eastward* as “a 3D game with a 2D perspective.” Assets are separated by structure, rebuilt in a 3D environment, and hand-painted with bump-map information; the custom engine also uses shader textures and lighting. citeturn19view3turn19view5 | **Very high** | Treat *Eastward* as a 2D/3D hybrid or 2.5D pixel-lighting reference |
-| Normal mapping automatically makes 2D sprites cast physically correct shadows | Incorrect. A normal map changes **surface response to light**; shadow casting requires an occluder representation, depth/height information, shadow geometry, or another visibility calculation. Modern 2D renderers expose normal maps separately from shadow/lighting systems. citeturn15search1 | **Very high** | Keep normal response and occlusion/shadow casting as separate systems |
+| Proposed claim                                                                      | Research finding                                                                                                                                                                                                                                                                                                     |                    Confidence | What the AI agent should retain                                                                           |
+|-------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------:|-----------------------------------------------------------------------------------------------------------|
+| *Noita* treats world pixels as simulated material cells                             | Strongly documented. Nolla describes the game as a falling-sand system based on “complex cellular automata”; its GDC presentation specifically covers scaling that simulation and coupling it to destructible rigid bodies. citeturn16search0turn20view4                                                         |                 **Very high** | Per-cell simulation, material rules, dirty chunks, spatially phased multithreading, rigid-body conversion |
+| *Noita* uses 64×64 chunks and a four-phase checkerboard-like threading scheme       | Explicitly described by Petri Purho/Nolla: 64×64 chunks, dirty rectangles, four update rounds, and cross-shaped exclusive update domains extending 32 pixels from a chunk. citeturn20view0                                                                                                                        |                 **Very high** | This is one of the most valuable directly documented architectural patterns                               |
+| Every *Noita* pixel separately stores density, flammability, melting point, etc.    | **Not established.** The material rules are documented, but that does not imply every cell duplicates every material property. citeturn20view4turn20view5                                                                                                                                                        | **Low for the storage claim** | Store immutable material properties in a material table and only mutable state per cell                   |
+| *Noita* couples changing pixel material to rigid bodies                             | Explicitly documented: rigid-body pixels know their body membership and local position, and damaged shapes can be recalculated or split. citeturn20view3                                                                                                                                                          |                 **Very high** | Occupancy grid ↔ contour/components ↔ rigid body bridge                                                   |
+| *Metal Slug Attack Reloaded* specifically uses hierarchical skeletal sprite mapping | I found **no first-party technical source establishing this**. SNK describes the title as retaining the franchise's detailed 2D pixel-art presentation, but does not document this runtime animation architecture. citeturn14search0                                                                              |                **Unverified** | Treat modular hierarchical sprite rigs as a useful *general technique*, not as confirmed SNK technology   |
+| Modern large sprites primarily solve an old “sprite-sheet memory cap”               | Too simplistic. Modern engines still face texture memory and maximum texture-size constraints, but modularization is also about reuse, animation authoring, batching, variants, and reducing duplicated raster data. Sprite atlases can reduce GPU draw calls. citeturn18view5                                    |                      **High** | Optimize storage **and** render state, draw calls, transforms, texture locality, authoring                |
+| *Arco* specifically uses the described sub-pixel color-shifting method              | *Arco*'s official material confirms Franek Nowotniak as its pixel artist, but I found no primary technical description identifying this exact technique. citeturn17search0turn17search3                                                                                                                          |                **Unverified** | Use *Arco* as visual reference, not as proof of implementation                                            |
+| *Owlboy*'s artist works with “sub-pixelling”                                        | Directly supported. Simon Stafsnes Andersen discusses choosing colors that pair effectively for anti-aliasing and “sub-pixelling,” and describes studying sprite animation frame-by-frame to understand contortions and shading. citeturn19view0turn19view2                                                      |                      **High** | Palette-aware edge transitions, cluster manipulation, shading-based motion cues                           |
+| *Eastward* is purely 2D with normal maps                                            | **Incorrect.** Lead programmer Tommo Zhou explicitly describes *Eastward* as “a 3D game with a 2D perspective.” Assets are separated by structure, rebuilt in a 3D environment, and hand-painted with bump-map information; the custom engine also uses shader textures and lighting. citeturn19view3turn19view5 |                 **Very high** | Treat *Eastward* as a 2D/3D hybrid or 2.5D pixel-lighting reference                                       |
+| Normal mapping automatically makes 2D sprites cast physically correct shadows       | Incorrect. A normal map changes **surface response to light**; shadow casting requires an occluder representation, depth/height information, shadow geometry, or another visibility calculation. Modern 2D renderers expose normal maps separately from shadow/lighting systems. citeturn15search1                |                 **Very high** | Keep normal response and occlusion/shadow casting as separate systems                                     |
 
 The most important architectural conclusion is therefore that these are **four different forms of “pixel manipulation,” operating at four different levels**:
 
-| Level | System | Pixel is treated as… |
-| --- | --- | --- |
-| Simulation | Falling-sand CA | A stateful world cell |
-| Object animation | Modular sprite rig | A texel belonging to a transformable part |
+| Level                | System                    | Pixel is treated as…                                                                  |
+|----------------------|---------------------------|---------------------------------------------------------------------------------------|
+| Simulation           | Falling-sand CA           | A stateful world cell                                                                 |
+| Object animation     | Modular sprite rig        | A texel belonging to a transformable part                                             |
 | Perceptual animation | Sub-pixel / micro-shading | A discrete sample whose temporal color/occupancy creates apparent fractional movement |
-| Rendering | Normal-mapped lighting | A surface sample with color, orientation, masks, and potentially depth |
+| Rendering            | Normal-mapped lighting    | A surface sample with color, orientation, masks, and potentially depth                |
 
 An AI agent should never collapse these into one generic “pixel animation” mechanism. They have radically different state representations, update frequencies, authoring requirements, and failure modes.
 
@@ -371,11 +371,11 @@ This is more general than saying “parts use coordinate offsets.” Coordinate 
 
 There are three useful classes for a pixel-art game:
 
-| Rig style | Mechanism | Pixel-art suitability |
-| --- | --- | --- |
-| **Rigid cutout** | Each component is an undeformed sprite transformed around a pivot | Excellent for machines, armor, weapons, segmented creatures |
-| **Weighted mesh** | Vertices of a textured mesh receive weighted bone transforms | Excellent for painted HD 2D; risky for strict pixel clusters |
-| **Hybrid** | Rigid sprite parts + frame-swapped joints/faces + occasional deformation | Usually best for sophisticated pixel art |
+| Rig style         | Mechanism                                                                | Pixel-art suitability                                        |
+|-------------------|--------------------------------------------------------------------------|--------------------------------------------------------------|
+| **Rigid cutout**  | Each component is an undeformed sprite transformed around a pivot        | Excellent for machines, armor, weapons, segmented creatures  |
+| **Weighted mesh** | Vertices of a textured mesh receive weighted bone transforms             | Excellent for painted HD 2D; risky for strict pixel clusters |
+| **Hybrid**        | Rigid sprite parts + frame-swapped joints/faces + occasional deformation | Usually best for sophisticated pixel art                     |
 
 Spine's own runtime distinction mirrors this separation: region attachments are rectangular image regions, while mesh attachments can contain deformable vertices and bone weights. citeturn18view3
 
@@ -528,13 +528,13 @@ Rotation is harder. Even if the pivot is snapped, arbitrary rotation does not pr
 
 An AI agent should choose a rotation strategy explicitly:
 
-| Rotation requirement | Preferred solution |
-| --- | --- |
-| Machine part can rotate freely and slight pixel crawl is acceptable | Continuous rotation + nearest-neighbor rasterization |
-| Pixel purity is more important | Quantized angles |
-| Hero object needs perfect silhouettes | Hand-drawn rotational variants |
-| Organic joint bends | Attachment swaps / bespoke in-between frames |
-| Lots of rotation but strict virtual aesthetic | Render rig to low-res intermediate target, then nearest-neighbor upscale |
+| Rotation requirement                                                | Preferred solution                                                       |
+|---------------------------------------------------------------------|--------------------------------------------------------------------------|
+| Machine part can rotate freely and slight pixel crawl is acceptable | Continuous rotation + nearest-neighbor rasterization                     |
+| Pixel purity is more important                                      | Quantized angles                                                         |
+| Hero object needs perfect silhouettes                               | Hand-drawn rotational variants                                           |
+| Organic joint bends                                                 | Attachment swaps / bespoke in-between frames                             |
+| Lots of rotation but strict virtual aesthetic                       | Render rig to low-res intermediate target, then nearest-neighbor upscale |
 
 ### Use animation composition instead of one giant clip
 
@@ -941,14 +941,14 @@ A sophisticated AI-authored sprite material can use:
 
 where:
 
-| Channel | Meaning | Required? |
-| --- | --- | --- |
-| \(D\) | Diffuse/base pixel color | Yes |
-| \(N\) | Surface normal direction | For directional lighting |
-| \(H\) | Approximate height/elevation | Optional but powerful |
-| \(M\) | Lighting/material mask | Recommended |
-| \(E\) | Emissive mask/color | For lamps, screens, lava |
-| \(O\) | Occlusion/shadow metadata | When real shadowing is required |
+| Channel | Meaning                      | Required?                       |
+|---------|------------------------------|---------------------------------|
+| \(D\)   | Diffuse/base pixel color     | Yes                             |
+| \(N\)   | Surface normal direction     | For directional lighting        |
+| \(H\)   | Approximate height/elevation | Optional but powerful           |
+| \(M\)   | Lighting/material mask       | Recommended                     |
+| \(E\)   | Emissive mask/color          | For lamps, screens, lava        |
+| \(O\)   | Occlusion/shadow metadata    | When real shadowing is required |
 
 A compact packed representation might use:
 
@@ -1485,19 +1485,19 @@ The Eastward pipeline provides especially strong justification for putting this 
 
 An AI agent should have hard validation rules rather than merely aesthetic prompts.
 
-| Invariant | Validation |
-| --- | --- |
-| No accidental smoothing | Texture sampling is nearest unless explicitly authorized |
-| Stable logical grid | Output dimensions and pivots are integer logical-pixel compatible |
-| Controlled palette | Every sprite color belongs to approved palette/ramp or explicitly permitted dynamic-light output |
-| No accidental isolated pixels | Connected-component / neighbor test flags new singleton clusters |
-| Normal alignment | Diffuse, normal, height, mask share dimensions, pivot and atlas region |
-| Rig socket consistency | Parent/child attachment coordinates match standardized sockets |
-| No double update in CA | One cell/material entity cannot perform two movement updates during the same tick unless behavior explicitly permits it |
-| Thread safety | Concurrent CA jobs cannot own overlapping writable cells |
-| Determinism | Same seed + same input sequence generates same simulation result where deterministic mode is required |
-| Shadow separation | `casts_shadow=true` requires actual occlusion representation; normal texture alone is insufficient |
-| Temporal consistency | Pixel changes between frames must be attributable to motion, shading, FX, damage, or intentional texture variation |
+| Invariant                     | Validation                                                                                                              |
+|-------------------------------|-------------------------------------------------------------------------------------------------------------------------|
+| No accidental smoothing       | Texture sampling is nearest unless explicitly authorized                                                                |
+| Stable logical grid           | Output dimensions and pivots are integer logical-pixel compatible                                                       |
+| Controlled palette            | Every sprite color belongs to approved palette/ramp or explicitly permitted dynamic-light output                        |
+| No accidental isolated pixels | Connected-component / neighbor test flags new singleton clusters                                                        |
+| Normal alignment              | Diffuse, normal, height, mask share dimensions, pivot and atlas region                                                  |
+| Rig socket consistency        | Parent/child attachment coordinates match standardized sockets                                                          |
+| No double update in CA        | One cell/material entity cannot perform two movement updates during the same tick unless behavior explicitly permits it |
+| Thread safety                 | Concurrent CA jobs cannot own overlapping writable cells                                                                |
+| Determinism                   | Same seed + same input sequence generates same simulation result where deterministic mode is required                   |
+| Shadow separation             | `casts_shadow=true` requires actual occlusion representation; normal texture alone is insufficient                      |
+| Temporal consistency          | Pixel changes between frames must be attributable to motion, shading, FX, damage, or intentional texture variation      |
 
 A simple frame-to-frame pixel metric is useful:
 
@@ -1564,20 +1564,20 @@ The research suggests that the best production system is not to imitate any one 
 
 The recommended stack is:
 
-| System | Recommended implementation | Why |
-| --- | --- | --- |
-| World destruction | Chunked cellular automata with dirty regions | Directly grounded in *Noita*'s documented scalable approach. citeturn20view0turn16search0 |
-| CA threading | Spatially disjoint phased jobs with halo/write-radius constraints | Generalizes *Noita*'s four-round checker-like solution. citeturn20view0 |
-| Material behavior | Shared material prototypes + per-cell mutable state + data-driven reaction table | Captures the documented emergent-rule model without wasteful per-cell duplication. citeturn20view4turn20view5 |
-| Structural destruction | Connected components + contour extraction + simplified rigid-body shapes | Matches the documented need to recalculate/split destructible bodies and provides a principled Marching-Squares-style implementation. citeturn20view3turn16search1 |
-| Huge actors | Hybrid rigid-part skeletal rig | Well-supported general 2D skeletal architecture; game-specific Metal Slug attribution remains unverified. citeturn18view3turn18view4 |
-| Raster storage | Atlas reusable part states rather than baking every composite frame | Established sprite-atlas workflow reduces redundant texture state and draw-call pressure. citeturn18view5 |
-| Pixel-perfect rigging | Float animation state → quantized final transform | Retains interpolation internally while protecting final raster placement; nearest/point filtering maintains hard texel boundaries. citeturn15search25turn15search4 |
-| Organic micro-animation | Cluster handoff + palette-based sub-pixelling + shading drift | Directly compatible with Owlboy artist Simon Andersen's discussion of palette pairing for AA/sub-pixelling. citeturn19view0turn19view2 |
-| Dynamic light | Diffuse + hand-painted/derived normal/bump + mask + optional height | *Eastward*'s lead programmer explicitly describes shader lighting, structural separation, 3D reconstruction and hand-painted bump data. citeturn19view3turn19view5 |
-| Pixel-light aesthetic | Low-res light evaluation and/or quantized/palette-ramp output | Prevents continuously shaded lighting from overwhelming discrete pixel-art ramps |
-| Shadows | Separate caster/depth/occlusion system | A normal stores surface orientation, not line-of-sight visibility |
-| Final presentation | Virtual render target → nearest-neighbor integer upscale | Keeps all simulation, shading and animation decisions tied to one logical grid; contemporary engine tooling continues to distinguish point and smoothing filters. citeturn15search10turn15search25 |
+| System                  | Recommended implementation                                                       | Why                                                                                                                                                                                                    |
+|-------------------------|----------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| World destruction       | Chunked cellular automata with dirty regions                                     | Directly grounded in *Noita*'s documented scalable approach. citeturn20view0turn16search0                                                                                                          |
+| CA threading            | Spatially disjoint phased jobs with halo/write-radius constraints                | Generalizes *Noita*'s four-round checker-like solution. citeturn20view0                                                                                                                             |
+| Material behavior       | Shared material prototypes + per-cell mutable state + data-driven reaction table | Captures the documented emergent-rule model without wasteful per-cell duplication. citeturn20view4turn20view5                                                                                      |
+| Structural destruction  | Connected components + contour extraction + simplified rigid-body shapes         | Matches the documented need to recalculate/split destructible bodies and provides a principled Marching-Squares-style implementation. citeturn20view3turn16search1                                 |
+| Huge actors             | Hybrid rigid-part skeletal rig                                                   | Well-supported general 2D skeletal architecture; game-specific Metal Slug attribution remains unverified. citeturn18view3turn18view4                                                               |
+| Raster storage          | Atlas reusable part states rather than baking every composite frame              | Established sprite-atlas workflow reduces redundant texture state and draw-call pressure. citeturn18view5                                                                                           |
+| Pixel-perfect rigging   | Float animation state → quantized final transform                                | Retains interpolation internally while protecting final raster placement; nearest/point filtering maintains hard texel boundaries. citeturn15search25turn15search4                                 |
+| Organic micro-animation | Cluster handoff + palette-based sub-pixelling + shading drift                    | Directly compatible with Owlboy artist Simon Andersen's discussion of palette pairing for AA/sub-pixelling. citeturn19view0turn19view2                                                             |
+| Dynamic light           | Diffuse + hand-painted/derived normal/bump + mask + optional height              | *Eastward*'s lead programmer explicitly describes shader lighting, structural separation, 3D reconstruction and hand-painted bump data. citeturn19view3turn19view5                                 |
+| Pixel-light aesthetic   | Low-res light evaluation and/or quantized/palette-ramp output                    | Prevents continuously shaded lighting from overwhelming discrete pixel-art ramps                                                                                                                       |
+| Shadows                 | Separate caster/depth/occlusion system                                           | A normal stores surface orientation, not line-of-sight visibility                                                                                                                                      |
+| Final presentation      | Virtual render target → nearest-neighbor integer upscale                         | Keeps all simulation, shading and animation decisions tied to one logical grid; contemporary engine tooling continues to distinguish point and smoothing filters. citeturn15search10turn15search25 |
 
 The **single most useful instruction to place in the AI agent's system knowledge** is:
 

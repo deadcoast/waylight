@@ -1,5 +1,6 @@
 # PIXELPASS — the v3.11 plan
-### Review → research → planning → critical criticisms → refinements. Development follows this file.
+
+### Review → research → planning → critical criticisms → refinements. Development follows this file
 
 The brief: two QOL patches, then a meticulous review of twelve pasted asset bundles — where each could fit WAYLIGHT, which earn a place, which do not — and a balanced, application-wide integration. The pasted source was plain-text ports with lost formatting and possible mislabels, so this review treats each bundle as a **technique**, not as code to transplant. Standing law already forbids transplanting: every borrowed idea must be re-authored in WAYLIGHT's palette (bone `#f2ead4` · gold `#ffb54f` · rust `#d96b4f` family · slate `#3a4048` · lumen, on the `#0a0e14` void) and in its idioms (canvas texels at integer scale, CSS plates, ordered dither, no curves, no glow-blur). Source colors, source fonts, and box-shadow-as-bitmap DOM art do not survive the border.
 
@@ -101,6 +102,7 @@ faked one. Salvage piles are still vector triangles; crates on the ground are tw
 peddler cart, supply drop, cairns, kept porters and the station tower are rect patchwork below rig quality.
 
 RESEARCH (what the masters actually do):
+
 - Slynyrd ramp law: hue warms as it brightens (+hue shift per step), saturation peaks mid-ramp, never
   100% sat+bright together. A glow is a RAMP walked outward, not one colour at falling coverage.
 - saint11 halo law: a light source = emissive core (near-white) + 1–3 HARD concentric bands; fire is
@@ -110,6 +112,7 @@ RESEARCH (what the masters actually do):
   ambient dark, tight bloom cores, shafts only where atmosphere justifies them, and they fade with the sun.
 
 PLAN:
+
 1. coronaSprite replaces glowSprite at every lamp/fire/bloom call site: near-white core, two solid
    hue-shifted bands at stepped alpha, a one-texel Bayer stitch at each seam. Wraiths and kept porters
    keep the full-dither body under a new name (ghostBody) — ghosts are the one thing checker is FOR.
