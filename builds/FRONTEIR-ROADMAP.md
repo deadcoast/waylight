@@ -1,0 +1,119 @@
+# WAYLIGHT — Frontier Roadmap (post-testing notes, 2026-09-08)
+
+The player's post-testing verdicts and directives, captured in build order. Nothing here is optional
+colour — each line is a directive from play. Details not specified are to be completed per the game's
+theme and per common management/diplomacy mechanics (named references: Crusader Kings 3, Bannerlord 2).
+
+## v3.19 — THE BODY REMEMBERS (in build)
+The game must feel alive through INTERACTION, never through effect-spam. Screen shake and motion blur
+are the things players turn off; MIVIM environment effects are interactive or they are cut.
+- Cargo visuals on the player: complete overhaul. Authored looks for the default spawn items and a
+  thorough base set; gear (boots/coat/pack) visibly worn on the rig. Pixel methods per
+  `research-pixel-art-systems.md` (attachment swaps, cluster discipline, palette ramps).
+- MIVIM weather law, the two canonical examples:
+  - LEAVES ON THE WIND: a gust puts leaves in motion; leaves that hit the character model deflect or
+    stick on it for a moment; leaves that miss never change trajectory. Sparse and eloquent, never thick.
+  - SNOW ACCUMULATION: snow piles on the player's shoulders/head as a function of snowfall intensity
+    and how much they move; then melts. Weather is never "more/fewer raindrops".
+- Placement ghosts: every placeable (ladders first — they currently plop at random angles) hovers as a
+  semi-transparent blueprint of its eventual placement before the player commits. Applies to ALL
+  buildings/placed items.
+- Pause-on-minimize TOGGLE: for long trips, players can switch screens without the game pausing.
+- WOBBLE REWORK: far, far too common. Pushback matters, but frivolous wobbles must not cancel the
+  automation travel chain the player set up. This is an AUTOMATION mechanic, not an idle one: the
+  player builds their character/kit to automate the chain their way (map "go here, then here", chain
+  clicking a safe route); they run into trouble and see why full automation must be earned. There is
+  never just one way to accomplish this.
+
+## v3.20 — THE WORKING WORLD
+- LIVING PATHS: deliveries between two areas wear a natural foot path along the assumed traffic line
+  regardless of the player's walked route. The player's own steps accelerate wear visibly: trampled →
+  bare dirt → permanent (human intervention to regrow; grass dies, sharp rock smooths into vague
+  steps) — exaggerated for progression identity, realized over a few passes, widening to a full bare
+  footpath like the city-link paths. Paths feed NPC routing, are followable targets, and grant speed.
+- PATH UPGRADES: footpath → metal-scrap road → cobblestone → wood road, … Logistics get easier by this
+  progression (not the paver-only ladder).
+- COMPANION JOBS (Waylighter side): HAULER (huge capacity, slow → upgrades to DONKEY_CARAVAN, which
+  wants Farkeeper protection), MASON (cobblestone), FORRESTER (fells trees — REAL environment change,
+  wood for wood paths), PATH PRESSER (custom footpaths — automated exploration or player-assigned
+  click routes).
+- EARNER SKILLS (companion QOL, earned): LOOTER — companion loots anything entering the player's
+  vision (chests, items, lost cargo, nodes); upgrades: bigger packs → fully automated looting,
+  bringing large resource loads home to sell/build with.
+
+## v3.21 — THE BUILDS EARN THEIR GROUND
+- "I only use ladders." Structures must FEEL useful, never be required. NPC strongholds did nothing
+  while scrappers chased the player straight through them — builds act on pursuers.
+- Upgrade ladder per structure: cheap first upgrades with useful traits; full upgrades very helpful
+  but demanding real job-work and earning. Fully upgraded feels EARNED.
+- Any building big enough to house a room is enterable (safety, item placement), priced by the safety
+  it provides. Cheaper POBOX: dump items, leave donations.
+- DONATION VISIBILITY: donating demonstrably does something. A donated weapon arms an NPC waylighter;
+  ten armed and the area is measurably safer — and the player is told it is safer because of them.
+
+## v3.22 — KARMA & THE REPUBLIC (research first: CK3 / Bannerlord-class systems)
+- KARMA oversees two independent currencies: APPRECIATION (exists) and RENEGADE (new). Not good/bad —
+  each biased but independent (cowboys weren't universally hated; Han Solo was hated by many and loved
+  by few, until he was loved by many and hated by few). Renegade acts may leave appreciation
+  unchanged, or even raise it.
+- Fed by choices and missions: cutpurse jobs; smuggling runs (highleaf smokes out of the farm — caught
+  on delivery or not, each outcome lands differently per area); mercenary-guild work gated by weapons,
+  party, and training a fresh Waylighter lacks. Choices are SEEN and FELT in the world — butterfly
+  effects, never delivered through dialogue or text alone.
+- THE REPUBLIC OF CONNECTION — default members WAYLIGHT + FARKEEP. Founded when the Waylighters,
+  having intervened in the colossal Farlands famine, merged societies with the FARKEEPERS and
+  descended them from a mountain climate and wars neither man nor beast could face. The Farkeepers —
+  a larger, fiercely loyal, nordic mountain people (ancient men hardened by climate: elongated thighs,
+  broadened chests — NOT giants) — saw the light and changed their ways, but not their nature. The
+  Waylighters, no fools, had relied on mercenaries and bought corruption with them; in the Farkeepers
+  they saw allies and solution.
+- LORE CORRECTION (standing): ALL security/battle purpose transfers to FARKEEPERS — the militia riders
+  of v3.16 become Farkeepers wherever accounts say otherwise. Waylighters uphold connection, warmth,
+  love, loyalty, trust. Farkeepers equip the weapons, protect the society, quell / silence-the-light
+  of Renegade rebellions and towns lost to darkness, and can take towns by force.
+- DIPLOMACY: player-decided, player-controlled, affected by the Karma currencies.
+  Defaults — ABSOLUTE_ALLY (defend at all costs): Waylighters. ABSOLUTE_HOSTILE (shoot on sight):
+  Reapers, Cannibals.
+- Faction data to create, each with cultural + visual identity: REAPERS, RAIDERS, REBELS, CANNIBALS,
+  FLAME KEEPERS, IRON GIANTS.
+- Farkeeper companion classes: LONGBOWMEN (ranged security), PUGUGLY (bigger than most Farkeepers —
+  huge to Waylighters — bare-knuckle, surprising agility), RIFLE_RIDER (upgraded longbowman; requires
+  horse — introduce HORSE BREED DATA: real common breeds with stats reflecting their actual
+  strengths), RECON_RIDER (quick, low damage, automated exploration), BERSERKER (pistol + claymore).
+- Expansion door stays open: revisiting the Farlands, traversing the mountain to Farkeep, connecting
+  the Farkeepers' homeland with the allies won on the current map.
+
+## Standing laws gathered from these notes
+- Alive = interaction. No cheap ambient effects the player neither cares about nor touches.
+- New integrations require targeted identity, visually and conceptually. Factions require identities
+  in culture and design recognition.
+- Fill unlisted operational detail from genre knowledge, always bent to the theme.
+
+## PIXELLAB MCP — INTEGRATED (v3.20)
+The PixelLab MCP (https://api.pixellab.ai/mcp) is reachable from this cloud session by direct
+JSON-RPC over HTTP — `tools/pixellab.mjs` wraps it (list tools · call any tool · queue a character ·
+poll and save the PNG). Toolkit: characters (humanoid + quadruped with a HORSE template — the breed
+data and donkey), animations, top-down tilesets, PATH TILES, building kits, UI assets.
+STATUS: auth good, protocol good; the account has NO GENERATION CREDITS remaining — first asset pass
+fires the moment credits land. Asset law: generate → quantize to the game's palette bands → embed
+(rig-texel tables or data URIs), never hotlink. Queue for the first pass: default courier set (the
+user's 32×32 sheet as style reference), pack donkey, horse breeds, Farkeeper classes.
+
+## v3.23 — THE MYTH IN THE FLESH (captured from MIVIM's Postman notes, 2026-09-08)
+- THE POSTMAN's return-to-the-city beat: the founder treated as a myth in the flesh ("I saw him
+  once, before the light, when I lived in unlit [city]"). Carry the spirit through GAMEPLAY —
+  the world reacts to the walker's LEGEND, citing the player's ACTUAL record, never through
+  dialogue screens. Start framing the mysterious protagonist.
+- Micro-cutscenes as cognitive signals only: a slow zoom for the FIRST line of dialogue, no
+  longer. Never bog gameplay down; flow with it.
+- Play as a rookie Waylighter who carries the player's overworld-simulation knowledge — we live
+  the gameplay through the character we create.
+- CHARACTER INVESTMENT SUITE [inventory, equip screen, creation screen, character editor]:
+  permadeath requires caring; the editor is essential — every real sandbox has one.
+- THE HANDOFF PARODY: the famous Postman scene (child holds the letter up; slow-mo horse trot;
+  zooms, angles; the classic SUPER ZOOM on the handoff). Absurdly over-produced effects against
+  the janky low-bit aesthetic = the joke and the identity. Short bursts of absurd, well-done
+  scenes beat long ones nobody watches. Our muscle is CODE — the effects are hand-controlled.
+- PIXELLAB SHELVED by directive: the current art style is a real aesthetic in its infancy.
+  Polish it comprehensively with the audited research (research-pixel-art-audited.md) EVERY time
+  the source is touched. No corner cutting, no shortcuts, no assumptions.

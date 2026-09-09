@@ -1,0 +1,273 @@
+# WAYLIGHT — Frontier Roadmap (post-testing notes, 2026-09-08)
+
+The player's post-testing verdicts and directives, captured in build order. Nothing here is optional
+colour — each line is a directive from play. Details not specified are to be completed per the game's
+theme and per common management/diplomacy mechanics (named references: Crusader Kings 3, Bannerlord 2).
+
+## v3.19 — THE BODY REMEMBERS (in build)
+The game must feel alive through INTERACTION, never through effect-spam. Screen shake and motion blur
+are the things players turn off; MIVIM environment effects are interactive or they are cut.
+- Cargo visuals on the player: complete overhaul. Authored looks for the default spawn items and a
+  thorough base set; gear (boots/coat/pack) visibly worn on the rig. Pixel methods per
+  `research-pixel-art-systems.md` (attachment swaps, cluster discipline, palette ramps).
+- MIVIM weather law, the two canonical examples:
+  - LEAVES ON THE WIND: a gust puts leaves in motion; leaves that hit the character model deflect or
+    stick on it for a moment; leaves that miss never change trajectory. Sparse and eloquent, never thick.
+  - SNOW ACCUMULATION: snow piles on the player's shoulders/head as a function of snowfall intensity
+    and how much they move; then melts. Weather is never "more/fewer raindrops".
+- Placement ghosts: every placeable (ladders first — they currently plop at random angles) hovers as a
+  semi-transparent blueprint of its eventual placement before the player commits. Applies to ALL
+  buildings/placed items.
+- Pause-on-minimize TOGGLE: for long trips, players can switch screens without the game pausing.
+- WOBBLE REWORK: far, far too common. Pushback matters, but frivolous wobbles must not cancel the
+  automation travel chain the player set up. This is an AUTOMATION mechanic, not an idle one: the
+  player builds their character/kit to automate the chain their way (map "go here, then here", chain
+  clicking a safe route); they run into trouble and see why full automation must be earned. There is
+  never just one way to accomplish this.
+
+## v3.20 — THE WORKING WORLD
+- LIVING PATHS: deliveries between two areas wear a natural foot path along the assumed traffic line
+  regardless of the player's walked route. The player's own steps accelerate wear visibly: trampled →
+  bare dirt → permanent (human intervention to regrow; grass dies, sharp rock smooths into vague
+  steps) — exaggerated for progression identity, realized over a few passes, widening to a full bare
+  footpath like the city-link paths. Paths feed NPC routing, are followable targets, and grant speed.
+- PATH UPGRADES: footpath → metal-scrap road → cobblestone → wood road, … Logistics get easier by this
+  progression (not the paver-only ladder).
+- COMPANION JOBS (Waylighter side): HAULER (huge capacity, slow → upgrades to DONKEY_CARAVAN, which
+  wants Farkeeper protection), MASON (cobblestone), FORRESTER (fells trees — REAL environment change,
+  wood for wood paths), PATH PRESSER (custom footpaths — automated exploration or player-assigned
+  click routes).
+- EARNER SKILLS (companion QOL, earned): LOOTER — companion loots anything entering the player's
+  vision (chests, items, lost cargo, nodes); upgrades: bigger packs → fully automated looting,
+  bringing large resource loads home to sell/build with.
+
+## v3.21 — THE BUILDS EARN THEIR GROUND
+- "I only use ladders." Structures must FEEL useful, never be required. NPC strongholds did nothing
+  while scrappers chased the player straight through them — builds act on pursuers.
+- Upgrade ladder per structure: cheap first upgrades with useful traits; full upgrades very helpful
+  but demanding real job-work and earning. Fully upgraded feels EARNED.
+- Any building big enough to house a room is enterable (safety, item placement), priced by the safety
+  it provides. Cheaper POBOX: dump items, leave donations.
+- DONATION VISIBILITY: donating demonstrably does something. A donated weapon arms an NPC waylighter;
+  ten armed and the area is measurably safer — and the player is told it is safer because of them.
+
+## v3.22 — KARMA & THE REPUBLIC (research first: CK3 / Bannerlord-class systems)
+- KARMA oversees two independent currencies: APPRECIATION (exists) and RENEGADE (new). Not good/bad —
+  each biased but independent (cowboys weren't universally hated; Han Solo was hated by many and loved
+  by few, until he was loved by many and hated by few). Renegade acts may leave appreciation
+  unchanged, or even raise it.
+- Fed by choices and missions: cutpurse jobs; smuggling runs (highleaf smokes out of the farm — caught
+  on delivery or not, each outcome lands differently per area); mercenary-guild work gated by weapons,
+  party, and training a fresh Waylighter lacks. Choices are SEEN and FELT in the world — butterfly
+  effects, never delivered through dialogue or text alone.
+- THE REPUBLIC OF CONNECTION — default members WAYLIGHT + FARKEEP. Founded when the Waylighters,
+  having intervened in the colossal Farlands famine, merged societies with the FARKEEPERS and
+  descended them from a mountain climate and wars neither man nor beast could face. The Farkeepers —
+  a larger, fiercely loyal, nordic mountain people (ancient men hardened by climate: elongated thighs,
+  broadened chests — NOT giants) — saw the light and changed their ways, but not their nature. The
+  Waylighters, no fools, had relied on mercenaries and bought corruption with them; in the Farkeepers
+  they saw allies and solution.
+- LORE CORRECTION (standing): ALL security/battle purpose transfers to FARKEEPERS — the militia riders
+  of v3.16 become Farkeepers wherever accounts say otherwise. Waylighters uphold connection, warmth,
+  love, loyalty, trust. Farkeepers equip the weapons, protect the society, quell / silence-the-light
+  of Renegade rebellions and towns lost to darkness, and can take towns by force.
+- DIPLOMACY: player-decided, player-controlled, affected by the Karma currencies.
+  Defaults — ABSOLUTE_ALLY (defend at all costs): Waylighters. ABSOLUTE_HOSTILE (shoot on sight):
+  Reapers, Cannibals.
+- Faction data to create, each with cultural + visual identity: REAPERS, RAIDERS, REBELS, CANNIBALS,
+  FLAME KEEPERS, IRON GIANTS.
+- Farkeeper companion classes: LONGBOWMEN (ranged security), PUGUGLY (bigger than most Farkeepers —
+  huge to Waylighters — bare-knuckle, surprising agility), RIFLE_RIDER (upgraded longbowman; requires
+  horse — introduce HORSE BREED DATA: real common breeds with stats reflecting their actual
+  strengths), RECON_RIDER (quick, low damage, automated exploration), BERSERKER (pistol + claymore).
+- Expansion door stays open: revisiting the Farlands, traversing the mountain to Farkeep, connecting
+  the Farkeepers' homeland with the allies won on the current map.
+
+## Standing laws gathered from these notes
+- Alive = interaction. No cheap ambient effects the player neither cares about nor touches.
+- New integrations require targeted identity, visually and conceptually. Factions require identities
+  in culture and design recognition.
+- Fill unlisted operational detail from genre knowledge, always bent to the theme.
+
+## PIXELLAB MCP — INTEGRATED (v3.20)
+The PixelLab MCP (https://api.pixellab.ai/mcp) is reachable from this cloud session by direct
+JSON-RPC over HTTP — `tools/pixellab.mjs` wraps it (list tools · call any tool · queue a character ·
+poll and save the PNG). Toolkit: characters (humanoid + quadruped with a HORSE template — the breed
+data and donkey), animations, top-down tilesets, PATH TILES, building kits, UI assets.
+STATUS: auth good, protocol good; the account has NO GENERATION CREDITS remaining — first asset pass
+fires the moment credits land. Asset law: generate → quantize to the game's palette bands → embed
+(rig-texel tables or data URIs), never hotlink. Queue for the first pass: default courier set (the
+user's 32×32 sheet as style reference), pack donkey, horse breeds, Farkeeper classes.
+
+## v3.23 — THE MYTH IN THE FLESH (captured from MIVIM's Postman notes, 2026-09-08)
+- THE POSTMAN's return-to-the-city beat: the founder treated as a myth in the flesh ("I saw him
+  once, before the light, when I lived in unlit [city]"). Carry the spirit through GAMEPLAY —
+  the world reacts to the walker's LEGEND, citing the player's ACTUAL record, never through
+  dialogue screens. Start framing the mysterious protagonist.
+- Micro-cutscenes as cognitive signals only: a slow zoom for the FIRST line of dialogue, no
+  longer. Never bog gameplay down; flow with it.
+- Play as a rookie Waylighter who carries the player's overworld-simulation knowledge — we live
+  the gameplay through the character we create.
+- CHARACTER INVESTMENT SUITE [inventory, equip screen, creation screen, character editor]:
+  permadeath requires caring; the editor is essential — every real sandbox has one.
+- THE HANDOFF PARODY: the famous Postman scene (child holds the letter up; slow-mo horse trot;
+  zooms, angles; the classic SUPER ZOOM on the handoff). Absurdly over-produced effects against
+  the janky low-bit aesthetic = the joke and the identity. Short bursts of absurd, well-done
+  scenes beat long ones nobody watches. Our muscle is CODE — the effects are hand-controlled.
+- PIXELLAB SHELVED by directive: the current art style is a real aesthetic in its infancy.
+  Polish it comprehensively with the audited research (research-pixel-art-audited.md) EVERY time
+  the source is touched. No corner cutting, no shortcuts, no assumptions.
+
+## v3.24 — THE WIDER WORLD & THE PRODUCTION (captured 2026-09-08 · SHIPPED same day — 477/24 green)
+> Shipped: the Cine engine + 90s research, THE RIDE, the globe with region pins + delivery badges,
+> the party of four + companion horses + THE POOL + the rescue ride + the town law, the sound
+> overhaul with the rain dial. Still open from this batch: the recon/outpost mission system itself
+> (the globe's REGIONS data shape is its foundation) and any further absurd-realism placements.
+- THE GLOBAL MAP: the whole current map is ONE REGION of Waylight. Add the global layer — not yet
+  populated — LAUGHABLY more realistic/advanced in render than everything else (the cartoon cut to
+  a fully painted frame; that contrast IS Waylight). Fixed-position but rotatable presentation.
+  Future home of the recon/outpost mission system (Frostpunk 1 first-outpost reference). Continue
+  the absurd-realism trend in targeted places at Claude's judgment.
+- NUMERIC DELIVERY BADGES on the classic map (and the global regional view, futureproofed): per-town
+  counts of deliverables on the player's back + companion inventories — unload the most at one stop.
+- PARTY: hire up to 3 companions (party of 4 total). Horses hireable/buyable for companions.
+- AUDIO: mute + volume for rain, and RESOURCE it — current rain is white radio static. Full SFX
+  overhaul: everything but the wraith eerie (keep, polish) is scaffolding to be replaced with
+  targeted, designed sound.
+- THE RIDE: The Postman firing-squad scene, parodied in-universe — a Waylighter caught behind
+  Reaper lines, a recon Waylighter watching with all of Haven's behind him, the scream, "RIDE,
+  WAYLIGHTER! RIIIIDE!", the camera veering out, the shots heard. Over-produced, short, targeted.
+- CINE ENGINE TOOLS: formalize the production kit for reuse — camera angles, cuts, dolly, slow
+  zooms, aesthetic treatments, timeScale — so every future parody scene is a shot list, not
+  bespoke code. Research 90s directing style (The Postman, Waterworld) as the framing blueprint.
+- DEATH REBALANCE: Waylighters die far too easily (~30 deliveries is not economically viable).
+  NEVER hunger/thirst death in town (immediate immunity); the party is the HP POOL — companions
+  are knocked out first in quarters, the player's character always falls LAST; and a downed party
+  gets a LAST-CHANCE RESCUE from the player's highest-appreciation town (success scales with that
+  appreciation; the riders rally the party and clear the field, or die trying — then it is real).
+- All of it leans on the existing systems and interacts coherently.
+
+## v3.25 — THE NAMES & THE EXILES (captured 2026-09-08 · SHIPPED same day — 497/25 green)
+The directive batch, verbatim-intent:
+
+**THE NAMES.**
+- "The World of Waylight" is WRONG for the global map menu — WAYLIGHT is the mythic civilization/
+  capital, not the world. Retitle such menus.
+- Waylight = the mythic utopia in the far lands, the ORIGINAL CAPITAL CITY of the Waylighters,
+  "first dawning of the last light [Waylight]" — where ALL waylights get their light from. Their
+  home region [TO BE NAMED] hosts the economic utopia. Some have tried to take what the
+  Waylighters give; some succeeded, some did not — but with the FARKEEPERS so intertwined in the
+  founding of the joint civilization (NOTES CONFIRM: **the Republic** — "the Republic's muscle,"
+  12c_factions.js), homeland security is solidified through migration and intermingling. The
+  Farkeepers could always defend what little they had (written into blood and society); the
+  Waylight society had too much and no way to defend it. Yin met yang — balance for each other.
+- Waylighters = Romans WITHOUT the conquest (spreading light, Roman aesthetic + intelligence);
+  Waylight City = ancient Rome. Farkeepers = alt-universe Viking/Celtic mountain people, by
+  nature huge/tall/muscular, from mountains (NOTES: the Farlands — "the Farlands famine").
+- The current/default map has NO formal land name — it must get one. (Editorial call, reversible:
+  **THE GREYMARCH** — the borderland march of the Grey; "the valley" stays as the colloquial.)
+- Regions/factions were lined out in the karma notes with a request to COMPLETE the rest of the
+  factions — Farkeepers ARE integrated (v3.22 FK ward/riders/fkIntro) but the globe's regions
+  ignored the lore; wire the globe to the REAL places (Waylight, the Farlands) and audit the
+  cascade for missing integrations.
+
+**THE PROTAGONIST → THE LAMPLIGHTER.**
+- The protagonist is the 'scorned hero' Waylighter — the ONE who chose the dark, cloaked torch:
+  THE EVER-ELUSIVE LAMPLIGHTER. Frame him FIRST (neat cut scenes); the LampLighter CLASS is
+  introduced ONLY AFTER the protagonist is well introduced/written. "Lamplighters should be the
+  protagonist's sort of 'rescue.'"
+- Lamplighters = Waylighter EXILES (rose up and chose the sword → exile). Freedom + hauling power
+  of Waylighters + long-range PRECISION fire. NOT melee, NOT brutes — hard-hitting SNIPERS.
+  Crafty, sneaky, hard to track; formidable wherever they train.
+- In exile they turned to the open world; in survival they found friends: a strange ally speaking
+  a raised tongue, emerged from the core of the earth through steam and copper — THE DIEFENBUNKER
+  SOCIETY (appeared in the darklands around the same time the Waylighters showed up; rumors, no
+  confirmation). In reality the Society took the Lamplighters in — the most level-headed of the
+  new world to these sheltered bunker pups. The Society has old-war weapons but not the will or
+  understanding of the new world; the Lamplighters supply both.
+- The Lamplighter name/lore OPENS TWO NEW FACTIONS: THE LAMPLIGHTER NOMADS (exiles so numerous
+  they are their own migrant faction, in all reaches of the Waylight universe — they even founded
+  a city/home of their own, findable through progression, story decisions, missions or
+  exploration) and THE DIEFENBUNKER SOCIETY.
+
+**THE DIEFENBUNKER SOCIETY.** The last of the old world — hundreds of years on, all of Canadian
+origin, NEVER said outright, all the hints given (C8s with the red leaf etched in the sights,
+leaders' pins, "a place called Canada... the last haven of the free world. Something about the
+cold, something about the water."). Highly educated, highly trained; the last political class so
+far down the line they almost stopped believing the old world existed. Our homage to FALLOUT —
+done correctly, properly. Dictionary: SBSN (Social Bunker Security Number), SBCA (Social Bunker
+Career Assignment). Three founding diary logs supplied (Douglas Reed, Prime Administer, 13 days
+post Unseal/New World Day — "we didn't find ruin... we found death we thought couldn't exist";
+Sarah O'Connel, Mechanic, 12 days post "whatever the opposite of hope is" — math said radiation
+had dropped OR food ran out (both at once; whichever gauge was faulty is up for debate), doors
+designed to unseal PERMANENTLY, no tech to reseal, "doors open until we get the welders up";
+Jimmy Butler, Enforcement Lieutenant, 16 days post NWD — red alert, C8s from the racks, the pins
+of the old times and the ancient ones). Arsenal: infantry small arms C8A3 (red leaf optic), C7A2
+(olive drab, C79 Elcan), C22 pistol in storage grease; THE LAMPLIGHTER ARSENAL — C14 Timberwolf
+(.338 Lapua bolt-action), C3A1 (legacy 7.62 bolt), C20 DMR (semi-auto 7.62); strategic assets —
+Bank of Canada bullion crates as blast-tunnel barricades, Federal Warning Centre comm arrays,
+radiation decon shower tunnels.
+
+**Standing:** add targeted, complete, cohesive; lean on existing systems (karma/renegade is the
+violence ledger the rifle writes to; the rescue system gains the exile lane; the Republic lore
+already in FACTIONS). All prior cued work (recon/outposts, remaining non-live factions) stays
+cued. WE ARE MIVIM : MIVIM ERA WE * STANDARDS.
+
+
+## v3.26 — THE CONTINENTAL MAP (captured 2026-09-08 mid-v3.25 · SHIPPED same day — 506/26 green)
+- The v3.24 globe is NOT what "global map" meant — global map does not literally mean a globe, and
+  the delivered artifact was not remotely the demanded quality. The scale ladder shipped wrong:
+  (1) the local area and (2) the entire world, with NO in-between.
+- THE GLOBE STAYS as an aesthetic FOURTH layer only — no purpose yet beyond marking the farthest
+  zoom-out of the NEW scale ladder. (Defect on record, to fix regardless: the atmosphere halo
+  clips SQUARE at the canvas edge — a pasted circular asset cut off at the edges with no padding,
+  shipped unexamined. Never again: padding around the asset, and LOOK at it.)
+- THE CONTINENTAL MAP is the ACTUAL developed map — the new middle scale, the real strategic
+  layer (and the recon system's future home).
+- Presentation law: designed at the ANGLE of the provided reference screenshots (Ace Combat 7
+  briefing tables) with a SIMILAR DEPTH of development — the tilted 3D wire-grid/holotable manner
+  of presenting the map. The AESTHETIC IS NOT MIRRORED; only the angle/manner of presentation.
+  The map must fit the game aesthetic we have built (LEDGERLIGHT: bone contours on void, gold for
+  the lit and ours, grey-blue for the dark, rust for trouble, chunky bracket labels, stepped
+  bands, no smooth gradients).
+- The references are screenshots of a 3D wire-grid style map. If that is the effect best
+  recreated in, do that — tweaked and incorporated into the game's aesthetic: contour-line
+  terrain, receding grid, region tint washes, leader-line labels, side data columns fed by REAL
+  ledger data, depth fade toward a horizon.
+- Scale ladder after v3.26: THE GREYMARCH (survey sheet) → THE CONTINENT (developed strategic
+  map) → THE KNOWN WORLD (globe, aesthetic-only farthest zoom).
+
+## v3.27 — THE ECOSYSTEM (captured 2026-09-08 · SHIPPED same day — 520/27 green)
+- Gameloop additions NEVER replace or overwrite cued work — they are reviewed and PLACED IN THE
+  CUE where the logic is best developed with the rest. There must be comprehensive cues still;
+  comprehensive requests were made. (Answered below: THE CUE, consolidated and ordered.)
+- Direct utilities and build items are TWO SEPARATE THINGS:
+  - PLAYER UTILITY ITEMS (what rides the pack);
+  - BUILDABLE SHELTERS and QOL BUILDINGS to fabricate (what holds the ground).
+- Both sides form a FACTORY-STYLE AUTOMATION LOOP: everything has a purpose, everything helps the
+  other, all things revolve in this ecosystem.
+
+## THE CUE (consolidated open queue, ordered by where each logic best develops — standing)
+1. **v3.27 THE ECOSYSTEM** (this batch): the utilities/works split made explicit, and the loop
+   CLOSED — works PRODUCE into the banked economy (terrain-sited, weather-aware, visible as earn
+   chips), utilities and further works CONSUME it, field jobs automate the middle, disrepair
+   pauses hands and repair feeds metal back in. Placed first: it leans directly on the field jobs
+   (v3.20), structure tiers (v3.21) and stock economy (v3.18), and everything after eats from it.
+2. **v3.28 RECON & OUTPOSTS**: the Frostpunk-1-style recon/outpost mission system over the
+   Darklands table's uncharted pins — recon riders (RECON_RIDER activates), the first outpost as a
+   remote WORKS cluster fed by the v3.27 loop (why the ecosystem ships first). Batched with the
+   automation completions that share its logistics: caravan protection contracts (Farkeepers),
+   path-presser custom player-clicked routes, LOOTER full automation.
+3. **v3.29 THE EXILE ROADS**: the Lamplighter Nomads' own city (found through progression, story
+   decisions, missions or exploration), the Diefenbunker as a walkable place, C3A1/C20 as gear
+   tiers, .338 trade lanes, and mercenary-guild work (weapon + party gated — the rifle and the
+   party of four now exist to gate it honestly).
+4. **v3.30 THE REPUBLIC IN FORCE**: the remaining factions LIVE (the Unlit's rebellions and the
+   Farkeeper quell/take-towns doctrine playable, Flame Keepers, Cannibals and Reapers as world
+   presences, Iron Giant sightings), full stance play/diplomacy, the Farkeeper combat kit
+   (longbowmen / rifle_rider / berserker), and the expansion door: the mountain to Farkeep.
+5. **THE ASSET PASS** (shelved by directive until PixelLab credits land): the audited pipeline on
+   the remaining older sprites; more gear stages on the rig.
+6. **Rolling opens inside every version** (never a version of their own): protagonist origin
+   fragments continue to drip; absurd-realism placements at judgment; pixel-art polish on every
+   source touch. WE ARE MIVIM : MIVIM ERA WE * STANDARDS.
