@@ -8,7 +8,6 @@
 const Economy = (() => {
   const { stations, stationOrder, T, goodsInfo } = DATA;
   const rand = Math.random;
-  const MOODS = ['critical', 'wanting', 'steady', 'thriving'];
   const MOOD_RANK = { critical: 0, wanting: 1, steady: 2, thriving: 3 };
   const known = id => S.stations[id].connected || S.stations[id].met;
 
@@ -26,20 +25,69 @@ const Economy = (() => {
     S.stations.mill.stock.food = 18; S.stations.mill.stock.textiles = 30;
     S.stations.green.stock.seeds = 20;
     for (const id of stationOrder) for (const g of stations[id].needs) S.stations[id].mood[g] = moodOf(S.stations[id].stock[g]);
+    for (const id of stationOrder) { const st = S.stations[id]; st.bag = 36 + rng() * 40; st.appr = 0; st.mealT = 0; }
     S.trip = { n: 0, lastT: -1e9 };
     S.wireLog = {};
-    S.mailNext = {};
+    S.militia = { unlocked: {}, cdT: 0 };
   }
   function ensure() { // saves from before the economy existed
     if (!S.stations.haven.stock) seed(U.rng((S.seed || 1) ^ 0x5EED));
     if (!S.trip) S.trip = { n: 0, lastT: -1e9 };
     if (!S.wireLog) S.wireLog = {};
-    if (!S.mailNext) S.mailNext = {};
+    if (S.stations.haven.bag === undefined) for (const id of stationOrder) { const st = S.stations[id]; st.bag = 36 + rand() * 40; st.appr = st.appr || 0; st.mealT = 0; }
+    if (!S.militia) S.militia = { unlocked: {}, cdT: 0 };
   }
-  /* a mailbag takes time to fill: once letters for a place are carried off, the next bag is a while coming */
+  /* accepting a mail run empties that much of the bag; the town starts writing again at once */
   function onAccept(def) {
-    if (def.item === 'letters') S.mailNext[`${def.from}>${def.to}`] = S.time + T.mailGap + rand() * T.mailGap * 0.6;
+    if (def.item === 'letters') { const st = S.stations[def.from]; st.bag = Math.max(0, (st.bag || 0) - T.bagCost); }
   }
+
+  /* ---------- THE POST: appreciation & mail tiers ----------
+     Letters are the Order's service — no fee, ever. They pay the walker in skill and the town in
+     APPRECIATION, a ladder of boons the town itself extends (persistent while earned, Vagrus-style). */
+  function apprLevel(id) {
+    const a = (S.stations[id].appr || 0);
+    let lv = 0;
+    for (let i = 0; i < T.apprTiers.length; i++) if (a >= T.apprTiers[i]) lv = i + 1;
+    return lv;   // 0..4 → apprNames
+  }
+  function addAppr(id, n) {
+    const st = S.stations[id];
+    const was = apprLevel(id);
+    st.appr = (st.appr || 0) + n;
+    if (n > 0 && typeof UI !== 'undefined' && UI.earn) UI.earn('appr', n, stations[id].name);
+    const now = apprLevel(id);
+    if (now > was) {
+      const name = T.apprNames[now];
+      UI.toast(`<b>${stations[id].name}</b> holds you <b>${name}</b> — ${apprPerkLine(now)}`, 'gold', 8000);
+      Systems.addMail(`${stations[id].name} — ${name.toLowerCase()}`, `The town talks. ${apprPerkLine(now)}.`);
+      Snd.sfx.accept();
+    }
+    return now > was ? now : null;
+  }
+  function apprPerkLine(lv) {
+    return lv === 1 ? 'a warm meal finds you whenever you arrive hungry'
+      : lv === 2 ? 'the town’s children run your mailbags to the gate (letters from here weigh nothing) and locals point out salvage nearby'
+      : lv === 3 ? 'the militia takes notice — a rider’s dispatch waits on the board'
+      : lv === 4 ? 'the town lamp burns for you, and post wages here are waived — they volunteer'
+      : '';
+  }
+  /* the walk decides the tier: LOCAL POST / LONG POST / GREY POST */
+  const tierCache = new Map();
+  function mailTier(from, to) {
+    const key = from + '>' + to, hit = tierCache.get(key);
+    if (hit && S.time - hit.t < 60) return hit.v;
+    const A = stations[from], B = stations[to];
+    const r = World.pathTime(A.x, A.y, B.x, B.y, true);
+    let grey = S.stations[to].dimmed || !!(S.quiet && S.quiet[to]);   // a dark or starving destination is the grey walk; merely-unlit neighbours are not
+    if (!grey && r.path) for (const [x, y] of r.path) if (World.mistAt(x, y) > T.wraithMist) { grey = true; break; }
+    let scrap = false;
+    if (!grey && r.path) for (const [x, y] of r.path) { for (const c of DATA.camps) if (!S.camps[c.id].pacified && U.dist(x, y, c.x, c.y) < c.r) { scrap = true; break; } if (scrap) break; }
+    const v = grey ? 3 : (r.seconds > 300 || scrap) ? 2 : 1;
+    tierCache.set(key, { t: S.time, v });
+    return v;
+  }
+  const TIER_TAG = [null, 'LOCAL POST', 'LONG POST', 'GREY POST'];
 
   /* ---------- reading the market ---------- */
   function moodOf(v) { return v < 15 ? 'critical' : v < 35 ? 'wanting' : v < 65 ? 'steady' : 'thriving'; }
@@ -53,7 +101,6 @@ const Economy = (() => {
   function needMul(id, good) { const m = needMood(id, good); return m ? T.needMul[m] : 1; }
   const pulses = [], pulseT = {};   // light caravans on the wire — the flow, drawn
   function makersOf(good) { return stationOrder.filter(id => stations[id].makes.includes(good)); }
-  function dim(id) { return stationMood(id) === 'critical'; }
   /* how strongly the wire carries between two connected stations: roads and chartered porters multiply it */
   function flowMul(a, b) {
     let m = 1;
@@ -78,6 +125,12 @@ const Economy = (() => {
       // consumption: people eat, break tools, burn cells. the unconnected ration themselves — half rate
       const drain = T.stockDrain * def.pop * (st.connected ? 1 : 0.5) * dt;
       for (const g of def.needs) st.stock[g] = Math.max(0, st.stock[g] - drain);
+      // the mailbag: the town writes on its own; a Letter runner on the post doubles the pen speed
+      if (st.bag !== undefined && st.bag < 100) {
+        const runner = S.npcs && S.npcs.some(n => n.state === 'post' && n.at === id && n.job === 'runner' && !n.hungry);
+        st.bag = Math.min(100, st.bag + (T.bagFill + (runner ? T.bagRunner : 0)) * dt);
+      }
+      if (st.mealT > 0) st.mealT -= dt;
       // the wire: what connected neighbours make flows in, slowly
       if (st.connected) {
         for (const g of def.needs) {
@@ -182,15 +235,128 @@ const Economy = (() => {
         out.push({ id: `mk_${good}_${to}`, from: stId, to, item: good, n, likesMul: 1, express: mood === 'critical', premium: false, mood, urgency: MOOD_RANK[mood] });
       }
     }
-    // letters go everywhere people are — light, cheap, and they say something when they land. a bag per place, now and then
-    for (const to of dests) if (!active.has(`letters>${to}`) && S.time >= (S.mailNext[`${stId}>${to}`] || 0)) out.push({ id: `lt_${to}`, from: stId, to, item: 'letters', n: 2, likesMul: T.letterMul, express: false, premium: false, mood: null, urgency: 9 });
+    // THE POST: the bag posts runs by how full it is — one nearby, then a long haul, then the grey.
+    // Always ongoing, never filler: no fee, tiered skill and appreciation instead.
+    {
+      const st = S.stations[stId];
+      const byTier = [null, [], [], []];
+      for (const to of dests) if (!active.has(`letters>${to}`)) byTier[mailTier(stId, to)].push(to);
+      const near = arr => arr.sort((a, b2) => U.dist(stations[stId].x, stations[stId].y, stations[a].x, stations[a].y) - U.dist(stations[stId].x, stations[stId].y, stations[b2].x, stations[b2].y))[0];
+      const post = (to, tier) => out.push({ id: `lt_${to}`, from: stId, to, item: 'letters', n: 2, likesMul: 0, service: true, tier, express: false, premium: false, mood: null, urgency: 9 });
+      const bag = st.bag || 0;
+      if (bag >= T.bagCost) { const to = near(byTier[1]) || near(byTier[2]) || near(byTier[3]); if (to) post(to, mailTier(stId, to)); }
+      if (bag >= T.bagCost * 2) { const to = near(byTier[2]) || byTier[3][0]; if (to && !out.some(o => o.to === to && o.item === 'letters')) post(to, mailTier(stId, to)); }
+      if (bag >= 99) { const to = byTier[3][0] || byTier[2][1]; if (to && !out.some(o => o.to === to && o.item === 'letters')) post(to, mailTier(stId, to)); }
+      // the militia's own letter: at HONOURED the riders trust you with a dispatch — the gate to their boon
+      if (apprLevel(stId) >= 3 && !(S.militia.unlocked || {})[stId] && !S.orders.active.some(o => o.item === 'dispatch' && o.from === stId) && !active.has(`dispatch>` + stId)) {
+        const to = near(byTier[2]) || byTier[3][0] || near(byTier[1]);
+        if (to) out.push({ id: `md_${stId}`, from: stId, to, item: 'dispatch', n: 1, likesMul: 0, service: true, militia: stId, tier: mailTier(stId, to), express: false, premium: false, mood: null, urgency: -0.5 });
+      }
+    }
+    // THE SHAPES OF WORK (the Greenhouse opens them): the same walk, different questions
+    if (S.flags && S.flags.unlocks && S.flags.unlocks.shapes) {
+      // CIRCUIT — one contract, many doors; every crate loads NOW. The pack is the puzzle.
+      if (S.stations[stId].stars >= 2 && dests.length >= 3 && !S.orders.active.some(o => o.circuit && o.from === stId)) {
+        const legs = circuitLegs(stId, dests, active);
+        if (legs.length >= 2) out.push({ id: `cc_${stId}`, from: stId, to: legs[0].to, circuit: true, legs, item: legs[0].item, n: legs[0].n, likesMul: 1, express: false, premium: false, mood: null, urgency: 0.5 });
+      }
+      // CONVOY — the cargo is a person: a junior walker who needs the road walked with them
+      if (!S.convoy && S.stations[stId].connected && !S.orders.active.some(o => o.convoy)) {
+        const to = convoyDest(stId, dests);
+        if (to) out.push({ id: `cv_${stId}_${to}`, from: stId, to, convoy: true, item: null, n: 0, likesMul: 1.2, express: false, premium: false, mood: null, urgency: 0.8 });
+      }
+      // SALVAGE — a wreck out in the deep grey holds what this town is shortest of
+      if (!S.orders.active.some(o => o.salvage && o.from === stId)) {
+        const sv = salvagePost(stId);
+        if (sv) out.push({ id: `sv_${stId}`, from: stId, to: stId, salvage: true, item: sv.good, n: 0, site: sv.site, likesMul: 1, express: false, premium: false, mood: needMood(stId, sv.good), urgency: 0.9 });
+      }
+    }
     // a station that fell silent: a core from here relights it
-    for (const q of Object.keys(S.quiet || {})) if (S.quiet[q] && !S.stations[q].connected && !S.orders.active.some(o => o.relight === q)) out.push({ id: `rl_${q}`, from: stId, to: q, item: 'core', n: 1, likesMul: 2.0, express: false, premium: false, relight: q, title: `Relight ${stations[q].name}`, urgency: -1 });
+    /* v3.32 — a town that went dark BY CHOICE takes no core: the Unlit are answered by doctrine
+       (the quell or the parley), never by logistics. Only starved towns post the relight walk. */
+    for (const q of Object.keys(S.quiet || {})) if (S.quiet[q] && !S.stations[q].connected && !(typeof Republic !== 'undefined' && Republic.isUnlit(q)) && !S.orders.active.some(o => o.relight === q)) out.push({ id: `rl_${q}`, from: stId, to: q, item: 'core', n: 1, likesMul: 2.0, express: false, premium: false, relight: q, title: `Relight ${stations[q].name}`, urgency: -1 });
     // special postings (crises) kept on the old list
     for (const o of (S.orders.avail[stId] || [])) out.push(o);
     out.sort((a, b) => a.urgency - b.urgency);
     return out.slice(0, 8);
   }
+  /* ---------- THE SHAPES OF WORK: what gets posted, and where ---------- */
+  /* CIRCUIT legs: a nearest-neighbour chain through 2-3 stations that want what this one makes */
+  function circuitLegs(stId, dests, active) {
+    const A = stations[stId];
+    const cands = [];
+    for (const good of stations[stId].makes) for (const to of dests) {
+      if (!stations[to].needs.includes(good) || active.has(`${good}>${to}`)) continue;
+      const m = needMood(to, good);
+      if (m === 'thriving' || m === null) continue;
+      if (!cands.some(c => c.to === to)) cands.push({ to, item: good, n: m === 'steady' ? 1 : 2, mood: m });
+    }
+    if (cands.length < 2) return [];
+    const legs = [];
+    let px = A.x, py = A.y;
+    while (cands.length && legs.length < 3) {
+      cands.sort((a, b) => U.dist(px, py, stations[a.to].x, stations[a.to].y) - U.dist(px, py, stations[b.to].x, stations[b.to].y));
+      const l = cands.shift(); legs.push(l);
+      px = stations[l.to].x; py = stations[l.to].y;
+    }
+    return legs;
+  }
+  /* CONVOY: the escort needs a route their feet can take — found by the pathfinder, no deep grey on it */
+  const dryCache = new Map();
+  function convoyDest(stId, dests) {
+    const A = stations[stId];
+    const conn = dests.filter(id => S.stations[id].connected)
+      .sort((a, b) => U.dist(A.x, A.y, stations[a].x, stations[a].y) - U.dist(A.x, A.y, stations[b].x, stations[b].y));
+    for (const to of conn) {
+      const key = stId + '>' + to, hit = dryCache.get(key);
+      let ok;
+      if (hit && S.time - hit.t < 90) ok = hit.v;
+      else {
+        const r = World.pathTime(A.x, A.y, stations[to].x, stations[to].y, true, Systems.walkOpts ? Systems.walkOpts(true) : null);
+        ok = !!r.found;
+        if (ok && r.path) for (const [x, y] of r.path) if (World.mistAt(x, y) > T.wraithMist) { ok = false; break; }
+        dryCache.set(key, { t: S.time, v: ok });
+      }
+      if (ok) return to;
+    }
+    return null;
+  }
+  /* SALVAGE: a wreck site in the deep grey, 900-1400u out — stable sweep, cached */
+  const siteCache = new Map();
+  function salvageSite(stId) {
+    const hit = siteCache.get(stId);
+    if (hit && S.time - hit.t < 120) return hit.v;
+    const A = stations[stId];
+    let v = null;
+    outer:
+    for (let ring = 0; ring < 3; ring++) {
+      const R = 950 + ring * 220;
+      for (let i = 0; i < 14; i++) {
+        const a = (i / 14) * Math.PI * 2 + stId.length * 0.7;
+        const x = A.x + Math.cos(a) * R, y = A.y + Math.sin(a) * R;
+        if (x < 200 || y < 200 || x > DATA.W - 200 || y > DATA.H - 200) continue;
+        if (World.mistBase(x, y) <= 0.5) continue;
+        const t = World.terrainAt(x, y);
+        if (t.water || t.blocked) continue;
+        let nearSt = false;
+        for (const id2 of stationOrder) if (U.dist(x, y, stations[id2].x, stations[id2].y) < 340) { nearSt = true; break; }
+        if (nearSt) continue;
+        v = { x: Math.round(x), y: Math.round(y) };
+        break outer;
+      }
+    }
+    siteCache.set(stId, { t: S.time, v });
+    return v;
+  }
+  function salvagePost(stId) {
+    // the town's worst shortage names the prize; comfortable towns don't send walkers into the grey
+    let worst = null, wv = 101;
+    for (const g of stations[stId].needs) { const s2 = stockOf(stId, g); if (s2 !== null && s2 < wv) { wv = s2; worst = g; } }
+    if (!worst || wv > 70) return null;
+    const site = salvageSite(stId);
+    return site ? { good: worst, site } : null;
+  }
+
   function needsOf(id) { return stations[id].needs.map(g => ({ good: g, name: goodsInfo[g].name, stock: stockOf(id, g), mood: needMood(id, g), makers: makersOf(g), knownMakers: makersOf(g).filter(mk => known(mk)) })); }
   function letterLine() { return DATA.letterLines[Math.floor(rand() * DATA.letterLines.length)]; }
   function dayPhase() { // 0..1 through the day; night is the last 40%
@@ -198,5 +364,5 @@ const Economy = (() => {
     return { t, night: t > 0.6, dusk: t > 0.52 && t <= 0.6, dawn: t < 0.06, label: t < 0.06 ? 'dawn' : t < 0.52 ? 'day' : t <= 0.6 ? 'dusk' : 'night', nightness: t > 0.6 ? Math.min(1, (t - 0.6) / 0.08) * Math.min(1, (1 - t) / 0.05 + 0.01) : 0 };
   }
 
-  return { seed, ensure, update, onAccept, moodOf, stockOf, needMood, stationMood, needMul, makersOf, dim, flowMul, onDeliver, chainStep, ordersFor, needsOf, letterLine, crash, goQuiet, dayPhase, MOOD_RANK, pulses };
+  return { seed, ensure, update, onAccept, stockOf, needMood, stationMood, needMul, flowMul, onDeliver, chainStep, ordersFor, needsOf, letterLine, crash, dayPhase, pulses, apprLevel, addAppr, apprPerkLine, mailTier, TIER_TAG };
 })();

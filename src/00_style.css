@@ -85,6 +85,71 @@ canvas#game { position:absolute; inset:0; width:100%; height:100%; display:block
     -2px 4px 0 rgba(0,0,0,.45), 2px 4px 0 rgba(0,0,0,.45), 0 5px 0 rgba(0,0,0,.45); }
 .tag { font:800 10px var(--ui); letter-spacing:.1em; text-transform:uppercase; color:var(--bone-faint); }
 .gold { color:var(--gold); } .lumen { color:var(--lumen); } .rust { color:var(--rust); }
+/* v3.29 — THE MEMORIAL SHEET: the Roll of the Order as playercards. LEDGERLIGHT paper — bone on
+   the void, gold for the remembered, the register's mono for the numbers. Grand stones read
+   larger on paper too. */
+#memHead h2 { font:600 26px var(--disp); color:var(--bone);
+  display:inline-block; background:#161d27; padding:2px 14px 4px; margin:2px 2px 6px 0;
+  box-shadow:-2px 0 0 var(--line), 2px 0 0 var(--line), 0 -2px 0 var(--line), 0 2px 0 var(--line),
+    0 5px 0 rgba(0,0,0,.5), inset 1px 1px 0 rgba(255,236,190,.08), inset -1px -1px 0 rgba(0,0,0,.35); }
+#memHead .memLine { font:italic 13.5px var(--disp); color:var(--gold-hot); margin-top:6px; max-width:520px; line-height:1.5; }
+#memBody { display:grid; grid-template-columns:repeat(auto-fill, minmax(228px, 1fr)); gap:10px; }
+.memCard { border:1px solid var(--line2); border-top:3px solid var(--line); padding:12px 12px 10px; text-align:center;
+  background:#12171f url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4'%3E%3Crect width='4' height='4' fill='%230f141b'/%3E%3Crect x='0' y='0' width='1' height='1' fill='%23131a23'/%3E%3Crect x='2' y='2' width='1' height='1' fill='%23131a23'/%3E%3C/svg%3E") repeat; background-size:4px 4px; image-rendering:pixelated; }
+.memCard.grand { border-top-color:var(--gold); box-shadow:inset 0 1px 0 rgba(255,201,120,.14); }
+.memCard.unraised { opacity:.55; border-style:dashed; }
+.memCard .memPortrait { margin-bottom:6px; }
+.memCard .memName { font:600 16px var(--disp); color:var(--bone); }
+.memCard.grand .memName { color:var(--gold-hot); }
+.memCard .memCheat { font:700 8px var(--mono); letter-spacing:.12em; color:var(--rust); border:1px solid rgba(217,107,79,.5); padding:0 4px; vertical-align:2px; }
+.memCard .memCls { font:11.5px var(--ui); color:var(--bone-dim); margin-top:1px; }
+.memCard .memNums { font:700 11px var(--mono); color:var(--bone-dim); margin-top:5px; }
+.memCard .memFate { font:italic 12px var(--disp); color:var(--bone-faint); margin-top:4px; }
+.memCard .memStamp { font:800 9px var(--mono); letter-spacing:.2em; color:var(--gold); margin-top:7px; border-top:1px solid var(--line2); padding-top:6px; }
+.memCard.unraised .memStamp { color:var(--bone-faint); }
+
+/* v3.31 — THE DELIVERY LEDGERS: three papers over one policy store. The mark boxes are pressed
+   plates in the doctrine's grammar — on is gold, off is a groove, MIXED is the half-fill every
+   sandbox filter tree speaks. */
+.lgRow { display:flex; padding:7px 2px; border-bottom:1px solid rgba(233,226,208,.06); }
+.lgGroup { border-left:2px solid var(--line2); margin:2px 0 2px 2px; }
+.lgIndent { padding-left:26px; }
+.lgBox { display:inline-block; width:15px; height:15px; margin:0 4px; vertical-align:-2px; cursor:pointer; background:rgba(0,0,0,.55); position:relative; flex:none;
+  box-shadow:-2px 0 0 var(--line2), 2px 0 0 var(--line2), 0 -2px 0 var(--line2), 0 2px 0 var(--line2), inset 1px 1px 0 rgba(0,0,0,.6); }
+.lgBox:hover { box-shadow:-2px 0 0 var(--line), 2px 0 0 var(--line), 0 -2px 0 var(--line), 0 2px 0 var(--line), inset 1px 1px 0 rgba(0,0,0,.6); }
+.lgBox.on { background:var(--gold);
+  box-shadow:-2px 0 0 var(--line), 2px 0 0 var(--line), 0 -2px 0 var(--line), 0 2px 0 var(--line), inset 1px 1px 0 rgba(255,246,220,.5), inset -1px -1px 0 rgba(90,50,10,.45); }
+.lgBox.on::after { content:''; position:absolute; left:4px; top:4px; width:7px; height:7px; background:#1a1206; }
+.lgBox.mixed { background:rgba(255,181,79,.28); }
+.lgBox.mixed::after { content:''; position:absolute; left:3px; top:6px; width:9px; height:3px; background:var(--gold); }
+.lgTreeRow { display:flex; align-items:center; gap:4px; padding:5px 2px; border-bottom:1px solid rgba(233,226,208,.05); }
+.lgTreeRow.lgItem .lgName { color:var(--bone-dim); font-size:13px; }
+.lgTreeRow.lgFound { background:rgba(255,201,120,.12); border-left:2px solid var(--gold); }
+.lgTreeRow.lgEmpty { border-bottom:0; }
+.lgTwist { width:16px; text-align:center; cursor:pointer; color:var(--bone-faint); font:700 12px var(--mono); flex:none; }
+.lgTwist:hover { color:var(--gold); }
+.lgName { font:600 14px var(--ui); color:var(--bone); flex:1; min-width:0; }
+.lgLine { font:italic 11px var(--disp); color:var(--bone-faint); flex:2; }
+.lgMarks { display:flex; gap:0; flex:none; padding-right:6px; }
+.lgMarks .lgBox { margin:0 17px; }   /* 49px column pitch — full verb words fit the heads */
+.lgHead { display:flex; align-items:center; gap:4px; padding:4px 2px 8px; border-bottom:2px solid var(--line); margin-bottom:4px; }
+.lgHead .lgMarks { gap:0; }
+.lgBoxHead { font:800 8.5px var(--mono); letter-spacing:.08em; color:var(--bone-faint); width:49px; text-align:center; }
+.lgSearchWrap { position:relative; margin:4px 0 10px; }
+.lgSearch { width:100%; font:600 13px var(--ui); color:var(--bone); background:rgba(0,0,0,.35); border:1px solid var(--line2); padding:7px 10px; }
+.lgSearch:focus { outline:none; border-color:var(--gold); }
+.lgHits { position:absolute; left:0; right:0; top:100%; z-index:5; background:var(--panel2); border:2px solid var(--line); box-shadow:var(--chunk); }
+.lgHit { padding:6px 10px; font:600 13px var(--ui); color:var(--bone-dim); cursor:pointer; }
+.lgHit:hover, .lgHit.first { color:var(--gold-hot); background:rgba(255,201,120,.08); }
+.lgChips { display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }
+.lgChip { font:700 11px var(--ui); color:var(--gold); border:1px solid var(--line); padding:2px 8px; cursor:pointer; background:rgba(255,201,120,.06); }
+.lgChip:hover { color:var(--rust); border-color:var(--rust); }
+
+/* v3.28b — the fault chip: a pinned diagnostic the player can read back to the Order verbatim.
+   Non-blocking by law: it can never eat a click. */
+#faultChip { position:fixed; left:10px; bottom:10px; z-index:60; pointer-events:none; max-width:min(560px, 80vw);
+  padding:6px 10px; background:rgba(20,16,10,.92); border:1px solid var(--rust); color:var(--rust);
+  font:700 10px ui-monospace, Menlo, monospace; letter-spacing:.06em; }
 .num { font-family:var(--mono); font-variant-numeric:tabular-nums; }
 ::-webkit-scrollbar { width:8px; }
 ::-webkit-scrollbar-thumb { background:rgba(233,226,208,.16); }
@@ -199,10 +264,6 @@ canvas#game { position:absolute; inset:0; width:100%; height:100%; display:block
 #barTop { top:0; } #barBot { bottom:0; }
 .cine .bar { height:9vh; }
 .cine #toasts, .cine #guide { opacity:0; transition:opacity .4s; }
-#cineTitle { position:absolute; left:0; right:0; bottom:12vh; text-align:center; z-index:26; opacity:0; transition:opacity 1s; pointer-events:none; }
-#cineTitle.show { opacity:1; }
-#cineTitle .big { font:800 34px var(--disp); color:var(--gold-hot); text-shadow:3px 3px 0 rgba(0,0,0,.6); }
-#cineTitle .small { font:13px var(--ui); letter-spacing:.2em; text-transform:uppercase; color:var(--bone-dim); margin-top:4px; }
 
 /* ---------- modal chrome ---------- */
 .overlay { position:fixed; inset:0; z-index:40; display:flex; align-items:center; justify-content:center;
@@ -360,6 +421,51 @@ canvas#game { position:absolute; inset:0; width:100%; height:100%; display:block
 #mapFoot .k { margin:0 4px 0 0; }
 #mapCanvasWrap { flex:1; position:relative; overflow:hidden; cursor:grab; }
 #mapCanvasWrap:active { cursor:grabbing; }
+/* v3.24 — the world view: a shaded planet in a paper-and-texel game. deliberate. */
+#mapViewBtns { display:flex; gap:0; border:2px solid var(--line); }
+.viewBtn { font:700 11px var(--mono); letter-spacing:1.5px; padding:6px 12px; background:transparent;
+  color:var(--bone-faint); border:0; cursor:pointer; }
+.viewBtn.on { background:var(--gold); color:#0a0e14; }
+.viewBtn:not(.on):hover { color:var(--bone); }
+/* v3.26 — the briefing table: the continent at the lean, the real middle scale */
+#contWrap { flex:1; position:relative; overflow:hidden; background:#05070b; cursor:grab; }
+#contWrap:active { cursor:grabbing; }
+#cont { position:absolute; inset:0; }
+#contCap { position:absolute; left:0; right:0; bottom:10px; text-align:center;
+  font:600 11px var(--mono); letter-spacing:2px; color:var(--bone-faint); pointer-events:none; }
+/* v3.28 — the frontier desk: a working sheet pinned to the table's corner. LEDGERLIGHT paper:
+   bone text on the void, gold for the actionable, the register's mono voice. */
+#contPanel { position:absolute; right:22px; bottom:64px; width:min(390px, 84vw); z-index:5;
+  background:rgba(9,12,17,.94); border:2px solid var(--line); box-shadow:var(--chunk);
+  padding:12px 14px 14px; font:12px/1.55 ui-monospace, Menlo, monospace; color:var(--bone-dim); }
+#contPanel .fdHead { display:flex; justify-content:space-between; align-items:baseline;
+  font:700 12px ui-monospace, Menlo, monospace; letter-spacing:.14em; color:var(--gold-hot);
+  border-bottom:1px solid var(--line); padding-bottom:7px; margin-bottom:9px; }
+#contPanel .fdX { background:none; border:1px solid var(--line2); color:var(--bone-faint);
+  font:11px ui-monospace, Menlo, monospace; width:20px; height:20px; cursor:pointer; padding:0; }
+#contPanel .fdX:hover { color:var(--rust); border-color:var(--rust); }
+#contPanel .fdLine { margin-bottom:8px; color:var(--bone); }
+#contPanel .fdLine.dim { color:var(--bone-faint); }
+#contPanel .fdLine b { color:var(--gold-hot); }
+#contPanel .fdBank { font-size:10px; letter-spacing:.06em; color:var(--bone-faint); border:1px dashed var(--line2);
+  padding:4px 7px; margin-bottom:9px; }
+#contPanel .fdBank b { color:var(--bone); }
+#contPanel .fdBtn { display:block; width:100%; text-align:center; cursor:pointer; margin-top:2px;
+  font:800 11px ui-monospace, Menlo, monospace; letter-spacing:.1em; color:#1a1206; background:var(--gold);
+  border:none; padding:8px 10px;
+  box-shadow:-2px 0 0 #c98a30, 2px 0 0 #c98a30, 0 -2px 0 var(--gold-hot), 0 2px 0 #c98a30, 0 4px 0 rgba(0,0,0,.5); }
+#contPanel .fdBtn:hover { background:var(--gold-hot); }
+#contPanel .fdBtn:active { transform:translateY(2px); box-shadow:-2px 0 0 #c98a30, 2px 0 0 #c98a30, 0 -2px 0 #c98a30, 0 2px 0 #c98a30, 0 2px 0 rgba(0,0,0,.5); }
+#contPanel .fdBtn.on { background:#141a23; color:var(--gold);
+  box-shadow:-2px 0 0 var(--line), 2px 0 0 var(--line), 0 -2px 0 var(--line), 0 2px 0 var(--line), 0 4px 0 rgba(0,0,0,.5); }
+#globeWrap { flex:1; position:relative; overflow:hidden; background:#020308;
+  display:flex; align-items:center; justify-content:center; cursor:grab; }
+#globeWrap:active { cursor:grabbing; }
+#globeStars { position:absolute; inset:0; width:100%; height:100%; }
+#globe { position:relative; image-rendering:auto; }
+#globeOv { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); }
+#globeCap { position:absolute; left:0; right:0; bottom:10px; text-align:center;
+  font:600 11px var(--mono); letter-spacing:2px; color:var(--bone-faint); pointer-events:none; }
 canvas#map { position:absolute; inset:0; width:100%; height:100%; }
 #mapTip { position:absolute; pointer-events:none; padding:8px 12px; font:13px var(--ui); display:none; max-width:240px; }
 #mapTip h5 { font:600 15px var(--disp); color:var(--gold-hot); }
@@ -378,7 +484,8 @@ canvas#map { position:absolute; inset:0; width:100%; height:100%; }
 #introCard p b { color:var(--gold); }
 
 /* ---------- build bar ---------- */
-#buildBar { position:absolute; left:50%; bottom:70px; transform:translateX(-50%); display:flex; gap:8px; padding:10px; z-index:20; }
+#buildBar { position:absolute; left:50%; bottom:70px; transform:translateX(-50%); display:flex; gap:8px; padding:10px; z-index:20;
+  flex-wrap:wrap; justify-content:center; max-width:min(1180px, 92vw); }   /* v3.27: nine works wrap, never spill */
 .buildOpt { width:112px; padding:9px 8px; text-align:center; cursor:pointer; border:none; background:#121820; margin:1px 1px 3px;
   box-shadow:-1px 0 0 var(--line2), 1px 0 0 var(--line2), 0 -1px 0 var(--line2), 0 1px 0 var(--line2), 0 3px 0 rgba(0,0,0,.5), inset 0 1px 0 rgba(255,236,190,.06); }
 .buildOpt:hover { background:#1a2029;
@@ -481,6 +588,25 @@ input[type=range]::-moz-range-thumb { width:12px; height:14px; border:none; bord
 #saveNote { position:absolute; right:18px; top:84px; font:11px var(--ui); letter-spacing:.1em; text-transform:uppercase; color:var(--bone-faint); opacity:0; transition:opacity .4s; }
 #saveNote.show { opacity:.8; }
 
+/* ---------- v3.20: the EARN FEED — every coin is SEEN landing ---------- */
+#earnFeed { position:absolute; right:18px; top:104px; display:flex; flex-direction:column; gap:5px; align-items:flex-end; z-index:18; pointer-events:none; }
+.earnChip { display:flex; align-items:center; gap:7px; padding:4px 10px 4px 7px; background:var(--panel2);
+  font:800 14px var(--mono); animation:earnIn .28s cubic-bezier(.2,1.5,.4,1); }
+.earnChip canvas { image-rendering:pixelated; display:block; }
+.earnChip .lbl { font:700 10px var(--ui); letter-spacing:.08em; text-transform:uppercase; color:var(--bone-faint); }
+.earnChip.trust { color:var(--gold-hot);
+  box-shadow:-2px 0 0 var(--line), 2px 0 0 var(--line), 0 -2px 0 var(--line), 0 2px 0 var(--line), 0 4px 0 rgba(0,0,0,.5), inset 1px 1px 0 rgba(255,236,190,.12); }
+.earnChip.appr { color:#e8a08a;
+  box-shadow:-2px 0 0 #7e4a3a, 2px 0 0 #7e4a3a, 0 -2px 0 #7e4a3a, 0 2px 0 #7e4a3a, 0 4px 0 rgba(0,0,0,.5), inset 1px 1px 0 rgba(255,220,200,.1); }
+.earnChip.mat { color:#b9c2c8;
+  box-shadow:-2px 0 0 var(--line2), 2px 0 0 var(--line2), 0 -2px 0 var(--line2), 0 2px 0 var(--line2), 0 4px 0 rgba(0,0,0,.5), inset 1px 1px 0 rgba(255,236,190,.07); }
+.earnChip.renegade { color:#d9736b;
+  box-shadow:-2px 0 0 #6e2a2a, 2px 0 0 #6e2a2a, 0 -2px 0 #6e2a2a, 0 2px 0 #6e2a2a, 0 4px 0 rgba(0,0,0,.5), inset 1px 1px 0 rgba(255,190,180,.08); }
+.earnChip.bump { animation:earnBump .22s ease-out; }
+.earnChip.out { opacity:0; transform:translateX(10px); transition:opacity .45s, transform .45s; }
+@keyframes earnIn { 0% { opacity:0; transform:translateX(26px) scale(1.25); } 100% { opacity:1; transform:none; } }
+@keyframes earnBump { 0% { transform:scale(1.18); } 100% { transform:none; } }
+
 @media (max-width:760px) {
   #compass { display:none; }
   #guide { top:12px; max-width:92vw; }
@@ -488,6 +614,11 @@ input[type=range]::-moz-range-thumb { width:12px; height:14px; border:none; bord
   #cargoPanel { width:220px; }
   #orderTray { width:200px; }
 }
+
+/* v3.25 — bunker paper: the Society's record reads like a form that outlived its filing cabinet */
+.sbsn { font:12px/1.7 var(--mono); letter-spacing:.04em; color:#a9c2a4; background:rgba(70,90,66,.12);
+  border:1px solid #3a4a38; border-left:3px solid #8fb08a; padding:9px 12px; margin-top:6px; }
+.sbsn hr { border:0; border-top:1px dashed #3a4a38; margin:7px 0; }
 
 /* ---------- briefing & hint strip ---------- */
 #maraPhoto { flex:none; text-align:center; align-self:flex-start; margin-left:14px; }
@@ -587,3 +718,152 @@ input[type=range]::-moz-range-thumb { width:12px; height:14px; border:none; bord
 .prompt.deliver .k { color:#1a1206; background:var(--gold);
   box-shadow:-1px 0 0 #c98a30, 1px 0 0 #c98a30, 0 -1px 0 #c98a30, 0 1px 0 #c98a30, 0 3px 0 rgba(26,18,6,.6); }
 .prompt.deliver:hover { color:#fff2d0; }
+
+
+/* ---------- v3.23: the look swatches — the coat is yours ---------- */
+.lookRow { display:flex; gap:6px; align-items:center; margin:0 0 8px; flex-wrap:wrap; }
+.lookRow .tag { width:52px; }
+.lsw { width:22px; height:22px; cursor:pointer; border:none; padding:0; position:relative;
+  box-shadow:-2px 0 0 var(--line2), 2px 0 0 var(--line2), 0 -2px 0 var(--line2), 0 2px 0 var(--line2), inset 1px 1px 0 rgba(255,255,255,.12), inset -1px -1px 0 rgba(0,0,0,.35); }
+.lsw:hover { box-shadow:-2px 0 0 var(--line), 2px 0 0 var(--line), 0 -2px 0 var(--line), 0 2px 0 var(--line), inset 1px 1px 0 rgba(255,255,255,.12), inset -1px -1px 0 rgba(0,0,0,.35); }
+.lsw.sel { box-shadow:-2px 0 0 var(--gold), 2px 0 0 var(--gold), 0 -2px 0 var(--gold), 0 2px 0 var(--gold), inset 1px 1px 0 rgba(255,246,220,.4), inset -1px -1px 0 rgba(0,0,0,.35); }
+.lsw.sel::after { content:''; position:absolute; left:8px; top:8px; width:6px; height:6px; background:rgba(0,0,0,.45); }
+
+/* v3.32 — THE BANNER SHEET: the Republic on LEDGERLIGHT paper */
+.rpCols { display:grid; grid-template-columns:1.1fr 1fr; gap:18px; }
+.rpCol .railHead { margin-bottom:8px; }
+.rpRow { padding:9px 2px 10px; border-bottom:1px solid rgba(233,226,208,.07); }
+.rpRow:last-child { border-bottom:0; }
+.rpTop { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.rpChip { display:inline-flex; flex:none; }
+.rpChip i { width:9px; height:14px; display:inline-block; box-shadow:0 0 0 1px rgba(0,0,0,.55); }
+.rpName { font:600 15px var(--disp); color:var(--bone); }
+.rpPeople { font:11px var(--ui); color:var(--bone-faint); letter-spacing:.06em; text-transform:uppercase; }
+.rpPlate { font:800 9px var(--mono); letter-spacing:.14em; padding:1px 6px; border:1px solid; margin-left:auto; white-space:nowrap; }
+.rpSeal { font:800 9px var(--mono); letter-spacing:.14em; color:var(--bone-faint); border:1px dashed var(--line2); padding:1px 6px; }
+.rpSeal.dim { opacity:.75; }
+.rpLine { font:italic 12px var(--disp); color:var(--bone-dim); margin:4px 0 5px; line-height:1.45; }
+.rpCtl { display:flex; gap:6px; align-items:center; flex-wrap:wrap; }
+.rpStep.on { color:var(--gold); box-shadow:-1px 0 0 var(--gold), 1px 0 0 var(--gold), 0 -1px 0 var(--gold), 0 1px 0 var(--gold), 0 1px 0 rgba(0,0,0,.5), inset 0 1px 0 rgba(0,0,0,.25); transform:translateY(2px); }
+.rpStep.no { opacity:.45; }
+.rpGate { font:italic 11px var(--disp); color:var(--bone-faint); width:100%; line-height:1.4; }
+.rpHold { padding:8px 2px; border-bottom:1px solid rgba(233,226,208,.07); display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.rpHold .rpCtl { width:100%; margin-top:4px; }
+.rpOwner { margin-left:auto; }
+.rpOwner + .rpPlate { margin-left:0; }
+.rpRel { padding:6px 2px; border-bottom:1px solid rgba(233,226,208,.07); display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.rpRelPair { font:600 13px var(--disp); color:var(--bone); display:inline-flex; align-items:center; gap:5px; }
+.rpRelPair i { font-style:normal; color:var(--bone-faint); }
+.rpRel .rpGate { width:100%; margin-top:2px; }
+
+/* v3.35 THE FIELD MANUAL & THE PASSAGE PAPERS — a handbook on LEDGERLIGHT paper: key caps as
+   pressed plates (a rebinding cap glows and LISTENS), lessons as walked pages with sealed ones
+   greyed, the papers as an index with an OPEN plate, and the passage — three valley plates and
+   the code box. Paper scale rides a CSS zoom on the papers, prompts and toasts only. */
+#fmBody { min-height:300px; }
+.fmGroup { font:800 10px var(--ui); letter-spacing:.16em; text-transform:uppercase; color:var(--bone-faint); border-bottom:1px solid var(--line2); padding:10px 0 4px; margin-bottom:4px; }
+.fmRow { display:flex; align-items:center; gap:10px; padding:6px 2px; border-bottom:1px solid rgba(233,226,208,.06); }
+.fmRow .fmName { flex:1; font:600 13.5px var(--ui); color:var(--bone); }
+.fmRow .fmName i { font-style:normal; color:var(--bone-faint); font-size:11px; margin-left:8px; }
+.fmCaps { display:inline-flex; gap:4px; align-items:center; }
+.fmCap { cursor:pointer; }
+.fmCap.fixed { cursor:default; opacity:.7; }
+.fmCap.custom { color:var(--gold-hot); box-shadow:-1px 0 0 var(--line), 1px 0 0 var(--line), 0 -1px 0 var(--line), 0 1px 0 var(--line), 0 3px 0 #05070b, inset 0 1px 0 rgba(255,236,190,.10); }
+.fmCap.listen { color:#1a1206; background:var(--gold); animation:capListen .9s ease-in-out infinite alternate;
+  box-shadow:-1px 0 0 #c98a30, 1px 0 0 #c98a30, 0 -1px 0 var(--gold-hot), 0 1px 0 #c98a30, 0 3px 0 #05070b; }
+@keyframes capListen { from { filter:brightness(1); } to { filter:brightness(1.25); } }
+.fmNote { font:italic 12px var(--disp); color:var(--bone-faint); padding:6px 2px; line-height:1.5; }
+.fmNote b { font-style:normal; color:var(--bone-dim); }
+.fmSearchWrap { margin:6px 0 10px; }
+.fmLesson { padding:8px 2px 9px; border-bottom:1px solid rgba(233,226,208,.06); }
+.fmLesson .fmTitle { font:600 14px var(--disp); color:var(--bone); display:flex; align-items:baseline; gap:8px; }
+.fmLesson .fmTitle .fmPg { font:800 9px var(--mono); letter-spacing:.14em; color:var(--bone-faint); margin-left:auto; }
+.fmLesson .fmText { font:13px/1.55 var(--ui); color:var(--bone-dim); margin-top:3px; }
+.fmLesson .fmText b { color:var(--bone); }
+.fmLesson.sealed { opacity:.5; }
+.fmLesson.sealed .fmTitle { color:var(--bone-faint); }
+.fmLesson.sealed .fmText { font-style:italic; }
+.fmPaper { display:flex; align-items:center; gap:10px; padding:8px 2px; border-bottom:1px solid rgba(233,226,208,.06); }
+.fmPaper .fmName { font:600 14px var(--disp); color:var(--bone); min-width:190px; }
+.fmPaper .fmLine { flex:1; font:12px/1.45 var(--ui); color:var(--bone-dim); }
+.fmPaper .fmHow { font:800 9px var(--mono); letter-spacing:.1em; color:var(--bone-faint); max-width:190px; text-align:right; line-height:1.5; }
+.fmSlots { display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; margin:6px 0 12px; }
+.fmSlot { border:1px solid var(--line2); border-top:3px solid var(--line2); padding:10px 12px; background:rgba(0,0,0,.25); cursor:pointer; position:relative; }
+.fmSlot:hover { border-color:var(--line); }
+.fmSlot.cur { border-top-color:var(--gold); box-shadow:inset 0 1px 0 rgba(255,201,120,.14); }
+.fmSlot .fmSlotN { font:800 9px var(--mono); letter-spacing:.2em; color:var(--bone-faint); }
+.fmSlot.cur .fmSlotN { color:var(--gold); }
+.fmSlot .fmSlotName { font:600 15px var(--disp); color:var(--bone); margin-top:2px; }
+.fmSlot .fmSlotSub { font:11.5px var(--ui); color:var(--bone-dim); margin-top:2px; line-height:1.45; }
+.fmSlot .fmSlotSub b { color:var(--bone); }
+.fmSlot.empty .fmSlotName { color:var(--bone-faint); font-style:italic; }
+.fmSlot .rpCtl { margin-top:6px; }
+.fmCode { width:100%; height:92px; font:600 11px var(--mono); color:var(--bone-dim); background:rgba(0,0,0,.45); border:1px solid var(--line2); padding:7px 9px; resize:vertical; word-break:break-all; }
+.fmCode:focus { outline:none; border-color:var(--gold); }
+.fmCodeRow { display:flex; gap:8px; align-items:center; margin-top:6px; flex-wrap:wrap; }
+.fmVerdict { font:italic 12px var(--disp); color:var(--gold-hot); }
+.fmVerdict.bad { color:var(--rust); }
+/* the title's three valleys */
+#slotRow { display:flex; gap:6px; margin-bottom:10px; }
+#slotRow .tSlot { flex:1; border:1px solid var(--line2); border-top:3px solid var(--line2); background:rgba(5,7,11,.7); padding:6px 8px; cursor:pointer; text-align:left; min-width:0; }
+#slotRow .tSlot:hover { border-color:var(--line); }
+#slotRow .tSlot.cur { border-top-color:var(--gold); background:rgba(255,201,120,.07); }
+#slotRow .tSlot .tN { font:800 8px var(--mono); letter-spacing:.2em; color:var(--bone-faint); }
+#slotRow .tSlot.cur .tN { color:var(--gold); }
+#slotRow .tSlot .tName { font:600 12.5px var(--disp); color:var(--bone); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+#slotRow .tSlot.empty .tName { color:var(--bone-faint); font-style:italic; }
+#slotRow .tSlot .tSub { font:10px var(--ui); color:var(--bone-dim); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+#titleMenu { width:390px; }
+/* paper scale — the reading surfaces only; the world and the HUD meters stay */
+:root { --paperZoom: 1; }
+.sheet, #prompts, #toasts, #guide, #cargoPanel, #contPanel { zoom: var(--paperZoom); }
+.sheet { max-height: calc(92vh / var(--paperZoom)); }
+.miniBtn.on { color:var(--gold-hot); box-shadow:-1px 0 0 var(--gold), 1px 0 0 var(--gold), 0 -1px 0 var(--gold), 0 1px 0 var(--gold), 0 1px 0 rgba(0,0,0,.5), inset 0 1px 0 rgba(0,0,0,.25); transform:translateY(2px); }
+
+/* v3.36 THE MUSTER ROLL — every back its own plate: the walker's OWN figure on a dark stamp,
+   the name, a state plate, a skills stripe in the register's icons, the service stripe counted,
+   the last thing they did in italics. The wedge plate is a canvas in the sheet's own ink. The
+   orders pane is the ledgers' grammar over one back's store. */
+.muCols { display:grid; grid-template-columns:1.05fr 1fr; gap:18px; }
+.muCol .railHead { margin-bottom:8px; }
+.muPlate { display:flex; gap:10px; padding:8px 8px 8px 6px; border:1px solid rgba(233,226,208,.08); border-left:3px solid var(--line2); margin-bottom:6px; cursor:pointer; background:rgba(0,0,0,.18); transition:border-color .12s, background .12s; }
+.muPlate:hover { border-color:var(--line); background:rgba(255,201,120,.04); }
+.muPlate.sel { border-left-color:var(--gold); background:rgba(255,201,120,.07); box-shadow:inset 0 1px 0 rgba(255,201,120,.12); }
+.muPlate.companion { border-left-color:var(--gold); }
+.muPlate.recover { opacity:.7; }
+.muFig { flex:none; width:48px; height:70px; display:flex; align-items:flex-end; justify-content:center; background:#10161f; border:2px solid #d8d2bd; box-shadow:var(--chunk); }
+.muFig img { image-rendering:pixelated; display:block; margin-bottom:3px; }
+.muPlate.recover .muFig img { filter:grayscale(1); }
+.muBody { flex:1; min-width:0; }
+.muTop { display:flex; align-items:baseline; gap:8px; }
+.muName { font:600 15px var(--disp); color:var(--bone); }
+.muState { font:800 8.5px var(--mono); letter-spacing:.14em; padding:1px 5px; border:1px solid; margin-left:auto; white-space:nowrap; }
+.muSub { font:11.5px var(--ui); color:var(--bone-dim); margin-top:1px; }
+.muStripe { display:flex; align-items:center; gap:8px; margin-top:4px; flex-wrap:wrap; }
+.muSkills { display:inline-flex; gap:3px; }
+.muSk { font:700 10px var(--mono); color:var(--gold); background:rgba(255,201,120,.08); border:1px solid rgba(255,201,120,.25); padding:0 4px; }
+.muSk.dim { color:var(--bone-faint); border-color:var(--line2); background:none; }
+.muSvc { font:700 9.5px var(--mono); letter-spacing:.04em; color:var(--bone-faint); }
+.muSvc b { color:var(--bone-dim); font-weight:800; }
+.muChip { font:800 8px var(--mono); letter-spacing:.12em; padding:0 4px; border:1px solid var(--line2); color:var(--bone-dim); }
+.muChip.rust { color:var(--rust); border-color:rgba(217,107,79,.5); }
+.muChip.gold { color:var(--gold); border-color:var(--line); }
+.muLast { font:italic 11px var(--disp); color:var(--bone-faint); margin-top:4px; line-height:1.4; }
+.muOrd { font:800 8px var(--mono); letter-spacing:.14em; font-style:normal; color:var(--gold); border:1px solid var(--line); padding:0 4px; margin-right:2px; }
+.muOrd.own { color:var(--bone-dim); border-color:var(--line2); }
+.muWedge { width:100%; height:auto; image-rendering:pixelated; border:2px solid var(--line); box-shadow:var(--chunk); background:#0b1017; display:block; }
+.muOrdHead { display:flex; align-items:baseline; gap:10px; margin:2px 0 8px; }
+.muPresets { display:flex; flex-wrap:wrap; gap:4px; }
+.muPresetLine { font:italic 11.5px var(--disp); color:var(--bone-faint); margin:4px 0 8px; line-height:1.4; }
+.muOrder { padding:7px 2px; border-bottom:1px solid rgba(233,226,208,.06); }
+.muOrdName { font:800 10px var(--ui); letter-spacing:.14em; color:var(--bone-dim); display:inline-block; min-width:92px; }
+.muOrdName i { display:block; font:italic 10px var(--disp); color:var(--bone-faint); letter-spacing:0; text-transform:none; }
+.muChoices { display:inline-flex; flex-wrap:wrap; gap:2px; vertical-align:top; }
+.muOrdLine { font:italic 11px var(--disp); color:var(--bone-faint); margin-top:4px; line-height:1.4; }
+.muTreeRow { display:flex; align-items:center; gap:6px; padding:5px 2px; border-bottom:1px solid rgba(233,226,208,.05); flex-wrap:wrap; }
+.muTreeRow.root { border-bottom:2px solid var(--line); margin-bottom:2px; }
+.muTreeRow .lgName { flex:none; min-width:110px; font-size:13px; }
+.muTreeLine { font:italic 11px var(--disp); color:var(--bone-faint); }
+.muKids { display:inline-flex; flex-wrap:wrap; gap:2px 10px; }
+.muKid { display:inline-flex; align-items:center; gap:2px; font:12px var(--ui); color:var(--bone-dim); }
+.muTreeHint { font:italic 10px var(--disp); color:var(--bone-faint); letter-spacing:0; text-transform:none; margin-left:8px; }

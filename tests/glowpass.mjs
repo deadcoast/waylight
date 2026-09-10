@@ -8,8 +8,11 @@ const ok = (name, cond, extra = '') => { results.push(`${cond ? 'PASS' : 'FAIL'}
 /* 1-2. the law, at the source */
 const src = readFileSync('/home/claude/waylight/src/17_render.js', 'utf8');
 ok('no arc() survives anywhere in the renderer', !/\.arc\(/.test(src));
+/* the pickups' OWN body only — v3.32 put drawRoom (bunker floor grid, cage bars) right after it,
+   which legitimately draws line paths; scope the guard to drawPickups → drawRoom */
+const pickupsBody = src.slice(src.indexOf('function drawPickups'), src.indexOf('function drawRoom'));
 ok('the checkered pillar is dead at the source: no beamSprite, and pickups draw no polygons',
-  !/beamSprite/.test(src) && !src.slice(src.indexOf('function drawPickups'), src.indexOf('function drawCamps')).includes('beginPath'));
+  !/beamSprite/.test(src) && !pickupsBody.includes('beginPath'));
 
 const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium', args: ['--disable-background-networking'] });
 const page = await b.newPage({ viewport: { width: 1440, height: 860 } });

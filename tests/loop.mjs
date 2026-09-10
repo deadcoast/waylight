@@ -60,9 +60,21 @@ ok('a companion carrying your order: no "lost" step, and the crates are handed o
 r = await ev(() => { S.cargo = []; S.orders.active = []; S.npcs = S.npcs.filter(n => n.state !== 'companion'); S.stations.elm.stock.tools = 90; const a = Economy.ordersFor('haven').some(o => o.item === 'tools' && o.to === 'elm'); S.stations.elm.stock.tools = 50; const b2 = Economy.ordersFor('haven').some(o => o.item === 'tools' && o.to === 'elm'); return { thriving: a, steady: b2 }; });
 ok('nobody posts for a need they are thriving on; a steady need is posted at ×1', r.thriving === false && r.steady === true, JSON.stringify(r));
 
-/* 7. letters are scarce */
-r = await ev(() => { const l = Economy.ordersFor('haven').find(o => o.item === 'letters' && o.to === 'elm'); if (!l) return { none: true }; Systems.acceptOrder(l, false); S.orders.active = []; S.cargo = []; const again = Economy.ordersFor('haven').some(o => o.item === 'letters' && o.to === 'elm'); S.time += DATA.T.mailGap * 1.7; const later = Economy.ordersFor('haven').some(o => o.item === 'letters' && o.to === 'elm'); return { again, later, mul: l.likesMul }; });
-ok('a mailbag carried off is not posted again until it refills (~5 min); letters pay half', r.again === false && r.later === true && r.mul === 0.5, JSON.stringify(r));
+/* 7. THE POST: the bag paces the mail, and letters take no fee */
+r = await ev(() => {
+  S.stations.haven.bag = 40;
+  const l = Economy.ordersFor('haven').find(o => o.item === 'letters');
+  if (!l) return { none: true };
+  Systems.acceptOrder(l, false);
+  S.orders.active = []; S.cargo = [];
+  const bagAfter = S.stations.haven.bag;
+  const again = Economy.ordersFor('haven').some(o => o.item === 'letters');
+  S.stations.haven.bag = 60;   // the town wrote for a while
+  const later = Economy.ordersFor('haven').some(o => o.item === 'letters');
+  return { again, later, bagAfter, mul: l.likesMul, service: !!l.service, tier: l.tier };
+});
+ok('a run drains the bag (no repost until it refills), letters are a SERVICE — zero fee, tiered',
+  r.again === false && r.later === true && r.bagAfter <= 6 && r.mul === 0 && r.service === true && r.tier >= 1, JSON.stringify(r));
 
 /* 8. loaded feet skirt scrapper territory; empty feet walk straight */
 r = await ev(() => {

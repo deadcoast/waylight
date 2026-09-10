@@ -59,12 +59,14 @@ const rim = await page.evaluate(() => {
   const hv = DATA.stations.haven; let lo = 0, hi = hv.baseR * 1.4;
   const Lat = d => World.lightAt(hv.x + d, hv.y);
   for (let i = 0; i < 40; i++) { const mid = (lo + hi) / 2; if (Lat(mid) > 0.30) lo = mid; else hi = mid; }
-  return { rimD: (lo + hi) / 2, inD: (lo + hi) / 2 - 260, outD: (lo + hi) / 2 + 320 };
+  return { rimD: (lo + hi) / 2, inD: (lo + hi) / 2 - 60, outD: (lo + hi) / 2 + 60 };
 });
+/* v3.16: the shore is a fixed-width LINE now (gradient-normalized), so it is judged like a line —
+   against the ground immediately beside it, not against the warm interior 260 u away */
 const pRim = await patch(spots.lit[0] - 340 + rim.rimD, spots.lit[1] + 60);   // = haven.x + rimD, haven.y
 const pIn = await patch(spots.lit[0] - 340 + rim.inD, spots.lit[1] + 60);
 const pOut = await patch(spots.lit[0] - 340 + rim.outD, spots.lit[1] + 60);
-ok('the light\'s edge carries a golden rim (a warm bump above the inside→beyond blend line)', pRim.warmth > (pIn.warmth + pOut.warmth) / 2 + 3 && pRim.warmth - pOut.warmth >= 6, `rim ${pRim.warmth.toFixed(1)} · inside ${pIn.warmth.toFixed(1)} · beyond ${pOut.warmth.toFixed(1)}`);
+ok('the light\'s edge carries a golden shoreline — warmer than the ground either side of it', pRim.warmth > pIn.warmth + 5 && pRim.warmth > pOut.warmth + 8, `rim ${pRim.warmth.toFixed(1)} · 60u inside ${pIn.warmth.toFixed(1)} · 60u beyond ${pOut.warmth.toFixed(1)}`);
 
 /* 3. night (measured before the network grows, so the grey sample stays grey):
       the contrast grows — lit ground keeps its day face, the grey drowns */

@@ -70,6 +70,14 @@ async function act() {
     if (/^Lay a ladder/.test(after.head) && after.bearing !== null) await clickTowardArrow(after, 40);   // a step closer
     return v;
   }
+  if (/blueprint/i.test(v.head) && v.bearing !== null) {
+    // v3.19: the ghost rides the hover — point at the arrow's mark, let it aim, then the click lays it
+    const px2 = Math.min(320, Math.max(70, (v.dist || 60) * 2.2));
+    const tx = center.x + Math.cos(v.bearing) * px2, ty = center.y + Math.sin(v.bearing) * px2;
+    await page.mouse.move(tx, ty); await page.waitForTimeout(160);
+    await clickAt(tx, ty); await page.waitForTimeout(220);
+    return v;
+  }
   if (v.bearing !== null && !v.moving) { await clickTowardArrow(v); await page.waitForTimeout(150); return v; }
   await page.waitForTimeout(120);
   return v;

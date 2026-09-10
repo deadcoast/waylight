@@ -8,11 +8,47 @@ const UI2 = (() => {
   /* ---------- character creation ---------- */
   let cg = null; // working draft
   let cgOnDone = null;
+  /* ---------- v3.23: THE LOOK — the coat is yours to cut ----------
+     Investment law: permadeath only stings for a character that is THEIRS. Swatches, not sliders:
+     six coats, six trims, the hoods and skins the valley already wears. */
+  const LOOK_COATS = [['Order blue', '#3d5a74', '#2c4258'], ['Wax green', '#4a5a34', '#3a4628'], ['Rust red', '#7a4432', '#5e3426'], ['Charcoal', '#3a4048', '#2a3038'], ['Bone', '#8a8268', '#6e684e'], ['Night', '#26202e', '#1a1622']];
+  const LOOK_TRIMS = [['Gold', '#c9a05a', '#a5824a'], ['Lumen', '#6fe3d2', '#57c0b2'], ['Ash', '#8d979c', '#6e747c'], ['Ember', '#d96b4f', '#b04a36'], ['Moss', '#8a9a4a', '#6e7e3a'], ['Pale', '#d8d2bd', '#b8b29d']];
+  function defaultLook() { return { C: '#3d5a74', c: '#2c4258', T: '#c9a05a', t: '#a5824a', H: '#2c4258', S: '#e0c298' }; }
+  function renderLookRows(rowsEl, rigImg, look, onChange) {
+    const swatch = (kind, i, col, sel) => `<button class="lsw ${sel ? 'sel' : ''}" data-look="${kind}:${i}" style="background:${col}" title="${kind}"></button>`;
+    rowsEl.innerHTML = `
+      <div class="lookRow"><span class="tag">Coat</span>${LOOK_COATS.map((c2, i) => swatch('coat', i, c2[1], look.C === c2[1])).join('')}</div>
+      <div class="lookRow"><span class="tag">Trim</span>${LOOK_TRIMS.map((t2, i) => swatch('trim', i, t2[1], look.T === t2[1])).join('')}</div>
+      <div class="lookRow"><span class="tag">Hood</span>${CHAR.PORTRAIT.hoods.map((h, i) => swatch('hood', i, h, look.H === h)).join('')}</div>
+      <div class="lookRow"><span class="tag">Skin</span>${CHAR.PORTRAIT.skins.map((s2, i) => swatch('skin', i, s2, look.S === s2)).join('')}</div>`;
+    rigImg.src = Render.rigPreviewURL(look, 8);
+    rowsEl.onclick = e => {
+      const a = e.target.getAttribute && e.target.getAttribute('data-look');
+      if (!a) return;
+      const [kind, iS] = a.split(':'); const i = +iS;
+      if (kind === 'coat') { look.C = LOOK_COATS[i][1]; look.c = LOOK_COATS[i][2]; }
+      else if (kind === 'trim') { look.T = LOOK_TRIMS[i][1]; look.t = LOOK_TRIMS[i][2]; }
+      else if (kind === 'hood') look.H = CHAR.PORTRAIT.hoods[i];
+      else if (kind === 'skin') look.S = CHAR.PORTRAIT.skins[i];
+      Snd.sfx.ui();
+      renderLookRows(rowsEl, rigImg, look, onChange);
+      onChange && onChange(look);
+    };
+  }
+  function openTailor() {
+    const look = S.look ? { ...S.look } : defaultLook();
+    $('tailorOv').classList.remove('hidden');
+    renderLookRows($('tailorRows'), $('tailorRig'), look, l2 => { S.look = { ...l2 }; Porter.dirty(); });
+    S.look = { ...look };
+    $('tailorDone').onclick = () => { $('tailorOv').classList.add('hidden'); State.save(); UI.toast('The tailor snips the thread and holds up the glass. It was always your coat.', 'gold', 4500); Snd.sfx.accept(); };
+  }
   function openCharGen(onDone) {
     cgOnDone = onDone || null;
     cg = Porter.generate({ cls: 'courier', traits: [] });
+    cg.look = defaultLook();
     $('chargen').classList.remove('hidden');
     renderCG();
+    renderLookRows($('cgLookRows'), $('cgRig'), cg.look);
   }
   function cgBudget() {
     let b = CLASSES[cg.cls].pts;
@@ -26,7 +62,9 @@ const UI2 = (() => {
     const bud = cgBudget();
     $('cgBudget').textContent = bud;
     $('cgBudget').classList.toggle('bad', bud < 0);
-    $('cgClasses').innerHTML = Object.entries(CLASSES).map(([id, c]) => `
+    $('cgClasses').innerHTML = Object.entries(CLASSES)
+      .filter(([, c]) => !c.locked || (typeof S !== 'undefined' && S && S.flags && S.flags[c.locked]))   // v3.25: exile classes exist only in worlds the exiles have touched
+      .map(([id, c]) => `
       <div class="cgClass ${cg.cls === id ? 'sel' : ''}" data-cls="${id}">
         <h5>${c.name}<span class="pts">${c.pts > 0 ? '+' + c.pts : c.pts} pts</span></h5>
         <div class="sk">${Object.entries(c.skills).map(([s, l]) => `${SKILLS[s].name} ${l}`).join(' · ') || '—'}</div>
@@ -126,7 +164,7 @@ const UI2 = (() => {
   $('deathContinue').addEventListener('click', () => {
     $('deathOv').classList.add('hidden');
     openCharGen(p => {
-      Porter.applyToState(p);
+      Porter.applyToState(p); S.look = p.look ? { ...p.look } : null;
       S.px = DATA.stations.haven.x + 60; S.py = DATA.stations.haven.y + 90;
       S.orders.prioAccepted = false;
       State.addCargo(State.makeItem('ration'));
@@ -147,6 +185,7 @@ const UI2 = (() => {
   function renderSkills() {
     $('skillsName').textContent = S.pName;
     $('skillsPortrait').src = Porter.portrait(S.pSeed, 64);
+    renderPaperdoll();
     const c = CLASSES[S.pClass];
     $('skillsSub').textContent = `${c.name} · ${S.pTraits.map(t => TRAITS[t].name).join(' · ') || 'untraited'} · “${S.pLine}”`;
     $('skillsBody').innerHTML = SKILL_IDS.map(id => {
@@ -166,7 +205,63 @@ const UI2 = (() => {
           <div class="xpbar"><i style="width:${need ? U.clamp(sk.xp / need * 100, 0, 100) : 100}%"></i></div>
         </div>
       </div>`;
-    }).join('') + `<p style="color:var(--bone-faint);font-size:12px;margin-top:10px">Skills grow from doing — and die with the body. Your journal (transcribed at every terminal) lets the next Waylighter recover 70% from your cairn. Manuals multiply learning through their levels.</p>`;
+    }).join('') + (() => {
+      // v3.22 THE KARMA LEDGER — two currencies, both yours, neither the mirror of the other
+      const rt = Systems.renegadeTier();
+      const [, rn, rline] = FACT.RENEGADE_TIERS[rt];
+      const next = FACT.RENEGADE_TIERS[rt + 1];
+      const apprTowns = DATA.stationOrder.filter(id => Economy.apprLevel(id) >= 1).length;
+      const heats = Object.entries(S.heat || {}).filter(([, v]) => v >= 1);
+      return `<hr class="hairline"><div class="tag" style="margin-bottom:6px">The karma ledger — not good and bad. Two coins, both yours.</div>
+      <div class="skillRow"><div class="ic" style="color:var(--gold)">◆</div><div class="grow">
+        <h4>Appreciation <span class="cls">THE TOWNS</span></h4>
+        <div class="fx">${apprTowns ? `<b>${apprTowns}</b> town${apprTowns > 1 ? 's hold' : ' holds'} you KNOWN or better — meals pressed into hands, riders that answer, wages waived` : 'no town holds you KNOWN yet — letters and deliveries build it'}</div></div></div>
+      <div class="skillRow"><div class="ic" style="color:var(--rust)">◈</div><div class="grow">
+        <h4>Renegade <span class="cls" style="color:var(--rust)">THE ROAD</span> <span class="num" style="color:var(--bone-dim);font-size:12px">${S.renegade || 0}</span></h4>
+        <div class="fx"><b>${rn}</b> — ${rline}${next ? ` · <span style="color:var(--bone-faint)">${next[0] - (S.renegade || 0)} to ${next[1]}</span>` : ''}</div></div></div>
+      ${heats.length ? `<div class="skillRow"><div class="ic" style="color:var(--rust)">▲</div><div class="grow"><h4>Heat</h4><div class="fx">${heats.map(([id, v]) => `${DATA.stations[id].name} <span class="num">${Math.ceil(v)}</span>`).join(' · ')} — settle the ledger at their terminal, or let time cool it</div></div></div>` : ''}`;
+    })() + `<p style="color:var(--bone-faint);font-size:12px;margin-top:10px">Skills grow from doing — and die with the body. Your journal (transcribed at every terminal) lets the next Waylighter recover 70% from your cairn. Manuals multiply learning through their levels.</p>`;
+  }
+  /* v3.23: the EQUIP SHEET — the walker as they stand, gear on the rig, one click to swap */
+  function renderPaperdoll() {
+    let host = $('skillsDoll');
+    if (!host) {
+      host = document.createElement('div');
+      host.id = 'skillsDoll';
+      host.style.cssText = 'display:flex;gap:16px;align-items:flex-start;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--line2)';
+      $('skillsBody').parentNode.insertBefore(host, $('skillsBody'));
+    }
+    const slots = ['coat', 'boots', 'pack', 'charm'];
+    const carriedFor = slot => S.cargo.filter(c2 => c2.cat === 'gear' && DATA.items[c2.defId] && DATA.items[c2.defId].slot === slot);
+    host.innerHTML = `
+      <img id="dollRig" width="72" height="108" style="image-rendering:pixelated;border:3px solid #d8d2bd;box-shadow:var(--chunk);background:#10161f" src="${Render.rigPreviewURL(Render.wornPal(), 6)}" alt="">
+      <div style="flex:1">
+        <div class="tag" style="margin-bottom:4px">As they stand — gear rides the rig</div>
+        ${slots.map(sl => {
+          const it = S.equip && S.equip[sl];
+          const alts = carriedFor(sl);
+          return `<div class="equipRow"><span class="slot">${sl}</span><span class="nm ${it ? '' : 'empty'}">${it ? it.name : '—'}</span>
+            ${alts.length ? `<button class="miniBtn" data-dollwear="${alts[0].id}">wear ${alts[0].name}</button>` : ''}</div>`;
+        }).join('')}
+        <button class="miniBtn" id="dollTailor" style="margin-top:6px">The tailor — recut colours</button>
+      </div>`;
+    host.onclick = e => {
+      const w = e.target.getAttribute && e.target.getAttribute('data-dollwear');
+      if (w) {
+        const c2 = S.cargo.find(x => x.id === +w);
+        if (c2) {
+          const d2 = DATA.items[c2.defId];
+          State.removeCargo(c2.id);
+          const old4 = S.equip[d2.slot];
+          if (old4 && !['boots0', 'coat0', 'pack0'].includes(old4.defId)) State.addCargo(old4);
+          S.equip[d2.slot] = c2;
+          Porter.dirty(); Snd.sfx.accept();
+          renderPaperdoll();
+        }
+        return;
+      }
+      if (e.target.id === 'dollTailor') { toggleSkills(false); openTailor(); }
+    };
   }
   $('skillsClose').addEventListener('click', () => toggleSkills(false));
 
@@ -292,15 +387,29 @@ const UI2 = (() => {
   /* ---------- waylighters tab ---------- */
   function renderWaylighters(body, stId) {
     const here = S.npcs.filter(n => n.state === 'pool' && n.at === stId);
-    const comp = NPC.companion();
+    const pt = NPC.party();
     const routes = S.npcs.filter(n => n.state === 'route');
+    const mending = S.npcs.filter(n => n.state === 'recover');
     const connected = DATA.stationOrder.filter(id => S.stations[id].connected && id !== stId);
-    let htm = `<p style="color:var(--bone-dim); font-size:13px; margin-bottom:10px">Waylighters walk for hire — one fee, then food. Companions carry, steady you, and meet trouble head-on; route walkers keep a corridor alive on their own. Charters open with coverage: <b class="num">${NPC.routesActive()}/${NPC.routeSlots()}</b> in use. Provisions banked: <b class="num">${Math.floor(S.banked.provisions)}</b>.</p>`;
-    if (comp) {
+    const breed = (FACT.STABLES && FACT.STABLES[stId]) || 'mustang';
+    const B = FACT.HORSES[breed];
+    let htm = `<p style="color:var(--bone-dim); font-size:13px; margin-bottom:10px">Waylighters walk for hire — one fee, then food. Companions carry, steady you, meet trouble head-on, and <b>take the blow that would drop you</b> — the party is the health pool, and you fall last. Party <b class="num">${pt.length}/${NPC.partyCap()}</b> · charters <b class="num">${NPC.routesActive()}/${NPC.routeSlots()}</b> · provisions banked <b class="num">${Math.floor(S.banked.provisions)}</b>.</p>
+      <div style="margin:-2px 0 10px"><button class="btn quiet" id="wlMusterBtn">THE MUSTER ROLL <span class="k" style="margin:0 0 0 6px">${typeof KEYS !== 'undefined' ? KEYS.capFor('muster') : 'O'}</span></button> <span class="desc" style="color:var(--bone-faint)">everyone under your command · standing orders · the wedge</span></div>`;
+    for (const comp of pt) {
       const kg = comp.carry.reduce((a, c) => a + c.kg, 0);
+      const horseLine = comp.horse
+        ? `riding a <b>${FACT.HORSES[comp.horse.breed].name}</b> (${comp.horse.owned ? 'theirs for good' : 'stable loaner'})`
+        : `on foot — the stable here keeps <b>${B.name}s</b>`;
       htm += `<div class="orderCard prio"><div class="top"><h4><img src="${Porter.portrait(comp.seed, 28)}" width="28" height="28" style="vertical-align:-8px;border-radius:3px"> ${comp.name} — walking with you</h4><span class="tag">${CLASSES[comp.cls].name}</span></div>
-        <div class="meta">carrying ${U.fmtKg(kg)} / ${NPC.capOf(comp)} kg · ${comp.hungry ? '<b class="rust">hungry — bank provisions</b>' : 'fed'} · “${comp.line}”</div>
-        <div class="actions"><button class="btn quiet" data-dismiss="${comp.id}">Part ways here</button></div></div>`;
+        <div class="meta">carrying ${U.fmtKg(kg)} / ${NPC.capOf(comp)} kg · ${comp.hungry ? '<b class="rust">hungry — bank provisions</b>' : 'fed'} · ${horseLine} · “${comp.line}”</div>
+        <div class="actions">
+          ${!comp.horse && S.stations[stId].connected ? `<button class="btn" data-saddle="${comp.id}:rent">Saddle a ${B.name} — ${DATA.T.compHorseRent} provisions</button><button class="btn quiet" data-saddle="${comp.id}:buy">Buy it outright — ${DATA.T.compHorseBuy}</button>` : ''}
+          ${comp.horse && !comp.horse.owned ? `<button class="btn quiet" data-unsaddle="${comp.id}">Return the loaner</button>` : ''}
+          <button class="btn quiet" data-dismiss="${comp.id}">Part ways here</button></div></div>`;
+    }
+    for (const m of mending) {
+      htm += `<div class="orderCard"><div class="top"><h4><img src="${Porter.portrait(m.seed, 28)}" width="28" height="28" style="vertical-align:-8px;border-radius:3px;filter:grayscale(1)"> ${m.name} — mending at ${DATA.stations[m.at].name}</h4><span class="tag rust">took your blow</span></div>
+        <div class="meta">back on their feet in <b class="num">${U.fmtTime(Math.max(0, m.recoverT || 0))}</b> · fee already paid in blood</div></div>`;
     }
     for (const n of here) {
       const cost = NPC.hireCost(n);
@@ -313,11 +422,22 @@ const UI2 = (() => {
         <div class="actions">
           <button class="btn" data-hirec="${n.id}">Companion ${cost ? '· ' + Systems.fmtCost(cost) : '· fee waived'}</button>
           ${connected.length ? `<button class="btn quiet" data-hirer="${n.id}">Charter route…</button>` : ''}
+          <button class="btn quiet" data-topost="${n.id}">City post…</button>
         </div>
         <div class="routePick hidden" data-pick="${n.id}" style="margin-top:8px">${connected.map(c => `<button class="miniBtn" data-route="${n.id}:${c}">${DATA.stations[stId].name} ⇄ ${DATA.stations[c].name}</button>`).join(' ')}</div>
       </div>`;
     }
-    if (!here.length && !comp) htm += '<p class="desc" style="color:var(--bone-faint)">Nobody waiting by the fire just now. Waylighters drift in as stations grow — and anyone you save remembers.</p>';
+    if (!here.length && !pt.length) htm += '<p class="desc" style="color:var(--bone-faint)">Nobody waiting by the fire just now. Waylighters drift in as stations grow — and anyone you save remembers.</p>';
+    const posted = S.npcs.filter(n => n.state === 'post');
+    if (posted.length) {
+      htm += `<hr class="hairline"><div class="tag" style="margin-bottom:6px">At the post</div>`;
+      for (const r of posted) {
+        const j = CHAR.JOBS[r.job] || {};
+        htm += `<div class="rowline"><div class="grow"><h4>${r.name} — ${j.name || '?'} at ${DATA.stations[r.at].name}</h4>
+          <div class="desc">trains ${CHAR.SKILLS[j.skill] ? CHAR.SKILLS[j.skill].name : ''} ${r.skills[j.skill] || 0}${r.hungry ? ' · <b class="rust">unpaid</b>' : ''}</div></div>
+          <button class="miniBtn" data-unroute="${r.id}">recall</button></div>`;
+      }
+    }
     if (routes.length) {
       htm += `<hr class="hairline"><div class="tag" style="margin-bottom:6px">Chartered routes</div>`;
       for (const r of routes) {
@@ -327,6 +447,7 @@ const UI2 = (() => {
       }
     }
     body.innerHTML = htm;
+    { const mb = body.querySelector('#wlMusterBtn'); if (mb) mb.addEventListener('click', () => { UI.closeStation(); MusterUI.open(); }); }
     body.onclick = e => {
       const hc = e.target.getAttribute('data-hirec'), hr = e.target.getAttribute('data-hirer'),
         rt = e.target.getAttribute('data-route'), dis = e.target.getAttribute('data-dismiss'), un = e.target.getAttribute('data-unroute');
@@ -338,7 +459,27 @@ const UI2 = (() => {
         if (n && NPC.hire(n, 'route') && NPC.assignRoute(n, stId, dest)) UI.renderStation();
         else if (n && n.state === 'route' && !n.route) { n.state = 'pool'; }
       }
-      if (dis) { const n = S.npcs.find(x => x.id === +dis); if (n) { NPC.dismiss(n, stId); UI.toast(`${n.name} settles by ${DATA.stations[stId].name}'s fire`); UI.renderStation(); } }
+      if (dis) { const n = S.npcs.find(x => x.id === +dis); if (n) { if (n.horse && !n.horse.owned) n.horse = null; NPC.dismiss(n, stId); UI.toast(`${n.name} settles by ${DATA.stations[stId].name}'s fire`); UI.renderStation(); } }
+      const sad = e.target.getAttribute('data-saddle');
+      if (sad) {   // v3.24: a horse under every back — rent it for the road, or buy it for the life
+        const [nid, mode] = sad.split(':');
+        const n = S.npcs.find(x => x.id === +nid);
+        const cost = mode === 'buy' ? DATA.T.compHorseBuy : DATA.T.compHorseRent;
+        if (n && !n.horse) {
+          if (S.banked.provisions < cost) { UI.toast(`The stable wants ${cost} provisions banked`, 'rust'); Snd.sfx.denied(); }
+          else {
+            S.banked.provisions -= cost;
+            const br = (FACT.STABLES && FACT.STABLES[stId]) || 'mustang';
+            n.horse = { breed: br, owned: mode === 'buy' };
+            UI.toast(`<b>${n.name.split(' ')[0]}</b> swings up onto a ${FACT.HORSES[br].name}${mode === 'buy' ? ' — theirs for good' : ''}. The party rides.`, 'gold', 5000);
+            Snd.sfx.accept(); UI.renderStation();
+          }
+        }
+      }
+      const unsad = e.target.getAttribute('data-unsaddle');
+      if (unsad) { const n = S.npcs.find(x => x.id === +unsad); if (n && n.horse && !n.horse.owned) { n.horse = null; UI.toast(`The loaner trots back to the stable`); UI.renderStation(); } }
+      const tp2 = e.target.getAttribute('data-topost');
+      if (tp2) UI.gotoTab('post');
       if (un) { const n = S.npcs.find(x => x.id === +un); if (n) { NPC.dismiss(n, stId); UI.renderStation(); } }
     };
   }
@@ -357,5 +498,7 @@ const UI2 = (() => {
     h._t = setTimeout(() => h.classList.add('hidden'), seconds * 1000);
   }
 
-  return { openCharGen, showDeath, toggleSkills, updateMoodles, openLoot, openTrader, renderWaylighters, updateCompChip, showBriefing, showHint, openTransfer, renderTransfer };
+  return {
+    openTailor,
+ openCharGen, showDeath, toggleSkills, updateMoodles, openLoot, openTrader, renderWaylighters, showBriefing, showHint, openTransfer };
 })();

@@ -151,13 +151,13 @@ const DATA = (() => {
 
   /* ---------- roads: chains of pavers ---------- */
   const roads = [
-    { id: 'r_elm', name: 'Elm Road', pts: [[4040, 9900], [3400, 9760], [2940, 9580], [2600, 9440], [2460, 9360]], segs: 2, cost: { metal: 70, ceramic: 40 }, needs: ['haven', 'elm'] },
-    { id: 'r_mill', name: 'Saddle Road', pts: [[4360, 9900], [4900, 9800], [5320, 9540], [5720, 9300], [6020, 9180], [6160, 9040]], segs: 3, cost: { metal: 80, ceramic: 50 }, needs: ['haven', 'mill'] },
-    { id: 'r_green', name: 'Silt Road', pts: [[4200, 9860], [4220, 9300], [4280, 8760], [4300, 8240], [4300, 7920], [4300, 7660], [4400, 7280], [4660, 6840]], segs: 4, cost: { metal: 90, ceramic: 60 }, span: 2, needs: ['haven', 'green'] },
-    { id: 'r_quarry', name: 'Terrace Road', pts: [[4660, 6840], [3800, 6800], [3000, 6760], [2300, 6800], [1900, 6900], [1580, 7040]], segs: 3, cost: { metal: 90, ceramic: 60 }, needs: ['green', 'quarry'] },
-    { id: 'r_relay', name: 'Signal Road', pts: [[4660, 6840], [5300, 6660], [5900, 6400], [6400, 6200], [6840, 6040]], segs: 3, cost: { metal: 90, ceramic: 60 }, needs: ['green', 'relay'] },
-    { id: 'r_foundry', name: 'Cold Road', pts: [[6840, 6040], [6960, 5620], [6920, 5240], [6700, 5040], [6500, 4600], [6360, 4200], [6280, 3900]], segs: 4, cost: { metal: 110, ceramic: 70 }, span: 2, needs: ['relay', 'foundry'] },
-    { id: 'r_pharos', name: 'Pilgrim Road', pts: [[6280, 3900], [5800, 3600], [5200, 3400], [4600, 3200], [4000, 2900], [3700, 2400], [3560, 1900], [3440, 1400]], segs: 5, cost: { metal: 130, ceramic: 90 }, needs: ['foundry', 'pharos'] },
+    { id: 'r_elm', name: 'Elm Road', pts: [[4040, 9900], [3400, 9760], [2940, 9580], [2600, 9440], [2460, 9360]], segs: 2, cost: { metal: 48, ceramic: 28 }, needs: ['haven', 'elm'] },
+    { id: 'r_mill', name: 'Saddle Road', pts: [[4360, 9900], [4900, 9800], [5320, 9540], [5720, 9300], [6020, 9180], [6160, 9040]], segs: 3, cost: { metal: 55, ceramic: 32 }, needs: ['haven', 'mill'] },
+    { id: 'r_green', name: 'Silt Road', pts: [[4200, 9860], [4220, 9300], [4280, 8760], [4300, 8240], [4300, 7920], [4300, 7660], [4400, 7280], [4660, 6840]], segs: 4, cost: { metal: 60, ceramic: 40 }, span: 2, needs: ['haven', 'green'] },
+    { id: 'r_quarry', name: 'Terrace Road', pts: [[4660, 6840], [3800, 6800], [3000, 6760], [2300, 6800], [1900, 6900], [1580, 7040]], segs: 3, cost: { metal: 60, ceramic: 40 }, needs: ['green', 'quarry'] },
+    { id: 'r_relay', name: 'Signal Road', pts: [[4660, 6840], [5300, 6660], [5900, 6400], [6400, 6200], [6840, 6040]], segs: 3, cost: { metal: 60, ceramic: 40 }, needs: ['green', 'relay'] },
+    { id: 'r_foundry', name: 'Cold Road', pts: [[6840, 6040], [6960, 5620], [6920, 5240], [6700, 5040], [6500, 4600], [6360, 4200], [6280, 3900]], segs: 4, cost: { metal: 75, ceramic: 46 }, span: 2, needs: ['relay', 'foundry'] },
+    { id: 'r_pharos', name: 'Pilgrim Road', pts: [[6280, 3900], [5800, 3600], [5200, 3400], [4600, 3200], [4000, 2900], [3700, 2400], [3560, 1900], [3440, 1400]], segs: 5, cost: { metal: 90, ceramic: 60 }, needs: ['foundry', 'pharos'] },
   ];
 
   /* ---------- scrapper camps ---------- */
@@ -184,14 +184,36 @@ const DATA = (() => {
   ];
 
   /* ---------- structures ---------- */
+  /* v3.28c THE TYPE LEDGER — the law: a structure type is FOREVER. Any future rename or removal
+     ships its map entry here in the same edit, and load() walks every save forward through it.
+     The audit of every shipped version found the type history ADDITIVE-ONLY, so the ledger opens
+     empty — the seam existing is the fix; a rename without its entry is a build that doesn't ship. */
+  const MIGRATE_TYPES = {};
   const structures = {
     ladder: { name: 'Ladder', span: 190, cost: null, hp: 100, decay: 1.5, desc: 'Crosses a cliff or river. Slow going, but going.' },
     fieldladder: { name: 'Field ladder', span: 190, cost: { metal: 8 }, hp: 100, decay: 1.5, desc: 'Lashed from scrap where you stand. Rigging 2.' },
-    bridge: { name: 'Bridge', span: 270, cost: { metal: 70 }, hp: 100, decay: 0.7, desc: 'A real crossing. Full speed, full load.' },
-    generator: { name: 'Generator', aura: 400, cost: { metal: 40 }, hp: 100, decay: 1.0, desc: 'Warmth and light. Stamina refills fast nearby; leaves you warmed.' },
-    shelter: { name: 'Shelter', aura: 380, cost: { ceramic: 40 }, hp: 100, decay: 1.0, desc: 'Rain cannot reach you here. Repairs containers, restores you.' },
-    watchtower: { name: 'Watchtower', aura: 1150, cost: { metal: 30 }, hp: 100, decay: 1.0, desc: 'Reveals the land, marks lost cargo and lumen.' },
-    zipline: { name: 'Zipline pylon', cost: { metal: 45, lumen: 12 }, hp: 100, decay: 0.8, range: 1700, desc: 'Links to pylons in range. Fly over everything.' },
+    bridge: { name: 'Bridge', span: 270, cost: { metal: 48 }, hp: 100, decay: 0.7, desc: 'A real crossing. Full speed, full load.' },
+    generator: { name: 'Generator', aura: 400, cost: { metal: 28 }, hp: 100, decay: 1.0, desc: 'Warmth and light. Stamina refills fast nearby; leaves you warmed.',
+      tiers: [{ cost: { metal: 10 }, name: 'Twin burner', desc: 'The aura grows a third; stamina refills half again as fast.' }, { cost: { metal: 22, lumen: 6 }, name: 'Hearth housing', desc: 'The fire HEALS whoever rests in its reach, and the warmth soaks deep.' }] },
+    shelter: { name: 'Shelter', aura: 380, cost: { ceramic: 26 }, hp: 100, decay: 1.0, desc: 'Rain cannot reach you here. Repairs containers, restores you.',
+      tiers: [{ cost: { ceramic: 10 }, name: 'The room', desc: 'Big enough to step INSIDE — nothing with claws or made of grey can follow. Rest fast. A drying rack under the eave banks PROVISIONS when meadow grows in reach.' }, { cost: { ceramic: 18, wood: 8 }, name: 'The bed', desc: 'Inside, wounds close and battered cargo mends while you breathe.' }] },
+    watchtower: { name: 'Watchtower', aura: 1150, cost: { metal: 18 }, hp: 100, decay: 1.0, desc: 'Reveals the land, marks lost cargo and lumen.',
+      tiers: [{ cost: { metal: 8 }, name: 'The horn', desc: 'Pursuers under its watch are CALLED OUT and slowed — the land itself takes your side.' }, { cost: { metal: 16, ceramic: 8 }, name: 'Armed post', desc: 'A walker stands the platform: runners passing beneath are knocked sprawling — and the spotter\'s tithe sweeps stray METAL into your bank between rounds.' }] },
+    zipline: { name: 'Zipline pylon', cost: { metal: 30, lumen: 8 }, hp: 100, decay: 0.8, range: 1700, desc: 'Links to pylons in range. Fly over everything.',
+      tiers: [{ cost: { lumen: 4 }, name: 'Greased line', desc: 'Lines from this pylon fly a third faster.' }, { cost: { metal: 10, lumen: 8 }, name: 'Cradled line', desc: 'Reaches 300 further — the far pylons come into range.' }] },
+    pobox: { name: 'PO Box', cost: { metal: 6 }, hp: 90, decay: 0.5, desc: 'A weatherproof box on a post: stash cargo on the road, take it back later — or leave it for the walkers.' },
+    /* v3.27 THE ECOSYSTEM — production works: sited by terrain, paying into the bank, feeding the
+       utilities that built them. Everything has a purpose; everything helps the other. */
+    lumenstill: { name: 'Lumen still', cost: { metal: 14, ceramic: 6 }, hp: 90, decay: 0.9, work: 'lumen',
+      desc: 'Condenses the grey itself into lumen. Wants the VEIL thick at its site — the light\'s edge, not its heart — and a storm is a harvest.' },
+    sawcamp: { name: 'Sawcamp', cost: { metal: 10, wood: 4 }, hp: 90, decay: 0.9, work: 'wood',
+      desc: 'Saws and racks by a treeline. Wants FOREST in reach — and it sharpens any forrester working the same stand, who sharpens it right back.' },
+    clayoven: { name: 'Clay oven', cost: { metal: 8, wood: 6 }, hp: 90, decay: 0.9, work: 'ceramic',
+      desc: 'Bakes marsh clay into slab. Wants WET GROUND close — marsh or shallows within a short walk.' },
+    /* v3.28c — the honest form of a type past the ledger (a save from a NEWER build): a real,
+       visible, inert object. decay 0, no work, never buildable (buildOptions is curated), carries
+       its original type on the object and steps back into itself the moment a build knows it. */
+    unmapped: { name: 'Unmapped works', span: 60, cost: null, hp: 100, decay: 0, desc: 'A build from a newer register. It stands quiet until a build that knows it.' },
   };
 
   /* ---------- cargo item defs ---------- */
@@ -199,7 +221,8 @@ const DATA = (() => {
     core: { name: 'Beacon core', kg: 18, fragile: false, cat: 'core' },
     coreHeavy: { name: 'The Pharos Core', kg: 30, fragile: false, cat: 'core' },
     meds: { name: 'Medicine', kg: 7, fragile: true, cat: 'goods' },
-    letters: { name: 'Letters', kg: 2, fragile: false, cat: 'goods' },
+    letters: { name: 'Letters', kg: 2, fragile: false, cat: 'goods', service: true },
+    dispatch: { name: 'Rider’s dispatch', kg: 1.5, fragile: false, cat: 'goods', service: true },
     food: { name: 'Rations', kg: 12, fragile: false, cat: 'goods' },
     seeds: { name: 'Seed stock', kg: 8, fragile: false, cat: 'goods' },
     parts: { name: 'Machine parts', kg: 15, fragile: false, cat: 'goods' },
@@ -214,6 +237,8 @@ const DATA = (() => {
     metal: { name: 'Scrap metal', kg: 8, fragile: false, cat: 'mat', mat: 'metal', qty: 10 },
     ceramic: { name: 'Ceramic slabs', kg: 7, fragile: false, cat: 'mat', mat: 'ceramic', qty: 10 },
     lumen: { name: 'Raw lumen', kg: 3, fragile: false, cat: 'mat', mat: 'lumen', qty: 5 },
+    wood: { name: 'Cut timber', kg: 6, fragile: false, cat: 'mat', mat: 'wood', qty: 10 },
+    highleaf: { name: 'Highleaf smokes', kg: 5, fragile: false, cat: 'contra' },
     ladderTool: { name: 'Ladder', kg: 3, fragile: false, cat: 'tool', tool: 'ladder' },
     kitTool: { name: 'Build kit', kg: 5, fragile: false, cat: 'tool', tool: 'kit' },
   };
@@ -223,7 +248,7 @@ const DATA = (() => {
     {
       id: 'p1', from: 'haven', to: 'elm', items: [['meds', 1], ['letters', 1]],
       title: 'First steps', brief: 'Elm Farm ran out of insulin four days ago. Haven has some. Nobody has walked it over. You are nobody, for now.',
-      arrive: 'You did that. Look at their medicine bar — that is what a crate means here.',
+      arrive: 'You did that. Look at their medicine bar — that is what a crate means here. And the letters? Letters pay nothing. They pay ANYWAY — open THE POST at any terminal and watch a town warm to you.',
     },
     {
       id: 'p2', from: 'elm', to: 'haven', items: [['food', 2]],
@@ -239,10 +264,10 @@ const DATA = (() => {
     },
     {
       id: 'p4', from: 'haven', to: 'mill', items: [['core', 1], ['parts', 1]],
-      title: 'Light for the Mill', brief: 'The Mill has been hungry since winter and nobody has heard the saws. A core over the saddle puts them on the wire — and every road in the valley starts with their timber.',
-      grant: { ladders: 1 },
+      title: 'Light for the Mill', brief: 'The Mill has been hungry since winter and nobody has heard the saws. A core over the saddle puts them on the wire — and every road starts with their timber. Mara throws you the reins of the POST HORSE for the run: the Order moved faster than boots, once. It will again.',
+      grant: { ladders: 1, horse: true },
       connect: 'mill', unlock: ['kit'],
-      hint: 'The ▲ is a direction, not a road — cliffs bar the straight line. M shows the ground; a ladder (B) spans a cliff.',
+      hint: 'R mounts and dismounts the horse — fast, tireless, steady, but it balks at water and crossings. The ▲ is a direction, not a road; a ladder (B) spans a cliff.',
       arrive: 'The Mill is on the wire. Sawyers wave from the yard — and Elm’s food will find them now without you.',
     },
     {
@@ -313,9 +338,9 @@ const DATA = (() => {
 
   /* ---------- fabrication ---------- */
   const fabItems = [
-    { id: 'ladder', name: 'Ladder', cost: { metal: 10 }, gives: 'ladderTool', desc: '3 kg on the back. Crosses cliffs and rivers.' },
-    { id: 'kit', name: 'Build kit', cost: { metal: 25, ceramic: 10 }, gives: 'kitTool', needs: 'kit', desc: '5 kg. Becomes a bridge, generator, shelter, watchtower or pylon.' },
-    { id: 'flare', name: 'Flare', cost: { lumen: 8 }, needs: 'flare', desc: 'Burns the mist. Wraiths cannot stand it.', max: 5 },
+    { id: 'ladder', name: 'Ladder', cost: { metal: 8 }, gives: 'ladderTool', desc: '3 kg on the back. Crosses cliffs and rivers.' },
+    { id: 'kit', name: 'Build kit', cost: { metal: 16, ceramic: 8 }, gives: 'kitTool', needs: 'kit', desc: '5 kg. Becomes a bridge, generator, shelter, watchtower or pylon.' },
+    { id: 'flare', name: 'Flare', cost: { lumen: 6 }, needs: 'flare', desc: 'Burns the mist. Wraiths cannot stand it.', max: 5 },
   ];
 
   /* ---------- tuning ---------- */
@@ -332,13 +357,75 @@ const DATA = (() => {
     decayBase: 0.035,          // structure %/s baseline in dark (≈48 min life)
     grabDrain: 0.20, grabGain: 0.085, grabStart: 0.45,
     wraithSpeed: 118, wraithSense: 400, wraithMist: 0.68,
-    scrapSpeed: 152, scrapCatch: 38,
+    /* v3.31 THE FAIRNESS PASS — the chase obeys the world: raiders are FOOT (a sprint outruns
+       them unloaded, a horse ALWAYS does), they climb slopes like everyone, stop at cliffs, and
+       give up past their leash. 152 flat was a relative-chase cheat; it is gone. */
+    scrapSpeed: 118, scrapCatch: 38, scrapLeash: 720,
     starThresholds: [100, 260, 520, 900, 1450],
     levelBase: 70, levelPow: 1.38,
     likesBase: 12, likesPerSec: 0.45, likesPerKg: 0.85,
     needMul: { critical: 2.2, wanting: 1.5, steady: 1.0, thriving: 0.6 },   // what a crate is worth depends on who is waiting for it
     chainBonus: 0.15,          // each further stop on one trip pays this much more
-    letterMul: 0.5, mailGap: 300, // letters are proof, not income: half pay, and a place's mailbag refills slowly once carried off
+    /* THE POST — letters are the Order's SERVICE: zero trust, ever. Goods are luxury; luxury pays.
+       The mailbag fills with time (townsfolk write); a Letter runner on staff doubles the pen speed.
+       Tiers by the walk: LOCAL POST / LONG POST / GREY POST — paid in porter XP and appreciation. */
+    bagFill: 0.11, bagRunner: 0.13, bagCost: 35,
+    apprByTier: [0, 6, 12, 22], apprTiers: [40, 100, 180, 280],
+    apprNames: ['A FACE IN TOWN', 'KNOWN', 'TRUSTED', 'HONOURED', 'BELOVED'],
+    shiftLen: 90, shiftWage: 1, shiftXp: 14, postAppr: 1,
+    militiaCd: 300, militiaR: 320,
+    horseMul: 1.75, horseRent: 4, horseRentT: 300,   // the road has more than one speed
+    /* THE SHAPES OF WORK — the same walk, different questions. A circuit is one contract, many
+       doors (every crate loads at accept: the pack is the puzzle; pay lands at the last door).
+       A convoy's cargo is a person. Salvage is grey work, and grey work pays. */
+    circuitMul: 1.35, salvageMul: 1.6, convoyLag: 220, dismantleBack: 0.6,
+    /* v3.20 THE WORKING WORLD */
+    paveLayR: 80, paveSpeed: [1, 1.12, 1.18, 1.24], trafficWear: 2, trafficStep: 11,
+    fellRadius: 860, fellTime: 5, fellWood: 2, haulCap: 12, caravanCap: 30, haulLvCaravan: 5,
+    fieldShift: 110, looterBase: 170, looterPer: 45,
+    /* v3.21 THE BUILDS EARN THEIR GROUND */
+    armedSafe: 10, armedCampR: 1700, armedCampMul: 0.78, armedChaseMul: 0.88,
+    towerSlow: 0.7, towerKnockR: 130, insideRest: 34, insideHeal: 2.2, insideMend: 3,
+    /* v3.24 THE PARTY OF FOUR — permadeath demands investment, and investment demands MERCY with
+       teeth: companions are the health pool's first three quarters, the town never lets its own
+       starve inside the walls, and the best-loved yard sends riders before the ledger closes. */
+    partyMax: 3, koRecover: 540, koHeal: 32,
+    townSafeR: 300, mercyMealCd: 300,
+    rescueCd: 1500, rescueBase: 0.25, rescuePer: 0.18, rescueHeal: 30,
+    compHorseRent: 3, compHorseBuy: 12,
+    /* v3.25 THE EXILES — the cloaked torch and the rifle it carries. Precision fire is the
+       Lamplighter's whole argument: not melee, not brutes, hard-hitting marksmen. The warning
+       shot costs nothing but a round; the shot that CONNECTS writes the renegade ledger — the
+       exact violence that made them exiles. */
+    rifleRange: 430, rifleWarnR: 540, rifleCd: 6, rifleDropCd: 25,
+    rifleRenegade: 2, rifleHeat: 2, lampAmmoStart: 12, lampClassAmmo: 6,
+    lampTriggerHp: 55, sbsnGap: 240,
+    /* v3.27 THE ECOSYSTEM — production clocks (seconds per unit banked) and siting reach.
+       Disrepair below workHpMin pauses hands; the still doubles in grey weather; a sawcamp and a
+       forrester on the same stand speed each other by the synergy factor. */
+    stillRate: 90, sawRate: 75, ovenRate: 85, titheRate: 110, rackRate: 120,
+    stillMist: 0.22, sawReach: 240, ovenReach: 160, rackReach: 220,
+    workHpMin: 30, workSynergy: 1.25,
+    /* v3.28 RECON & OUTPOSTS — the Frostpunk law, in the register's ink: a rider sent past the
+       table's edge, sites that take real riding, an outpost that becomes a LINE HOME fed by the
+       ecosystem, and Farkeeper steel purchasable over every caravan that walks it. */
+    reconHire: { metal: 20, provisions: 6 },
+    reconHazard: 0.3, reconHazardDelay: 45,
+    outpostCost: { metal: 40, wood: 20, provisions: 12 },
+    outpostCycle: 240, outpostHaul: 3, outpostAlt: 1,
+    contractCost: 2, raidOdds: 0.35,
+    lootAutoLv: 4, lootDepositFill: 0.8, lootNodeTime: 1.2,
+    /* v3.30 THE EXILE ROADS — Shutterlight's clocks and prices. The follow is a guided journey
+       (the exiles find YOU); rounds are dear because the Nomads collect rifles, not brass;
+       contracts run on the wage-law's grammar with a hazard roll like the recon ride's. */
+    exFollowDur: 90, a338Cost: 3, a338Stock: 6, a338Cycle: 240,
+    exHazard: 0.25, exRank2: 3, exRank3: 7,
+    /* THE BODY REMEMBERS — pushback is earned trouble, not frivolous QTEs. Wobble is rare on
+       mastered ground, auto-steadied by a body that knows its footing, and NEVER cancels the
+       travel chain: the player automates the walk, the valley shows them what still needs earning. */
+    wobbleBaseMul: 0.38, wobbleSafeLoad: 0.62, autoSteadyStam: 2.5,
+    snowAcc: 0.055, snowMelt: 0.045, snowCold: 0.42,   // shoulders collect the north; movement sheds it
+    leafMax: 14,
     stockPerCrate: 28, stockDrain: 0.035, wireFlow: 0.06,                  // stock points: per delivered crate; lost per second (×pop); gained per second along a connected pair
     dayLen: 480,               // seconds per day; night is the last 40%
     gradeMult: { S: 1.6, A: 1.25, B: 1.0, C: 0.7 },
@@ -349,7 +436,7 @@ const DATA = (() => {
   };
 
   /* ranks of the Order — read them like a promotion, because they are one */
-  const titles = [[0, 'Greenhand of the Order'], [4, 'Mudfoot'], [8, 'Waylighter, Sworn'], [12, 'Pathbinder'], [17, 'Lifeline'], [22, 'Lamplord'], [28, 'Legend of the Valley']];
+  const titles = [[0, 'Greenhand of the Order'], [4, 'Mudfoot'], [8, 'Waylighter, Sworn'], [12, 'Pathbinder'], [17, 'Lifeline'], [22, 'Lamplord'], [28, 'Legend of the Greymarch']];
 
   /* THE ORDER OF WAYLIGHTERS — the dead institution whose coat you wear and whose dispatch still runs.
      The Dispatch is the game's emcee: pre-quiet automation, all caps, zero doubt. Z's commander, NBA Jam's booth. */
@@ -427,16 +514,52 @@ const DATA = (() => {
   const tutorials = {
     firstWobble: 'Rough ground under a load — press <b>Space</b> when the ring appears, or hold <b>Space</b> to brace and walk slow.',
     firstRain: 'Greyfall. It eats containers in the dark. Light, shelters and tarps blunt it.',
-    firstLadder: 'Face the crossing and press <b>B</b> — a ladder spans cliffs and rivers.',
+    firstLadder: 'Press <b>B</b> and pick the ladder — its <b>blueprint</b> hangs where it will land. <b>Click</b> or <b>E</b> lays it; <b>Esc</b> puts it away.',
     firstWade: 'Cold water. It slows you, drinks your stamina, and soaks the crates — the grade will show it. A ladder laid across keeps everything dry.',
-    firstKit: 'Build kits raise real structures — stand where you want one and press <b>B</b>. They only rise where waylight reaches.',
+    firstKit: 'Build kits raise real structures — press <b>B</b>, pick one, and its <b>blueprint</b> follows your aim. <b>Click</b> or <b>E</b> raises it. They only rise where waylight reaches.',
     firstScrap: 'Scrapper territory. They chase walkers with cargo. Outrun them, drop nothing, or route around. Light will end them one day.',
+    firstRifle: 'The Timberwolf rides your pack — press <b>Y</b>. Empty ground: a <b>warning crack</b> that scatters every chase, clean ledger. A scrapper in reach: he <b>drops</b> — and the Renegade ledger writes it. Rounds are scarce; the exiles will not always be on the ridge.',
+    firstWork: 'Your work just PAID — a unit banked, all on its own. Works produce as long as they stand mended (repairs want metal — the loop feeds back). Site them where their desc says and the clock never stops.',
+    firstRecon: 'A rider is OUT past the table\'s edge. Recon runs itself — the map fills in behind them. When the region reads CHARTED, the Darklands table will take an <b>outpost</b> there: a far station that hauls what the valley can\'t make.',
+    firstMemorial: 'The Order keeps its own. Every walker who falls or hangs up the coat earns a STONE here — raise it, read it, and watch the ground grow with the roll. Nothing here is ever lost; that is the whole point of the wire.',
+    firstRising: 'A town went dark BY CHOICE — that is the UNLIT, and no delivered core will answer doctrine. The Republic holds two answers on THE BANNER SHEET (the survey sheet\'s rail): THE QUELL marches Farkeeper shields there and restores the light by force; THE PARLEY is your own boots, their fire, and a gift — slower, remembered longer.',
+    firstBanner: 'THE BANNER SHEET is the Republic in session: every faction the world knows, its stance sealed by lore or walked by your play, every town\'s light as a political fact, and the doctrines that answer the dark ones. The sandbox reads from here.',
+    firstShrine: 'You FED a shrine. The Flame Keepers hold that light must be fed, not wired — every bowl you keep burning warms their stance on the banner sheet, and a fed bowl is real light on real ground.',
+    firstMountain: 'THE MOUNTAIN ROAD IS CUT. Farkeep answers the wire: the kit of the mountain — longbowman, rifle rider, berserker — hires at their desk on the table, and each answers trouble from its own trade when it closes on your walk.',
+    firstInterior: 'You are INSIDE — a walked room, not a described one. The prompts read the floor: the plates, the record, the cage, and the door out. Nothing made of grey follows you in.',
+    firstTaking: 'THE TAKING landed: a raider camp is a REPUBLIC WATCHPOST now — shields stand its fire, a chase that crosses its ring is broken, and salvage from the ring piles by the post for you to carry. The price is written by the world: the camps that stand grow bolder for a season, and a truce dies with the first shield. The light\'s own patient answer — a camp reached by the wire stands down by itself — still stands beside this one.',
+    firstAsk: 'THE WORLD ASKED the Republic a question — it stands on the banner sheet under THE WORLD ASKS, and it AGES. Answer it by walking (feed the doused bowl by hand) or by sending the mountain (the taking, at the camp nearest it). Silence is also an answer, and the banner that asked will read it.',
+    firstMuster: 'THE MUSTER ROLL is everyone under your command on one paper: where they stand, what they have done beside you, and their STANDING ORDERS — the wedge they walk, how they eat, how they meet trouble, what they sweep into their pack and what they lift off your back when you are over. Presets are a start; every order is yours to set. Call the roll and they sound off.',
+    firstCourting: 'The Unlit are COURTING a town — the half-flown shutter beside its door is the warning before a rising. HEAR THEM OUT on the banner sheet (a gift of stores, and enough of the town\'s love that they sit with you) and the drum slows; ignore it and the rising takes that town first.',
+    firstDossier: 'THE DOSSIER ran its pass — missions first, then Deliver → Store → Donate → Scrap → Pickup, letters before cargo, never past your pack\'s capacity. Set its marks in THE LEDGERS (the survey sheet\'s rail), and the walk manages itself.',
+    firstExile: 'SHUTTERLIGHT is open to you — the exiles\' own city, out past every map. The EXCHANGE sells .338 by the cycle; the GUILD posts contracts for a rifle with a party at its back. Work the contracts and the deeper shelves open.',
+    firstOutpost: 'Your outpost STANDS. Every few minutes its caravan walks the haul into the bank — watch the chips land. Caravans can be raided on the dark roads: fund the <b>Farkeeper escort</b> on the table and the mountain walks beside them.',
     firstBurn: 'It burned at the light\'s edge. Wraiths cannot cross onto lit ground — the gold rim is a wall to them. Run for the light.',
     firstWraith: 'A wraith. Movement draws them — creep braced with <b>Space</b>, or sprint and pray. A flare (<b>F</b>) burns them off.',
+    firstCircuit: 'A circuit is one contract with many doors — every leg\'s crates are on your back <b>now</b>. Pack it right; the pack is the puzzle. Grade and pay settle at the last door.',
+    firstConvoy: 'The cargo is a person. Their pace, your lantern: run too far ahead and they stop and call. Scrappers go for <b>their</b> crates; the deep grey roots their feet until you stand beside them.',
+    firstSalvage: 'The wreck lies out in the deep grey — walk out empty, load what the Grey left, walk back heavy. Grey work pays ×1.6.',
     firstSnag: 'It took cargo to a snag. The marker shows where. Nothing stays lost that a Waylighter can reach.',
     firstPaver: 'A road paver. Feed it metal and ceramic — banked or carried — and it paves a segment for good. Roads are fast, safe, forever — and the wire carries twice as much between the stations they join.',
     firstZip: 'Pylons within range link into ziplines automatically. Press <b>E</b> under one to fly.',
+    firstPave: 'A path your feet argued into the ground can be IMPROVED: press <b>P</b> on bare trail to lay <b>scrap plates</b> (3 metal), again for <b>cobbles</b> (3 ceramic), again for a <b>wood way</b> (3 timber). Each tier walks faster — and everyone\'s feet prefer it.',
+    firstField: 'Field work: from a terminal\'s <b>Waylighters</b> tab you can put hands on the LAND — a <b>path presser</b> wears trails in, a <b>mason</b> lays cobbles, a <b>forrester</b> fells timber, a <b>hauler</b> walks freight. They eat a provision a round, and the valley works while you walk.',
+    firstUpgrade: 'Your builds can be RAISED: stand by one and press <b>U</b>. First upgrades are cheap and useful; the last one asks for real work — and earns it.',
+    firstPobox: 'The PO Box holds what you stash — <b>E</b> stashes your non-mission load, <b>G</b> takes it back, <b>L</b> leaves it for the walkers as a donation. Hand tools left this way ARM a walker.',
+    firstArmed: 'A donated crate of hand tools ARMS a waylighter. Ten armed, and the roads around that town are measurably safer — and everyone will know it was you.',
+  };
+  /* v3.35 THE FIELD MANUAL — every lesson above has a page title; the manual indexes the pages a
+     walker has walked (S.flags.tut) in full and seals the rest. A new lesson wants a title here. */
+  const tutorialTitles = {
+    firstWobble: 'The wobble', firstRain: 'Greyfall', firstLadder: 'The ladder and its blueprint', firstWade: 'Cold water',
+    firstKit: 'Build kits', firstScrap: 'Scrapper territory', firstRifle: 'The Timberwolf', firstWork: 'A work that pays',
+    firstRecon: 'The recon ride', firstMemorial: 'The kept ground', firstRising: 'The Unlit', firstBanner: 'The banner sheet',
+    firstShrine: 'A fed shrine', firstMountain: 'The mountain road', firstInterior: 'A walked room', firstTaking: 'The taking',
+    firstAsk: 'The world asks', firstMuster: 'The muster roll', firstCourting: 'The courting', firstDossier: 'The dossier', firstExile: 'Shutterlight',
+    firstOutpost: 'An outpost stands', firstBurn: 'The light\'s edge', firstWraith: 'A wraith', firstCircuit: 'The circuit',
+    firstConvoy: 'The convoy', firstSalvage: 'Salvage', firstSnag: 'A snag', firstPaver: 'The road paver', firstZip: 'Ziplines',
+    firstPave: 'Paving a path', firstField: 'Field work', firstUpgrade: 'Raising a build', firstPobox: 'The PO Box', firstArmed: 'Walkers armed',
   };
 
-  return { W, H, features, rivers, stations, stationOrder, goodsInfo, letterLines, starRewards, roads, camps, echoNames, echoSpots, structures, items, priority, fabItems, T, titles, tutorials, keepers, barks, gradeLines, epitaphs, scrapShouts, dispatch, rollSeed, taglines, cheats };
+  return { W, H, features, rivers, stations, stationOrder, goodsInfo, letterLines, starRewards, roads, camps, echoNames, echoSpots, structures, MIGRATE_TYPES, items, priority, fabItems, T, titles, tutorials, tutorialTitles, keepers, barks, gradeLines, epitaphs, scrapShouts, dispatch, rollSeed, taglines, cheats };
 })();

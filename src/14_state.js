@@ -2,7 +2,13 @@
 /* Waylight — game state, new game, save/load, cargo & progression helpers */
 
 let S = null;
-const SAVE_KEY = 'waylight_save_v1';
+/* v3.35 THE PASSAGE PAPERS — three valleys. Slot 1 keeps the key every save has ever used
+   (migration-safe: a browser that saved before slots exists in slot 1 unchanged); slots 2 and 3
+   stand beside it. The active slot is the player's, persisted with the options, never the porter's. */
+const SLOT_PTR = 'waylight.slot';
+const slotKey = n => n === 1 ? 'waylight_save_v1' : `waylight_save_v1_s${n}`;
+let CUR_SLOT = (() => { try { const n = +localStorage.getItem(SLOT_PTR); return n >= 1 && n <= 3 ? n : 1; } catch (e) { return 1; } })();
+const SAVE_KEY = () => slotKey(CUR_SLOT);
 
 const State = (() => {
   const { T, stations, stationOrder, items } = DATA;
@@ -17,8 +23,11 @@ const State = (() => {
       stam: T.baseStam, stamMax: T.baseStam, capBase: T.baseCap,
       state: 'walk', qte: null, stagger: 0, struggle: null, zip: null, cine: null,
       cargo: [], likes: 0, level: 1,
+      renegade: 0, heat: {}, contra: null, cut: null,
+      look: null, timeScale: 1, mcine: null, handoff: null, mythSay: null, kids: null, ride: null, cineSeq: false, rescue: null, lamp: null, rifleCd: 0,
+      eco: { produced: {} },
       gear: { flares: 0 },
-      banked: { metal: 30, ceramic: 15, lumen: 0, provisions: 10 },
+      banked: { metal: 30, ceramic: 15, lumen: 0, wood: 0, provisions: 10 },
       stations: st,
       structures: [], zipLinks: [], zipSel: 0,
       roads: {}, roadFund: {},
@@ -27,6 +36,7 @@ const State = (() => {
       wraiths: [], flareCd: 0,
       camps: {}, nodes: [], lost: [], snags: [], drops: [],
       mails: [], echoSpawned: {}, likedEchoes: {}, awayStamp: Date.now(),
+      horse: { loaner: false, rentedUntil: 0, on: false, spookT: 0 },
       graves: [], npcs: [], ruins: [], legacy: [], echoRoster: [],
       compPos: { x: 0, y: 0 }, event: null, eventCd: 40, surgeT: 0, stormT: 0, poolT: 20,
       flags: { tut: {}, unlocks: {}, effects: {}, finale: false, sessionEcho: 0 },
@@ -61,11 +71,11 @@ const State = (() => {
     // metal & ceramic piles: everywhere-ish, not too near stations
     for (let i = 0; i < 15; i++) tryPlace((x, y) => {
       if (nearStation(x, y, 430)) return false;
-      S.nodes.push({ id: U.uid(), type: 'metal', x, y, qty: 8 + (rand() * 8 | 0), taken: false }); return true;
+      S.nodes.push({ id: U.uid(), type: 'metal', x, y, qty: 12 + (rand() * 8 | 0), taken: false }); return true;
     });
     for (let i = 0; i < 11; i++) tryPlace((x, y) => {
       if (nearStation(x, y, 430)) return false;
-      S.nodes.push({ id: U.uid(), type: 'ceramic', x, y, qty: 8 + (rand() * 6 | 0), taken: false }); return true;
+      S.nodes.push({ id: U.uid(), type: 'ceramic', x, y, qty: 10 + (rand() * 8 | 0), taken: false }); return true;
     });
     // lumen blooms: only in mist
     for (let i = 0; i < 16; i++) tryPlace((x, y) => {
@@ -122,6 +132,7 @@ const State = (() => {
     if (S.flags.effects.likes10) n = Math.round(n * 1.1);
     S.likes += n; S.stats.likesEarned += n;
     if (S.pStats) S.pStats.likes += n;
+    if (n > 0 && typeof UI !== 'undefined' && UI.earn) UI.earn('trust', n);   // v3.20: EVERY coin is SEEN landing
     while (S.likes >= totalNeedFor(S.level + 1)) {
       S.level++;
       Snd.sfx.levelup();
@@ -134,32 +145,41 @@ const State = (() => {
   function titleFor(lv) { let t = DATA.titles[0][1]; for (const [l, name] of DATA.titles) if (lv >= l) t = name; return t; }
 
   /* ---------- banked materials ---------- */
-  function canAfford(cost) { return !cost || Object.entries(cost).every(([k, v]) => S.banked[k] >= v); }
+  function canAfford(cost) { return !cost || Object.entries(cost).every(([k, v]) => (S.banked[k] || 0) >= v); }
   function pay(cost) { if (!cost) return; for (const [k, v] of Object.entries(cost)) S.banked[k] -= v; }
+  function bank(k, n) { S.banked[k] = (S.banked[k] || 0) + n; if (n > 0 && typeof UI !== 'undefined' && UI.earn) UI.earn('mat', n, k); }
 
   /* ---------- save / load ---------- */
   function save() {
     try {
-      const s = { ...S, wraiths: [], qte: null, struggle: null, handover: null, zip: null, cine: null, state: 'walk', savedAt: Date.now(), event: null, surgeT: 0, stormT: 0, moveTo: null, route: [] };
+      const s = { ...S, wraiths: [], qte: null, struggle: null, handover: null, zip: null, cine: null, state: 'walk', savedAt: Date.now(), event: null, surgeT: 0, stormT: 0, moveTo: null, route: [], place: null, timeScale: 1, mcine: null, handoff: null, mythSay: null, kids: null, ride: null, cineSeq: false, rescue: null, lamp: null, rifleCd: 0 };
       s.wearSave = World.packWear();   // the paths your feet wore — the valley keeps them across lives
+      s.paveSave = World.packPave(); s.fellSave = World.packFell();   // and the ways laid over them, and the clearings cut
       s.camps = {};
-      for (const [k, v] of Object.entries(S.camps)) s.camps[k] = { pacified: v.pacified, alert: 0, stash: v.stash, runners: [] };
-      localStorage.setItem(SAVE_KEY, JSON.stringify(s));
+      for (const [k, v] of Object.entries(S.camps)) s.camps[k] = { pacified: v.pacified, alert: 0, stash: v.stash, runners: [], taken: v.taken || null, culled: v.culled || 0 };   // v3.34: a held camp stays held; a harvested one stays short for its day
+      localStorage.setItem(SAVE_KEY(), JSON.stringify(s));
       UI.savedBlink();
       return true;
     } catch (e) { return false; }
   }
-  function hasSave() { try { return !!localStorage.getItem(SAVE_KEY); } catch (e) { return false; } }
-  function peekLegacy() { try { const j = JSON.parse(localStorage.getItem(SAVE_KEY)); return (j && j.legacy) || []; } catch (e) { return []; } }
+  function hasSave() { try { return !!localStorage.getItem(SAVE_KEY()); } catch (e) { return false; } }
+  function peekLegacy() { try { const j = JSON.parse(localStorage.getItem(SAVE_KEY())); return (j && j.legacy) || []; } catch (e) { return []; } }
   function load() {
     try {
-      const s = JSON.parse(localStorage.getItem(SAVE_KEY));
+      const raw = localStorage.getItem(SAVE_KEY());
+      /* v3.28b THE NO-PURGE LAW — before this build reads a byte of the save, the save as it
+         stood is stashed whole in a backup slot. No migration, repair, or fix can ever cost a
+         run: the previous state always survives beside the live one. */
+      if (raw) { try { localStorage.setItem(SAVE_KEY() + '_bak', raw); } catch (e2) {} }
+      const s = JSON.parse(raw);
       if (!s || (s.v !== 1 && s.v !== 2 && s.v !== 3)) return false;
       S = s;
       if (S.v === 1) migrateV1();
       Economy.ensure(); S.v = 3;
-      S.state = 'walk'; S.qte = null; S.struggle = null; S.zip = null; S.cine = null; S.stagger = 0; S.moveTo = null;
+      S.state = 'walk'; S.qte = null; S.struggle = null; S.zip = null; S.cine = null; S.stagger = 0; S.moveTo = null; S.place = null; S.inside = null; S.timeScale = 1; S.mcine = null; S.handoff = null; S.mythSay = null; S.kids = null; S.ride = null; S.cineSeq = false; S.rescue = null; S.lamp = null; S.rifleCd = 0; S.room = null; S.eco = S.eco || { produced: {} };   // v3.32: a save never resumes mid-room — the hall re-enters from the door
       S.wraiths = [];
+      if (!S.horse) S.horse = { loaner: false, rentedUntil: 0, on: false, spookT: 0 };
+      if (S.convoy) { S.convoy.frozen = false; S.convoy.stag = 0; S.convoy.waiting = false; }   // the grey that held them did not survive the save
       let maxId = 10;
       const scan = o => { if (o && typeof o === 'object') { if (typeof o.id === 'number') maxId = Math.max(maxId, o.id); Object.values(o).forEach(scan); } else if (Array.isArray(o)) o.forEach(scan); };
       scan(S.cargo); scan(S.structures); scan(S.nodes); scan(S.lost); scan(S.snags); scan(S.drops);
@@ -169,10 +189,90 @@ const State = (() => {
       Systems.rebuildZipLinks();
       World.repaintRoads(S.roads);
       if (S.wearSave) { World.loadWear(S.wearSave); delete S.wearSave; }
+      if (S.paveSave) { World.loadPave(S.paveSave); delete S.paveSave; }
+      if (S.fellSave) { World.loadFell(S.fellSave); delete S.fellSave; }
+      if (S.banked.wood === undefined) S.banked.wood = 0;
+      if (S.renegade === undefined) S.renegade = 0;
+      if (!S.heat) S.heat = {};
+      /* v3.28c THE TYPE LEDGER — one seam, no attic, no splice. The short-lived v3.28b attic
+         drains back into the world here, then EVERY structure walks forward through the
+         migration map; a type past the map that this build still doesn't know becomes a real
+         UNMAPPED object — visible, inert, original type carried on it — and steps back into
+         itself the moment a build that knows it loads the save. */
+      if (S.attic) { for (const a of S.attic) if (a && a.type) S.structures.push(a); delete S.attic; }
+      for (const st2 of S.structures) {
+        if (st2.type === 'unmapped' && st2.origType) {
+          const back = DATA.MIGRATE_TYPES[st2.origType] || st2.origType;
+          if (DATA.structures[back]) { st2.type = back; delete st2.origType; continue; }
+        }
+        if (DATA.MIGRATE_TYPES[st2.type]) st2.type = DATA.MIGRATE_TYPES[st2.type];
+        if (!DATA.structures[st2.type]) { st2.origType = st2.origType || st2.type; st2.type = 'unmapped'; }
+      }
       return true;
     } catch (e) { return false; }
   }
-  function wipe() { try { localStorage.removeItem(SAVE_KEY); } catch (e) {} }
+  function wipe() { try { localStorage.removeItem(SAVE_KEY()); } catch (e) {} }
+
+  /* ---------- v3.35 THE PASSAGE PAPERS: slots, plates, and the codes that carry a valley ---------- */
+  const slot = () => CUR_SLOT;
+  function setSlot(n) { if (n < 1 || n > 3) return false; CUR_SLOT = n; try { localStorage.setItem(SLOT_PTR, String(n)); } catch (e) {} return true; }
+  /* what a slot holds, read cheaply for a plate — never loaded */
+  function slotInfo(n) {
+    let raw = null; try { raw = localStorage.getItem(slotKey(n)); } catch (e) {}
+    if (!raw) return { n, empty: true };
+    try {
+      const j = JSON.parse(raw);
+      const t = j.time || 0, dayN = Math.floor(t / T.dayLen) + 1;
+      return { n, empty: false, name: j.pName || 'The Walker', cls: (typeof CHAR !== 'undefined' && CHAR.CLASSES[j.pClass] || {}).name || 'Courier',
+        title: titleFor(j.level || 1), level: j.level || 1, day: dayN, likes: j.likes || 0, legacy: (j.legacy || []).length,
+        lit: Object.values(j.stations || {}).filter(x => x.connected).length, dead: !!j.dead, savedAt: j.savedAt || 0, bytes: raw.length };
+    } catch (e) { return { n, empty: false, name: '(a page the ink ran on)', broken: true, bytes: raw.length }; }
+  }
+  const slots = () => [1, 2, 3].map(slotInfo);
+  /* the code: the save as text — deflate-raw + base64 under a WL1 seal when the browser can, plain
+     base64 under WL0 when it cannot. A code from either seal reads on either browser. */
+  const b64 = bytes => { let s2 = ''; for (let i = 0; i < bytes.length; i += 0x8000) s2 += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000)); return btoa(s2); };
+  const unb64 = str => Uint8Array.from(atob(str), ch => ch.charCodeAt(0));
+  async function exportCode(n = CUR_SLOT) {
+    let raw = null; try { raw = localStorage.getItem(slotKey(n)); } catch (e) {}
+    if (!raw) return null;
+    const bytes = new TextEncoder().encode(raw);
+    if (typeof CompressionStream !== 'undefined') {
+      try {
+        const cs = new Blob([bytes]).stream().pipeThrough(new CompressionStream('deflate-raw'));
+        const out = new Uint8Array(await new Response(cs).arrayBuffer());
+        return 'WL1:' + b64(out);
+      } catch (e) { /* fall through to the plain seal */ }
+    }
+    return 'WL0:' + b64(bytes);
+  }
+  async function decodeCode(code) {
+    const c = String(code || '').replace(/\s+/g, '');
+    const m = /^WL([01]):(.+)$/.exec(c);
+    if (!m) throw new Error('no seal — a passage code begins WL1: or WL0:');
+    let bytes;
+    try { bytes = unb64(m[2]); } catch (e) { throw new Error('the code is not whole — a character the seal cannot read'); }
+    if (m[1] === '1') {
+      if (typeof DecompressionStream === 'undefined') throw new Error('this browser cannot unseal a WL1 code');
+      try {
+        const ds = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+        bytes = new Uint8Array(await new Response(ds).arrayBuffer());
+      } catch (e) { throw new Error('the seal is broken — the code was cut short or altered'); }
+    }
+    let j;
+    try { j = JSON.parse(new TextDecoder().decode(bytes)); } catch (e) { throw new Error('the seal is whole but the page inside is not readable'); }
+    const txt = JSON.stringify(j);
+    if (!j || typeof j !== 'object' || ![1, 2, 3].includes(j.v) || !j.stations || !j.banked) throw new Error('the seal is whole but the page is not a valley');
+    return { json: j, txt };
+  }
+  /* import writes ONE slot, after stashing whatever that slot held in its backup — the no-purge law */
+  async function importCode(code, n) {
+    const { json, txt } = await decodeCode(code);
+    let prev = null; try { prev = localStorage.getItem(slotKey(n)); } catch (e) {}
+    if (prev) { try { localStorage.setItem(slotKey(n) + '_bak', prev); } catch (e) {} }
+    localStorage.setItem(slotKey(n), txt);
+    return slotInfo(n);
+  }
 
   /* ---------- v1 → v2: the Founder inherits the network ---------- */
   function migrateV1() {
@@ -209,5 +309,6 @@ const State = (() => {
     Systems.addMail('The valley changed while you walked', 'Waylighters are mortal now. The network is not. Your journal transcribes at every terminal — whatever happens, the next one carries what you learned.');
   }
 
-  return { newGame, refreshSources, cap, weight, makeItem, addCargo, removeCargo, countTool, takeTool, grantLikes, titleFor, levelNeed, totalNeedFor, canAfford, pay, save, load, hasSave, peekLegacy, wipe };
+  return { newGame, refreshSources, cap, weight, makeItem, addCargo, removeCargo, countTool, takeTool, grantLikes, titleFor, canAfford, pay, bank, save, load, hasSave, peekLegacy, wipe,
+    slot, setSlot, slotInfo, slots, exportCode, decodeCode, importCode };
 })();

@@ -63,7 +63,8 @@ await page.keyboard.press('i'); await page.waitForTimeout(150);
 
 /* 2. the companion chip is clickable and giving works in two clicks */
 await page.evaluate(() => {
-  const n = NPC.gen({ at: 'haven' }); n.state = 'companion'; n.carry = []; n.x = S.px + 40; n.y = S.py; n.food = 100; S.npcs.push(n);
+  S.drops.length = 0;   // section 1's stage litter — the party's hands now reliably stow a crate at their feet (v3.19 law), so clear the floor
+  const n = NPC.gen({ at: 'haven' }); n.state = 'companion'; n.carry = []; n.x = S.px + 40; n.y = S.py; n.cx = S.px + 40; n.cy = S.py; n.food = 100; S.npcs.push(n);
   State.addCargo(State.makeItem('food'));
   UI2.updateVitals ? UI2.updateVitals() : null;
 });
@@ -133,9 +134,9 @@ await page.evaluate(() => { Systems.cancelMove(); });
 
 /* 6. the companion does not watch you die: a charging scrapper gets met and knocked flat */
 r = await page.evaluate(() => {
-  const n = NPC.companion(); n.x = S.px + 30; n.y = S.py; n.shoveCd = 0; n.hungry = false;
+  const n = NPC.companion(); n.shoveCd = 0; n.hungry = false;
   const cdef = DATA.camps[0], c = S.camps[cdef.id];
-  WL.tp([cdef.x, cdef.y]); n.x = S.px + 30; n.y = S.py;
+  WL.tp([cdef.x, cdef.y]); n.x = S.px + 30; n.y = S.py; n.cx = S.px + 30; n.cy = S.py;   // the live party position rides n.cx now
   S.cargo.push(State.makeItem('food'));
   c.runners.length = 0; c.runners.push({ x: S.px + 120, y: S.py, wa: 0, state: 'patrol', cd: 0 });
   const r0 = c.runners[0];

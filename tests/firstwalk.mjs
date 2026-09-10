@@ -88,6 +88,8 @@ async function act() {
     return v;
   }
   if (/^(Open|Deliver at)/.test(v.head)) { await setKeys([]); await page.keyboard.press('e'); await page.waitForTimeout(300); return v; }
+  if (/^The blueprint hangs/.test(v.head)) { await setKeys([]); await page.keyboard.press('e'); mark('pressed E — laid the blueprint'); await page.waitForTimeout(300); return v; }
+  if (/^Aim the blueprint/.test(v.head)) { await setKeys([]); await page.keyboard.press('Escape'); await page.waitForTimeout(120); return v; }   // put it away, step closer, try again
   if (/^Lay a ladder/.test(v.head) && /B opens build/.test(v.sub)) {
     await setKeys([]); await page.waitForTimeout(80);
     const barOpen = await page.evaluate(() => !document.getElementById('buildBar').classList.contains('hidden'));

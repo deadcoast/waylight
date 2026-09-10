@@ -81,7 +81,6 @@ const World = (() => {
   /* ---------- classification ---------- */
   // riverbanks: the carve makes them steep, but a bank is a bank — you can always walk down to the water
   const BANK = 2.6;
-  function nearRiver(rd, ri) { return ri !== 255 && rd < rivers[ri].w * BANK; }
   function classify(x, y, h, rd, ri, slope) {
     if (onPad(x, y)) return PAD;
     if (ri !== 255) {
@@ -223,9 +222,16 @@ const World = (() => {
         const tr = td[i], tg = td[i + 1], tb = td[i + 2];
         // the coastline: the wraith-burn threshold drawn as a dithered golden shore, day and night
         // — it is safety cartography, so it lives with the WARMTH and no lamp can erase it
-        if (Math.abs(L - 0.30) < 0.020 && bay < 0.42) {
-          dD[i] = dN[i] = dW[i] = 255; dD[i + 1] = dN[i + 1] = dW[i + 1] = 232; dD[i + 2] = dN[i + 2] = dW[i + 2] = 170; dD[i + 3] = dN[i + 3] = dW[i + 3] = 255;
-          continue;
+        if (Math.abs(L - 0.30) < 0.05 && bay < 0.36) {
+          // the shore is a LINE: fixed WORLD width (~3 texels), however shallow the gradient runs —
+          // measured against the local slope so a slow falloff cannot fatten it into a checker band
+          const gmx = Math.abs(gridAt(lightG, wx + 6, wy) - gridAt(lightG, wx - 6, wy)) / 12;
+          const gmy = Math.abs(gridAt(lightG, wx, wy + 6) - gridAt(lightG, wx, wy - 6)) / 12;
+          const gm = Math.max(0.00035, Math.hypot(gmx, gmy));
+          if (Math.abs(L - 0.30) < gm * 11) {
+            dD[i] = dN[i] = dW[i] = 255; dD[i + 1] = dN[i + 1] = dW[i + 1] = 232; dD[i + 2] = dN[i + 2] = dW[i + 2] = 170; dD[i + 3] = dN[i + 3] = dW[i + 3] = 255;
+            continue;
+          }
         }
         // Bayer jitters the light value, not the colour: bands stay solid, their EDGES dither.
         const Lq = L + (bay - 0.47) * 0.07 - (m > 0.62 + (bay - 0.5) * 0.2 ? 0.05 : 0);
@@ -304,13 +310,13 @@ const World = (() => {
     const c = classAt(x, y);
     if (c !== MEADOW && c !== MARSH) return 0;
     const i = wearIdx(x, y);
-    if (i < 0) return 0;
+    if (i < 0 || pave[i]) return 0;                       // a LAID way is finished ground — feet no longer argue with it
     wear[i] = Math.min(255, wear[i] + amt);
     wearDirty.add(i);
     // the tread spreads a little: neighbours take a lighter print
     for (const di of [-1, 1, -WW, WW]) {
       const j = i + di;
-      if (j >= 0 && j < WW * WH && wear[j] < wear[i]) { wear[j] = Math.min(255, wear[j] + Math.max(1, amt >> 1)); wearDirty.add(j); }
+      if (j >= 0 && j < WW * WH && !pave[j] && wear[j] < wear[i]) { wear[j] = Math.min(255, wear[j] + Math.max(1, amt >> 1)); wearDirty.add(j); }
     }
     return wear[i];
   }
@@ -324,7 +330,7 @@ const World = (() => {
     let bx0 = 1e9, by0 = 1e9, bx1 = -1e9, by1 = -1e9;
     for (const i of cells) {
       const w = wear[i];
-      if (w < W_TRAMPLE) continue;
+      if (w < W_TRAMPLE || pave[i]) continue;              // never paint dirt over a laid way
       const cx2 = i % WW, cy2 = (i / WW) | 0;
       const tx0 = Math.round(cx2 * WSC / TS), ty0 = Math.round(cy2 * WSC / TS);
       if (!wearOrig.has(i) && tx0 + 1 < TW && ty0 + 1 < TH) wearOrig.set(i, g.getImageData(tx0, ty0, 2, 2));
@@ -377,6 +383,114 @@ const World = (() => {
     }
     if (bx1 >= 0) paintLightRegion(bx0 - 1, by0 - 1, bx1 + 3, by1 + 3);
     wear.fill(0); wearOrig.clear(); wearDirty.clear();
+    pave.fill(0); felled.clear();
+  }
+
+  /* =============== v3.20 THE WORKING WORLD: paved ways & the forrester's clearings ===============
+     A bare footpath can be IMPROVED, tier by tier: scrap plates, then cobbles, then planking — each
+     faster underfoot, kinder to feet finding a route, and honest in the paint. Same grid as wear. */
+  const pave = new Uint8Array(WW * WH);   // 0 grass · 1 scrap · 2 cobble · 3 wood way
+  const PAVE_COLS = [
+    null,
+    [[70, 78, 86], [54, 62, 70], [98, 108, 116]],        // scrap: cool riveted steel, seamed
+    [[152, 148, 136], [118, 114, 104], [176, 172, 156]], // cobble: pale set stones, bright-jointed
+    [[128, 96, 58], [104, 76, 44], [150, 116, 70]],      // wood way: warm planks
+  ];
+  function paveAt(x, y) { const i = wearIdx(x, y); return i < 0 ? 0 : pave[i]; }
+  function paintPaveCells(cells) {
+    const g = tc.getContext('2d');
+    let bx0 = 1e9, by0 = 1e9, bx1 = -1e9, by1 = -1e9;
+    for (const i of cells) {
+      const p = pave[i];
+      if (!p) continue;
+      const cx2 = i % WW, cy2 = (i / WW) | 0;
+      const tx0 = Math.round(cx2 * WSC / TS), ty0 = Math.round(cy2 * WSC / TS);
+      if (!wearOrig.has(i) && tx0 + 1 < TW && ty0 + 1 < TH) wearOrig.set(i, g.getImageData(tx0, ty0, 2, 2));
+      const ramp = PAVE_COLS[p];
+      for (let ty2 = 0; ty2 < 2; ty2++) for (let tx2 = 0; tx2 < 2; tx2++) {
+        const px = tx0 + tx2, py = ty0 + ty2;
+        if (px >= TW || py >= TH) continue;
+        // each tier lays its own pattern: plates seamed, cobbles alternating, planks run with the row
+        const col = p === 3 ? ramp[(py & 2) ? 1 : (px & 1) ? 0 : 2]
+          : p === 2 ? ramp[(px + py * 2) % 3]
+            : ramp[((px >> 1) + (py >> 1)) & 1];
+        g.fillStyle = `rgb(${col[0]},${col[1]},${col[2]})`;
+        g.fillRect(px, py, 1, 1);
+      }
+      if (tx0 < bx0) bx0 = tx0; if (ty0 < by0) by0 = ty0;
+      if (tx0 > bx1) bx1 = tx0; if (ty0 > by1) by1 = ty0;
+    }
+    if (bx1 >= 0) paintLightRegion(bx0 - 1, by0 - 1, bx1 + 3, by1 + 3);
+  }
+  /* lay a tier around a point: only worn-bare ground takes tier 1; each tier lays on the one below.
+     Returns cells upgraded (0 = nothing here was ready for it). */
+  function layPave(x, y, r, tier) {
+    const upgraded = [];
+    const c0x = ((x - r) / WSC) | 0, c1x = ((x + r) / WSC) | 0, c0y = ((y - r) / WSC) | 0, c1y = ((y + r) / WSC) | 0;
+    for (let cy = Math.max(0, c0y); cy <= Math.min(WH - 1, c1y); cy++) for (let cx = Math.max(0, c0x); cx <= Math.min(WW - 1, c1x); cx++) {
+      const wx = cx * WSC + WSC / 2, wy = cy * WSC + WSC / 2;
+      if (Math.hypot(wx - x, wy - y) > r) continue;
+      const i = cy * WW + cx;
+      // the law: paving wants ground the feet already ARGUED for (bare trail), or a lesser tier to
+      // build on — tiers only ever go UP, and a rich walker may skip straight to the good stone
+      if (pave[i] >= tier) continue;
+      if (pave[i] === 0 && wear[i] < W_BARE) continue;
+      const c = classAt(wx, wy);
+      if (c !== MEADOW && c !== MARSH) continue;
+      pave[i] = tier;
+      upgraded.push(i);
+    }
+    if (upgraded.length) { paintPaveCells(upgraded); pcost = null; }
+    return upgraded.length;
+  }
+  function packPave() { const out = []; for (let i = 0; i < pave.length && out.length < 16000; i++) if (pave[i]) out.push(i, pave[i]); return out; }
+  function loadPave(pairs) { if (!pairs || !pairs.length) return; const cells = []; for (let k = 0; k + 1 < pairs.length; k += 2) { pave[pairs[k]] = pairs[k + 1]; cells.push(pairs[k]); } for (let a = 0; a < cells.length; a += 800) paintPaveCells(cells.slice(a, a + 800)); pcost = null; }
+
+  /* the forrester's axe: a forest cell becomes a clearing — the class grid IS the truth, so fell
+     writes it, paints the floor back to meadow with a stump, and the path grid re-learns the ground */
+  const felled = new Set();
+  function fellAt(x, y) {
+    const cx2 = U.clamp((x / CS) | 0, 0, CW - 1), cy2 = U.clamp((y / CS) | 0, 0, CH - 1);
+    const i = cy2 * CW + cx2;
+    if (cls[i] !== FOREST) return false;
+    cls[i] = MEADOW;
+    felled.add(i);
+    paintFellCell(i);
+    pcost = null;
+    return true;
+  }
+  function paintFellCell(i) {
+    const g = tc.getContext('2d');
+    const cx2 = i % CW, cy2 = (i / CW) | 0;
+    const tx0 = Math.round(cx2 * CS / TS), ty0 = Math.round(cy2 * CS / TS);
+    const n = Math.max(1, Math.round(CS / TS));
+    const ramp = COL[MEADOW];
+    for (let ty2 = 0; ty2 < n; ty2++) for (let tx2 = 0; tx2 < n; tx2++) {
+      const px = tx0 + tx2, py = ty0 + ty2;
+      if (px >= TW || py >= TH) continue;
+      const col = ramp[U.hash2(px, py, 77) > 0.5 ? 2 : 1];
+      g.fillStyle = `rgb(${col[0]},${col[1]},${col[2]})`;
+      g.fillRect(px, py, 1, 1);
+    }
+    // the stump: one dark-ringed texel where the tree stood
+    const sx2 = tx0 + (U.hash2(cx2, cy2, 31) * n) | 0, sy2 = ty0 + (U.hash2(cy2, cx2, 37) * n) | 0;
+    if (sx2 < TW && sy2 < TH) { g.fillStyle = 'rgb(94,66,40)'; g.fillRect(sx2, sy2, 1, 1); }
+    paintLightRegion(tx0 - 1, ty0 - 1, tx0 + n + 1, ty0 + n + 1);
+  }
+  function packFell() { return [...felled]; }
+  function loadFell(list) { if (!list) return; for (const i of list) { if (cls[i] === FOREST) { cls[i] = MEADOW; felled.add(i); paintFellCell(i); } } if (list.length) pcost = null; }
+  /* nearest standing forest cell to a point, within reach — the forrester's next tree */
+  function nearestForest(x, y, r) {
+    let best = null, bd = r;
+    const c0x = Math.max(0, ((x - r) / CS) | 0), c1x = Math.min(CW - 1, ((x + r) / CS) | 0);
+    const c0y = Math.max(0, ((y - r) / CS) | 0), c1y = Math.min(CH - 1, ((y + r) / CS) | 0);
+    for (let cy = c0y; cy <= c1y; cy++) for (let cx = c0x; cx <= c1x; cx++) {
+      if (cls[cy * CW + cx] !== FOREST) continue;
+      const wx = cx * CS + CS / 2, wy = cy * CS + CS / 2;
+      const d = Math.hypot(wx - x, wy - y);
+      if (d < bd) { bd = d; best = { x: wx, y: wy }; }
+    }
+    return best;
   }
 
   function coverage() {
@@ -580,7 +694,16 @@ const World = (() => {
       let blocked = t.blocked, deep = t.cls === DEEP;
       for (const [ox, oy] of [[-q, -q], [q, -q], [-q, q], [q, q]]) { const t2 = classAt(x + ox, y + oy); if (t2 === CLIFF) blocked = true; if (t2 === DEEP) deep = true; }
       if (deep) { pcost[cy * PW + cx] = 6.5; pdeep[cy * PW + cx] = 1; }   // "you will find a way across" (par estimates)
-      else pcost[cy * PW + cx] = blocked ? -1 : 1 / Math.max(0.3, t.p[0]);
+      else if (blocked) pcost[cy * PW + cx] = -1;
+      else {
+        let cost = 1 / Math.max(0.3, t.p[0]);
+        // v3.20: feet PREFER the worked ground — worn paths and paved ways are the cheap way through,
+        // so routed walks (the player's clicks and every walker of the Order) fall onto them
+        const pv = pave[wearIdx(x, y)] || 0;
+        if (pv) cost = [1, 0.72, 0.62, 0.55][pv];
+        else if (wear[wearIdx(x, y)] >= W_BARE) cost *= 0.82;
+        pcost[cy * PW + cx] = cost;
+      }
     }
   }
   const pathCell = (x, y) => U.clamp((y / PS) | 0, 0, PH - 1) * PW + U.clamp((x / PS) | 0, 0, PW - 1);
@@ -632,11 +755,9 @@ const World = (() => {
   }
 
   return {
-    W, H, MEADOW, FOREST, SCREE, ROCK, SNOW, MARSH, SHALLOW, DEEP, CLIFF, CP,
-    bake, hgtAt, slopeAt, classAt, terrainAt, riverAt,
-    setSources, lightAt, mistAt, mistBase, rebuildLight, coverage, lightG, LW, LH, LS,
-    tc, rc, thumb, TS, veilC, glowC, mistC, overlayC, lightOv, lightOvN, lightWarm, lightDim, rebuildThumb, repaintRoads,
+    W, H, MEADOW, FOREST, SCREE, ROCK, SNOW, MARSH, SHALLOW, DEEP, CLIFF, bake, hgtAt, classAt, terrainAt, riverAt,
+    setSources, lightAt, mistAt, mistBase, rebuildLight, coverage, tc, TS, overlayC, lightOv, lightOvN, lightWarm, lightDim, repaintRoads,
     addWear, wearAt, flushWear, packWear, loadWear, clearWear, W_TRAMPLE, W_BARE,
-    paintRoadSegment, paverPos, roadSegPts, pathTime, buildPathGrid, pathCell, PS,
+    paveAt, layPave, packPave, loadPave, fellAt, packFell, loadFell, nearestForest, paintRoadSegment, paverPos, pathTime, buildPathGrid, pathCell, PS,
   };
 })();

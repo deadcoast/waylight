@@ -53,10 +53,13 @@ const Porter = (() => {
     S.equip = { boots: State.makeItem('boots0'), coat: State.makeItem('coat0'), pack: State.makeItem('pack0'), charm: null };
     S.manuals = {};
     S.gear.flares = 0; S.gear.sledOn = false;
+    // v3.25: the Timberwolf is a hand-me-down between EXILES only — the Nomads collect their
+    // rifles from the fallen. A Lamplighter porter shoulders one on day one; nobody else does.
+    S.gear.rifle = p.cls === 'lamplighter'; S.gear.ammo338 = p.cls === 'lamplighter' ? DATA.T.lampClassAmmo : 0;
     S.cargo = [];
     S.journal = { name: p.name, xp: {} };
     S.pStats = { deliveries: 0, km: 0, likes: 0, bornAt: Date.now() };
-    S.dead = false;
+    S.dead = false; S.deadInfo = null;   // v3.28b: the new walker owes the certificate nothing
     _effT = -1;
   }
 
@@ -83,7 +86,7 @@ const Porter = (() => {
       drainMul: has('ironlungs') ? 0.85 : 1,
       regenMul: (1 + lv('end') * 0.04) * (has('asthmatic') ? 0.8 : 1) * (S.flags.effects.regen20 ? 1.2 : 1),
       stationRegen: (charm.stationRegen || 1) * (has('restless') ? 0.75 : 1),
-      cap: 55 + lv('haul') * 2.8 + (pack.cap || 0) + (has('packmule') ? 10 : 0) - (has('badback') ? 8 : 0) + (S.flags.effects.cap10 ? 10 : 0),
+      cap: 55 + lv('haul') * 2.8 + (pack.cap || 0) + (has('packmule') ? 10 : 0) - (has('badback') ? 8 : 0) + (S.flags.effects.cap10 ? 10 : 0) + (isCls('lamplighter') ? 6 : 0),
       dropMul: has('clumsy') ? 1.15 : 1,
       buildCostMul: (1 - lv('rig') * 0.03) * (isCls('rigger') ? 0.8 : 1),
       decayMineMul: 1 - lv('rig') * 0.04,
@@ -158,8 +161,22 @@ const Porter = (() => {
     for (const k of Object.keys(S.buffs)) { S.buffs[k] -= dt; if (S.buffs[k] <= 0) { delete S.buffs[k]; dirty(); } }
     // food
     const moving = S.speed > 8;
+    /* v3.24 THE TOWN LAW: no one starves or freezes to death inside walls — IMMEDIATE immunity.
+       A town that watches a walker drop dead of hunger in its own yard is not a town. */
+    const townId = Systems.nearStation(DATA.T.townSafeR);
     S.food = Math.max(0, S.food - (moving ? 0.09 : 0.03) * e.foodMul * dt);
-    if (S.food <= 0) { S.foodZeroT += dt; if (S.foodZeroT > 30) damage(0.14 * dt, 'starve', { silent: true }); }
+    if (S.food <= 0) {
+      S.foodZeroT += dt;
+      if (townId) {   // the mercy meal: a keeper spots you swaying and brings broth
+        S.flags.mercyT = S.flags.mercyT || {};
+        if ((S.flags.mercyT[townId] || 0) <= S.time) {
+          S.flags.mercyT[townId] = S.time + DATA.T.mercyMealCd;
+          S.food = Math.max(S.food, 24);
+          UI.toast(`A keeper at ${DATA.stations[townId].name} presses a bowl into your hands. <i>"Not in MY yard, walker. Eat."</i>`, 'gold', 6000);
+          Snd.sfx.pickup();
+        }
+      } else if (S.foodZeroT > 30) damage(0.14 * dt, 'starve', { silent: true });
+    }
     else S.foodZeroT = 0;
     if (S.food < 35 && !S.flags.tut.firstHunger) { S.flags.tut.firstHunger = true; UI.toast('Hungry — press <b>H</b> to eat. Rations print at any terminal from provisions; farms donate them with every delivery.', '', 8000); }
     // warmth
@@ -170,7 +187,7 @@ const Porter = (() => {
     if (Systems.inAura('generator') || Systems.inAura('shelter') || Systems.nearStation(150)) ins += 1.2;
     const net = cold - ins;
     S.warmth = U.clamp(S.warmth + (net > 0 ? -net * 1.1 : 7) * dt, 0, 100);
-    if (S.warmth < 15) damage(0.3 * dt, 'cold', { silent: true });
+    if (S.warmth < 15 && !townId) damage(0.3 * dt, 'cold', { silent: true });   // the town law covers the cold too
     if (S.warmth < 45 && !S.flags.tut.firstCold) { S.flags.tut.firstCold = true; UI.toast('The cold is in your coat. Light, fires and generators warm you; the north wants a real coat.', '', 8000); }
     // wounds
     if (S.bleeding) damage(0.25 * dt, 'bleed', { silent: true });
@@ -187,13 +204,23 @@ const Porter = (() => {
     if (S.dead || amt <= 0) return;
     S.health = Math.max(0, S.health - amt);
     lastCause = cause;
-    if (!opts.silent) Render.shake(Math.min(10, amt));
     if (opts.bleed && rand() < opts.bleed && !S.bleeding) {
       S.bleeding = true;
       UI.toast('You are <b>bleeding</b> — bandage it, or a terminal can', 'rust');
     }
     if (opts.bruise) S.bruisedT = Math.max(S.bruisedT, 60);
-    if (S.health <= 0) die(cause);
+    if (S.health <= 0) {
+      /* v3.24 THE PARTY IS THE HEALTH POOL: the player character ALWAYS falls last.
+         Quarter by quarter — each companion takes a blow that would end you; when the last
+         back is spent, the best-loved town gets one chance to ride. Then, and only then,
+         permadeath is permadeath. */
+      if (!opts.noSave) {
+        const m = NPC.partyAbsorb && NPC.partyAbsorb(cause);
+        if (m) { S.health = DATA.T.koHeal; S.bleeding = false; return; }
+        if (Systems.rescueAttempt && Systems.rescueAttempt(cause)) return;
+      }
+      die(cause);
+    }
   }
   function heal(amt) { S.health = Math.min(100, S.health + amt * eff().mendMul); }
 
@@ -326,7 +353,7 @@ const Porter = (() => {
     }
     S.orders.active = [];
     // legacy
-    S.legacy.push({ name: S.pName, cls: CLASSES[S.pClass].name, fate: CAUSES[cause] || cause, likes: Math.round(S.pStats.likes), km: (S.pStats.km / 1000).toFixed(1), deliveries: S.pStats.deliveries, cheated: !!S.flags.cheated });
+    S.legacy.push({ name: S.pName, cls: CLASSES[S.pClass].name, fate: CAUSES[cause] || cause, likes: Math.round(S.pStats.likes), km: (S.pStats.km / 1000).toFixed(1), deliveries: S.pStats.deliveries, cheated: !!S.flags.cheated, seed: S.pSeed, fact: S.pClass === 'lamplighter' ? 'lamplighters' : 'waylight' });   // v3.29/30: the face and the banner ride the roll — an exile's stone stands in the exiles' own ground
     if (!inGrey) {
       if (!S.echoRoster.includes(S.pName)) S.echoRoster.push(S.pName);
       Systems.addMail(`${S.pName} walks the network now`, 'Waylighters the light remembers never really stop delivering.');
@@ -334,7 +361,14 @@ const Porter = (() => {
       Systems.addMail(`The Grey kept ${S.pName}`, 'They stand where they fell. Light frees the kept — carry a flare to them.');
     }
     NPC.onPorterDeath();
-    UI2.showDeath({ name: S.pName, cls: CLASSES[S.pClass].name, cause: CAUSES[cause] || cause, wraith: inGrey, stats: S.pStats, seed: S.pSeed });
+    /* v3.28b THE DEAD BOOT LAW — the death is COMMITTED the moment it happens. The certificate's
+       facts ride the save (deadInfo), and the save is written NOW: no alt-F4 walks a death back,
+       and any reload lands on the Certificate of Passage instead of a zombie world with its
+       boots nailed down. This was the frozen-input bug: an auto-save on the death screen stored
+       dead:true, and every boot after loaded a world where nothing could move but the ESC menu. */
+    S.deadInfo = { name: S.pName, cls: CLASSES[S.pClass].name, cause: CAUSES[cause] || cause, wraith: inGrey, stats: S.pStats, seed: S.pSeed };
+    UI2.showDeath(S.deadInfo);
+    State.save();
   }
 
   function claimGrave(grave) {
@@ -401,5 +435,5 @@ const Porter = (() => {
     return url;
   }
 
-  return { generate, applyToState, randomName, randomTraits, eff, dirty, xp, xpAcc, update, damage, heal, eat, useItem, readManual, moodles, fearActive, transcribe, readJournal, die, claimGrave, freeWraithGrave, portrait, freshSkills };
+  return { generate, applyToState, randomName, randomTraits, eff, dirty, xp, xpAcc, update, damage, heal, eat, useItem, readManual, moodles, fearActive, transcribe, die, claimGrave, freeWraithGrave, portrait, freshSkills };
 })();

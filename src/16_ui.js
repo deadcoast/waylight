@@ -53,13 +53,13 @@ const UI = (() => {
     const low = hp <= 25 && hp > 0;
     const rate = low ? 2.4 : 1.3;
     const squeeze = (S.time * rate) % 1 < 0.16;
-    const shake = heartDmgT > 0 ? (((S.time * 40) | 0) % 2 ? 1 : -1) : 0;
+
     const flash = heartDmgT > 0.18;
     for (let i = 0; i < 5; i++) {
       const hpHere = U.clamp(hp - i * 20, 0, 20);
       const state = hpHere >= 15 ? 'full' : hpHere >= 5 ? 'half' : 'empty';
       const beat = (i === lastLive || (low && state !== 'empty')) && squeeze && state !== 'empty';
-      const x0 = 1 + i * 12 + shake, y0 = beat ? 2 : 1;
+      const x0 = 1 + i * 12, y0 = beat ? 2 : 1;
       for (let r = 0; r < (beat ? 7 : 8); r++) {
         const row = HEART[r];
         for (let c = 0; c < 9; c++) {
@@ -121,6 +121,24 @@ const UI = (() => {
     for (const rn of S.ruins || []) { if (rn.looted) continue; const dr = U.dist(S.px, S.py, rn.x, rn.y); if (dr < 700) marks.push({ x: rn.x, y: rn.y, label: 'ruin', color: '#a9a493', dist: dr }); }
     if (S.skills && (S.pClass === 'scavenger' || S.skills.sal.lv >= 2)) for (const n of S.nodes) { if (n.taken) continue; const dn = U.dist(S.px, S.py, n.x, n.y); if (dn < 520) marks.push({ x: n.x, y: n.y, label: n.type === 'lumen' ? 'lumen' : 'scrap', color: n.type === 'lumen' ? '#6fe3d2' : '#8f9a8a', dist: dn }); }
     for (const gv of S.graves || []) marks.push({ x: gv.x, y: gv.y, label: gv.wraith ? 'kept' : 'cairn', color: gv.wraith ? '#9aa4ff' : '#ffe3b0', dist: U.dist(S.px, S.py, gv.x, gv.y), keep: true });
+    // v3.29/30 — the memorial grounds: on the compass whenever their roll has names; a DUTY mark while a stone waits
+    if (typeof Memorial !== 'undefined' && (S.legacy || []).length) {
+      for (const f of Memorial.grounds()) {
+        const ms = Memorial.site(f);
+        if (!ms) continue;
+        const md = U.dist(S.px, S.py, ms.x, ms.y);
+        const waiting = !!Memorial.nextUnraised(f);
+        if (waiting || md < 1600) marks.push({ x: ms.x, y: ms.y, label: waiting ? 'stone waits' : f === 'waylight' ? 'memorial' : 'hooded row', color: f === 'waylight' ? '#ffd98f' : '#c9b98a', dist: md, keep: waiting });
+      }
+    }
+    /* v3.32 — the Republic's marks: a dark holding is a DUTY, a shrine an offer, a larder a warning */
+    if (typeof Republic !== 'undefined' && S.rep) {
+      for (const id of Republic.unlitList()) { const d2 = stations[id]; marks.push({ x: d2.x, y: d2.y, label: 'UNLIT', color: '#d96b4f', dist: U.dist(S.px, S.py, d2.x, d2.y), keep: true }); }
+      for (const s2 of Republic.sites('flameshrine')) { const ds = U.dist(S.px, S.py, s2.x, s2.y); if (ds < 900 || s2.fedUntil > S.time) marks.push({ x: s2.x, y: s2.y, label: s2.fedUntil > S.time ? 'fed bowl' : 'cold bowl', color: '#ffb54f', dist: ds }); }
+      for (const s2 of Republic.sites('hollowfire')) { const ds = U.dist(S.px, S.py, s2.x, s2.y); if (ds < 1100) marks.push({ x: s2.x, y: s2.y, label: 'wrong fire', color: '#c25038', dist: ds, keep: ds < 400 }); }
+      const gA = Republic.giant().act;
+      if (gA) marks.push({ x: gA.x, y: gA.y, label: 'THE SHAPE', color: '#8a8f98', dist: U.dist(S.px, S.py, gA.x, gA.y), keep: true });
+    }
     const prio = DATA.priority[S.orders.prioIdx];
     if (prio && !S.orders.prioAccepted) {
       const d = stations[prio.from];
@@ -150,7 +168,8 @@ const UI = (() => {
   function updatePrompts(list) {
     const el = $('prompts');
     promptList = list;
-    const htm = list.slice(0, 4).map((p, i) => `<div class="prompt ${p.cls || ''}" data-pi="${i}"><span class="k">${p.key}</span> ${p.label}</div>`).join('');
+    const capE = typeof KEYS !== 'undefined' ? KEYS.capFor('interact') : 'E';   // v3.35: the rail's E is the interact cap, wherever it was bound
+    const htm = list.slice(0, 4).map((p, i) => `<div class="prompt ${p.cls || ''}" data-pi="${i}"><span class="k">${p.key === 'E' ? capE : p.key}</span> ${p.label}</div>`).join('');
     if (el._last !== htm) { el._last = htm; el.innerHTML = htm; }
   }
   $('prompts') && $('prompts').addEventListener('click', e => {
@@ -159,6 +178,66 @@ const UI = (() => {
     const act = promptList[+p.getAttribute('data-pi')];
     if (act) { Snd.ctx(); act.fn(); }
   });
+  /* ---------- v3.20: the EARN FEED — every currency lands as a SEEN, animated chip ----------
+     One chip per currency (per town, for appreciation), each with its own authored pixel mark;
+     bursts merge and COUNT UP instead of stacking; the karma ledger (Renegade) already has a seat. */
+  const earnLive = {};
+  const earnIconCache = {};
+  function earnIconURL(kind) {
+    if (earnIconCache[kind]) return earnIconCache[kind];
+    const c = document.createElement('canvas'); c.width = 9; c.height = 9;
+    const g = c.getContext('2d');
+    const px = (x, y, col) => { g.fillStyle = col; g.fillRect(x, y, 1, 1); };
+    if (kind === 'trust') {           // the Order's diamond, cut gold
+      for (let y = 0; y <= 8; y++) { const w = y <= 4 ? y : 8 - y; for (let x = 4 - w; x <= 4 + w; x++) px(x, y, y <= 3 ? '#ffd98f' : y <= 5 ? '#ffb54f' : '#c98a30'); }
+      px(3, 2, '#fff2d0'); px(4, 1, '#fff2d0');
+    } else if (kind === 'appr') {     // the town's regard — a warm hearth-heart
+      for (let y = 1; y <= 3; y++) for (let x = 1; x <= 3; x++) px(x, y, '#d9736b');
+      for (let y = 1; y <= 3; y++) for (let x = 5; x <= 7; x++) px(x, y, '#d9736b');
+      for (let y = 3; y <= 7; y++) { const w = 7 - y; for (let x = 4 - w; x <= 4 + w; x++) px(x, y, y <= 4 ? '#c96a52' : '#a5473c'); }
+      px(2, 1, '#f0a08a'); px(1, 2, '#f0a08a');
+    } else if (kind === 'renegade') { // the other half of karma — a black bandana, one eye slit
+      for (let y = 2; y <= 6; y++) for (let x = 1; x <= 7; x++) px(x, y, y >= 5 ? '#4a1e1e' : '#642a2a');
+      px(2, 3, '#d9736b'); px(3, 3, '#f0d0c0'); px(5, 3, '#f0d0c0'); px(6, 3, '#d9736b');
+      px(0, 4, '#642a2a'); px(8, 4, '#642a2a'); px(0, 5, '#4a1e1e'); px(8, 5, '#4a1e1e');
+    } else {                          // materials — the banded crate
+      for (let y = 1; y <= 7; y++) for (let x = 0; x <= 8; x++) px(x, y, '#12161c');
+      for (let y = 2; y <= 6; y++) for (let x = 1; x <= 7; x++) px(x, y, '#9a8468');
+      for (let x = 1; x <= 7; x++) px(x, 4, '#b3a06a');
+      px(1, 2, '#c2ab89'); px(2, 2, '#c2ab89');
+    }
+    return earnIconCache[kind] = c.toDataURL();
+  }
+  /* the same authored icons as ready-to-draw images — map badges and the globe borrow them */
+  const earnImgCache = {};
+  function earnIconImg(kind) {
+    if (earnImgCache[kind]) return earnImgCache[kind];
+    const im = new Image(); im.src = earnIconURL(kind);
+    return earnImgCache[kind] = im;
+  }
+  function earn(kind, n, label) {
+    const feed = $('earnFeed');
+    if (!feed || !S || n <= 0) return;
+    const key = kind + '|' + (label || '');
+    let ch = earnLive[key];
+    if (!ch || !ch.el.isConnected) {
+      const el = document.createElement('div');
+      el.className = 'earnChip ' + kind;
+      el.innerHTML = `<img src="${earnIconURL(kind)}" width="18" height="18" style="image-rendering:pixelated" alt=""><span class="num">+0</span>${label ? `<span class="lbl">${label}</span>` : ''}`;
+      feed.prepend(el);
+      while (feed.children.length > 4) feed.lastChild.remove();
+      ch = earnLive[key] = { el, val: 0, shown: 0, raf: 0, hold: 0 };
+    } else clearTimeout(ch.hold);
+    ch.val += n;
+    const numEl = ch.el.querySelector('.num');
+    cancelAnimationFrame(ch.raf);
+    const from = ch.shown, to = ch.val, t0 = performance.now();
+    const step = t => { const k = Math.min(1, (t - t0) / 380); ch.shown = Math.round(from + (to - from) * k); numEl.textContent = '+' + ch.shown; if (k < 1) ch.raf = requestAnimationFrame(step); };
+    ch.raf = requestAnimationFrame(step);
+    ch.el.classList.remove('bump'); void ch.el.offsetWidth; ch.el.classList.add('bump');
+    ch.hold = setTimeout(() => { ch.el.classList.add('out'); setTimeout(() => { ch.el.remove(); if (earnLive[key] === ch) delete earnLive[key]; }, 500); }, 2600);
+  }
+
   function toast(msg, cls = '', dur = 4500) {
     const t = U.html($('toasts'), `<div class="toast ${cls}">${msg}</div>`);
     while ($('toasts').children.length > 4) $('toasts').firstChild.remove();
@@ -184,14 +263,21 @@ const UI = (() => {
         const left = o.deadline - S.time;
         timer = `<span class="${left < 30 ? 'late' : ''} num">${U.fmtTime(left)}</span>`;
       }
-      const kg = o.items.reduce((a, id) => { const c = S.cargo.find(x => x.id === id); return a + (c ? c.kg : 0); }, 0);
+      const kgIds = o.circuit ? o.legs.slice(o.leg).flatMap(l => l.items) : o.items;   // a circuit's pack carries every remaining door
+      const kg = kgIds.reduce((a, id) => { const c = S.cargo.find(x => x.id === id); return a + (c ? c.kg : 0); }, 0);
       const mood = o.item && !o.prio ? Economy.needMood(o.to, o.item) : null;
       // a crate you signed for that is not on your back: say where it went
       let miss = '';
       const gone = o.items.map(id => Guide.whereIs(id)).find(w => w.where !== 'pack');
       if (gone) { const WHERE = { ground: 'on the ground', snag: 'at a snag', porter: gone.npc ? `with ${gone.npc.name}` : 'with your Waylighter', storage: gone.station ? `in ${stations[gone.station].name}’s lockers` : 'in storage', camp: gone.camp ? `taken to ${gone.camp.name}` : 'taken by scrappers', gone: 'lost for good' }; miss = `<div class="miss ${gone.where === 'porter' ? 'ok' : ''}">${gone.item ? gone.item.name : 'cargo'} ${WHERE[gone.where]}</div>`; }
+      // THE SHAPES OF WORK read their own line on the tray
+      let shape = '';
+      if (o.circuit) shape = `<div class="miss ok">CIRCUIT — door ${o.leg + 1} of ${o.legs.length}</div>`;
+      else if (o.convoy) { const cv = S.convoy; shape = `<div class="miss ${cv && (cv.frozen || cv.waiting) ? '' : 'ok'}">${!cv ? 'convoy' : cv.frozen ? 'FROZEN in the grey — go to them' : cv.waiting ? 'left behind — they stopped' : `walking with you · crates ${cv.crates}/3`}</div>`; }
+      else if (o.salvage) shape = `<div class="miss ${o.looted ? 'ok' : ''}">${o.looted ? 'loaded — walk it home' : 'wreck ' + U.fmtDist(U.dist(S.px, S.py, o.site.x, o.site.y)) + ' into the grey'}</div>`;
+      const what = o.prio ? o.title : o.convoy ? (S.convoy ? S.convoy.n.name.split(' ')[0] + ' + crates' : 'a walker') : o.circuit ? `${items[o.item].name}${o.n > 1 ? ' ×' + o.n : ''} this door` : items[o.item] ? items[o.item].name + (o.n > 1 ? ' ×' + o.n : '') : o.items.length + ' cargo';
       htm += `<div class="trayCard ${focus === o.idNum ? 'selected' : ''} ${gone && gone.where !== 'porter' ? 'missing' : ''}" data-focus="${o.idNum}"><button class="giveUp" data-abandon="${o.idNum}" title="Give this order up">✕</button><div class="dest">${o.prio || o.relight ? '★ ' : ''}${d.name}${mood ? ` <span class="mood ${mood}">${mood}</span>` : ''}</div>
-        <div class="sub"><span>${o.prio ? o.title : items[o.item] ? items[o.item].name + (o.n > 1 ? ' ×' + o.n : '') : o.items.length + ' cargo'} · ${U.fmtKg(kg)} kg · ${dist}</span>${timer}</div>${miss}</div>`;
+        <div class="sub"><span>${what} · ${U.fmtKg(kg)} kg · ${dist}</span>${timer}</div>${miss}${shape}</div>`;
     }
     if (S.orders.active.length > 5) htm += `<div class="desc" style="text-align:right;color:var(--bone-faint)">+${S.orders.active.length - 5} more</div>`;
     if (el._last !== htm) { el._last = htm; el.innerHTML = htm; }
@@ -283,7 +369,20 @@ const UI = (() => {
     return iconCache[key] = cv2.toDataURL();
   }
   function iconTag(c) { return `<img class="crateChip itemIc" src="${itemIcon(c)}" alt="">`; }
-  function crateChip(defId) { return itemIcon({ defId, cat: (DATA.items[defId] || {}).cat }); }   // compat
+  /* the appreciation mark — a town's laurel, authored like everything else */
+  let _apprChip = null;
+  function apprChip() {
+    if (_apprChip) return _apprChip;
+    const c = document.createElement('canvas'); c.width = c.height = 12;
+    const g = c.getContext('2d');
+    const px = (x, y, col) => { g.fillStyle = col; g.fillRect(x, y, 1, 1); };
+    const L = '#8fb06a', l = '#b7d494', G = '#ffd98f';
+    [[2, 8], [1, 6], [1, 4], [2, 2], [9, 8], [10, 6], [10, 4], [9, 2]].forEach(([x, y]) => px(x, y, L));
+    [[3, 9], [2, 7], [2, 3], [8, 9], [9, 7], [9, 3]].forEach(([x, y]) => px(x, y, l));
+    [[4, 10], [5, 10], [6, 10], [7, 10]].forEach(([x, y]) => px(x, y, L));
+    px(5, 5, G); px(6, 5, G); px(5, 6, G); px(6, 6, G); px(5, 4, '#fff2d0');
+    return _apprChip = sz => `<img src="${c.toDataURL()}" width="${sz || 16}" height="${sz || 16}" style="image-rendering:pixelated;vertical-align:${Math.round((sz || 16) * -0.15)}px" alt="">`;
+  }
   function refreshCargo() {
     updateHUD();
     if (!cargoOpen) return;
@@ -374,12 +473,12 @@ const UI = (() => {
   }
   $('buildBar') && $('buildBar').addEventListener('click', e => {
     const b = e.target.closest('[data-b]');
-    if (b) Systems.tryBuild(b.getAttribute('data-b'));
+    if (b) Systems.beginPlace(b.getAttribute('data-b'));   // v3.19: choosing hangs the blueprint — placing is the player's
   });
   function buildHotkey(n) {
     if (!buildOpen) return false;
     const opts = Systems.buildOptions();
-    if (opts[n]) { Systems.tryBuild(opts[n].type); return true; }
+    if (opts[n]) { Systems.beginPlace(opts[n].type); return true; }
     return false;
   }
 
@@ -397,7 +496,7 @@ const UI = (() => {
     Snd.sfx.ui();
     // crates on the back for THIS station? the hand-over comes first — the terminal is paperwork, not a chute
     if (Systems.beginHandover(stId)) return;
-    $('keeperLine').innerHTML = keeperGreet(stId);   // read before met flips: the hello is for strangers
+    $('keeperLine').innerHTML = (typeof Myth !== 'undefined' ? Myth.legendPrefix(stId) : '') + keeperGreet(stId);   // read before met flips: the hello is for strangers
     S.stations[stId].met = true;
     reallyOpenStation(stId);
   }
@@ -424,10 +523,17 @@ const UI = (() => {
       $('starFill').style.width = U.clamp((st.likesTo - prev) / (need - prev) * 100, 0, 100) + '%';
       $('starNext').textContent = `${st.likesTo} / ${need} ◆ to ${st.stars + 1}★`;
     } else { $('starFill').style.width = '100%'; $('starNext').textContent = 'MAX connection'; }
-    const tabs = [['orders', 'Orders'], ['fab', 'Fabricate'], ['way', 'Waylighters'], ['donate', 'Donate'], ['storage', 'Storage'], ['ledger', 'Ledger']];
+    { // the town's own opinion of you, under the Order's stars
+      let al = document.getElementById('apprLine');
+      if (!al) { al = document.createElement('div'); al.id = 'apprLine'; al.className = 'tag'; al.style.marginTop = '3px'; $('starNext').parentNode.appendChild(al); }
+      const alv = Economy.apprLevel(stId), av = Math.round(st.appr || 0), nxt = T.apprTiers[alv];
+      al.innerHTML = `${apprChip()(16)} <span style="color:var(--gold-hot)">${T.apprNames[alv]}</span> · <span class="num">${av}${nxt ? ' / ' + nxt : ''}</span>`;
+    }
+    const tabs = [['orders', 'Orders'], ['post', 'The Post'], ['fab', 'Fabricate'], ['way', 'Waylighters'], ['donate', 'Donate'], ['storage', 'Storage'], ['ledger', 'Ledger']];
     $('stationTabs').innerHTML = tabs.map(([id, nm]) => `<button class="tab ${curTab === id ? 'active' : ''}" data-tab="${id}">${nm}</button>`).join('');
     const body = $('stationBody');
     if (curTab === 'orders') renderOrders(body, stId);
+    else if (curTab === 'post') renderPost(body, stId);
     else if (curTab === 'fab') renderFab(body, stId);
     else if (curTab === 'way') UI2.renderWaylighters(body, stId);
     else if (curTab === 'donate') renderDonate(body, stId);
@@ -494,13 +600,58 @@ const UI = (() => {
           <div class="actions"><button class="btn primary ${Guide.guided() ? 'hot' : ''}" data-accept="prio">Accept</button><span class="after num">${U.fmtKg(w + kg)} / ${cap} kg after</span></div></div>`;
       }
       const o = b.def;
+      /* THE SHAPES OF WORK — the same walk, different questions */
+      if (o.circuit) {
+        const totKg = o.legs.reduce((a, l) => a + items[l.item].kg * l.n, 0);
+        let secs = 0, px = stations[o.from].x, py = stations[o.from].y;
+        for (const l of o.legs) { const d2 = stations[l.to]; secs += World.pathTime(px, py, d2.x, d2.y).seconds; px = d2.x; py = d2.y; }
+        const par2 = Math.max(T.parFloor, secs * T.parPad);
+        const pay2 = Math.round((T.likesBase + par2 * T.likesPerSec + totKg * T.likesPerKg) * T.gradeMult.A * T.circuitMul);
+        const chain = o.legs.map(l => `<b>${stations[l.to].name}</b> <span style="color:var(--bone-dim)">${items[l.item].name}${l.n > 1 ? ' ×' + l.n : ''}</span>`).join(' <span style="color:var(--gold-hot)">→</span> ');
+        const over2 = w + totKg > cap;
+        return `<div class="orderCard"><div class="top"><h4><span class="wbTag" style="color:var(--gold-hot)">CIRCUIT</span>One contract, ${o.legs.length} doors</h4><span class="tag">×${T.circuitMul} at the last door</span></div>
+          <div class="meta">${chain}</div>
+          <div class="meta">Every leg's crates load <b>now</b> — the pack is the puzzle. Grade and pay settle at the final door.</div>
+          <div class="meta"><span class="num">${totKg} kg all at once</span> · pays ~<span class="num">${pay2}</span> ◆ · ~${U.fmtTime(secs)} walk in all</div>
+          <div class="actions"><button class="btn ${over2 ? 'over' : ''}" data-accept="${i}">${over2 ? 'Sign — overload' : 'Sign the circuit'}</button>
+          <span class="after num ${over2 ? 'rust' : ''}">${U.fmtKg(w + totKg)} / ${cap} kg after</span></div></div>`;
+      }
+      if (o.convoy) {
+        const hz2 = hazardsFor(o.from, o.to);
+        const pay2 = Math.round((T.likesBase + Math.max(T.parFloor, hz2.secs * T.parPad) * T.likesPerSec + 40) * (o.likesMul || 1) * T.gradeMult.A);
+        return `<div class="orderCard"><div class="top"><h4><span class="wbTag" style="color:var(--gold-hot)">CONVOY</span>Walk a walker → ${stations[o.to].name}</h4><span class="tag">the cargo is a person</span></div>
+          <div class="meta">A junior walker of the Order needs the road walked with them — three crates on a green back. <b>Their pace.</b> Scrappers will go for <b>their</b> crates; the deep grey roots their feet until your lantern stands beside them.</div>
+          <div class="meta"><span class="num">0 kg</span> on your pack · pays ~<span class="num">${pay2}</span> ◆ + 10 appreciation · you both must arrive · ~${U.fmtTime(hz2.secs)} their pace${hz2.hz.length ? ' · ' + hz2.hz.join(' · ') : ''}</div>
+          <div class="actions"><button class="btn" data-accept="${i}">Take them through</button></div></div>`;
+      }
+      if (o.salvage) {
+        const sd2 = U.dist(stations[o.from].x, stations[o.from].y, o.site.x, o.site.y);
+        return `<div class="orderCard"><div class="top"><h4><span class="wbTag" style="color:var(--lumen)">SALVAGE</span>The wreck run — ${DATA.goodsInfo[o.item] ? DATA.goodsInfo[o.item].name : o.item}</h4><span class="tag">×${T.salvageMul} — grey work</span></div>
+          <div class="meta">A caravan went down in the deep grey, ${U.fmtDist(sd2)} out — loaded with ${DATA.goodsInfo[o.item] ? DATA.goodsInfo[o.item].name.toLowerCase() : o.item}, and ${def.name} is shortest of exactly that. Walk out empty. Walk back heavy.</div>
+          <div class="meta">2–3 crates wait at the wreck · they come back battered — bring them home <b>no worse</b> · pays ×${T.salvageMul}${o.mood ? ` on top of <span class="mult ${o.mood}">×${T.needMul[o.mood]}</span>` : ''}</div>
+          <div class="actions"><button class="btn" data-accept="${i}">Walk it</button></div></div>`;
+      }
       const d = items[o.item];
-      const kg = d.kg * o.n;
+      const kg = (o.item === 'letters' && Economy.apprLevel(o.from) >= 2) ? 0 : d.kg * o.n;
       const hz = hazardsFor(o.from, o.to);
-      const pay = orderPay(o);
       const over = w + kg > cap;
-      const why = o.relight ? `The waylight is out. A core from here brings ${stations[o.to].name} back onto the wire.` : o.item === 'letters' ? DATA.goodsInfo.letters.why : `${stations[o.to].name} — ${o.mood === 'critical' ? 'they are out' : o.mood === 'wanting' ? 'running short' : o.mood === 'thriving' ? 'well stocked, pays little' : 'holding steady'} · ${DATA.goodsInfo[o.item] ? DATA.goodsInfo[o.item].why : ''}`;
-      return `<div class="orderCard ${o.mood === 'critical' ? 'crit' : ''} ${o.relight ? 'prio' : ''}"><div class="top"><h4><span class="wbTag">${o.relight ? 'PRIORITY DISPATCH' : o.item === 'letters' ? 'MAILBAG' : 'WAYBILL'}</span>${o.relight ? '★ ' : ''}${d.name}${o.n > 1 ? ` ×${o.n}` : ''} → ${stations[o.to].name}</h4>
+      // THE SERVICE RULE, on the board: letters and dispatches take no fee — the pay line says what they DO pay
+      if (o.service) {
+        const tierTag = Economy.TIER_TAG[o.tier] || 'LOCAL POST';
+        const appr = T.apprByTier[o.tier] || 6;
+        const why2 = o.item === 'dispatch'
+          ? `The FARKEEPER riders trust you with their own post. Carry it, and the mountain carries YOU — trouble on the road brings them at the gallop, from this day on.`
+          : `${DATA.goodsInfo.letters.why}. The Order carries the mail because that is what the Order is.`;
+        return `<div class="orderCard ${o.item === 'dispatch' ? 'prio' : ''}"><div class="top"><h4><span class="wbTag">${o.item === 'dispatch' ? 'THE MILITIA' : 'MAILBAG'}</span><span class="wbTag" style="color:${o.tier === 3 ? 'var(--lumen)' : 'var(--bone-dim)'}">${tierTag}</span>${d.name}${o.n > 1 ? ` ×${o.n}` : ''} → ${stations[o.to].name}</h4>
+          <span>${o.tier === 3 ? '<span class="constraint">the grey walk</span>' : ''}</span></div>
+          <div class="meta">${why2}</div>
+          <div class="meta"><span class="num">${kg} kg</span> · <b style="color:var(--gold-hot)">service of the Order — no fee</b> · +${appr} appreciation · +skill${o.item === 'dispatch' ? ' · <b class="lumen">unlocks the riders</b>' : ''} · ~${U.fmtTime(hz.secs)} walk${hz.hz.length ? ' · ' + hz.hz.join(' · ') : ''}</div>
+          <div class="actions"><button class="btn ${o.item === 'dispatch' ? 'primary' : ''}" data-accept="${i}">Carry it</button>
+          <span class="after num">${U.fmtKg(w + kg)} / ${cap} kg after</span></div></div>`;
+      }
+      const pay = orderPay(o);
+      const why = o.relight ? `The waylight is out. A core from here brings ${stations[o.to].name} back onto the wire.` : `${stations[o.to].name} — ${o.mood === 'critical' ? 'they are out' : o.mood === 'wanting' ? 'running short' : o.mood === 'thriving' ? 'well stocked, pays little' : 'holding steady'} · ${DATA.goodsInfo[o.item] ? DATA.goodsInfo[o.item].why : ''}`;
+      return `<div class="orderCard ${o.mood === 'critical' ? 'crit' : ''} ${o.relight ? 'prio' : ''}"><div class="top"><h4><span class="wbTag">${o.relight ? 'PRIORITY DISPATCH' : 'WAYBILL'}</span>${o.relight ? '★ ' : ''}${d.name}${o.n > 1 ? ` ×${o.n}` : ''} → ${stations[o.to].name}</h4>
         <span>${moodTag(o.mood)}${o.express ? '<span class="constraint warn">express</span>' : ''}${d.fragile ? '<span class="constraint">fragile</span>' : ''}</span></div>
         <div class="meta">${why}</div>
         <div class="meta"><span class="num">${kg} kg</span> · pays ~<span class="num">${pay}</span> ◆${o.mood ? ` <span class="mult ${o.mood}">×${T.needMul[o.mood]}</span>` : ''} · ~${U.fmtTime(hz.secs)} walk${hz.hz.length ? ' · ' + hz.hz.join(' · ') : ''}${o.matBonus ? ` + ${Systems.fmtCost(o.matBonus)}` : ''}</div>
@@ -510,32 +661,178 @@ const UI = (() => {
     }).join('');
     body.innerHTML = htm;
   }
+  /* ---------- THE POST — the mailroom: bag, appreciation, staff, training ---------- */
+  function renderPost(body, stId) {
+    const st = S.stations[stId], def = stations[stId];
+    const bag = Math.round(st.bag || 0);
+    const staff = NPC.postStaff(stId);
+    const cap2 = NPC.postCap(stId);
+    const alv = Economy.apprLevel(stId);
+    const runner = staff.some(n => n.job === 'runner' && !n.hungry);
+    const JOBS = CHAR.JOBS;
+    let htm = `<p style="color:var(--bone-dim);font-size:13px;margin-bottom:10px">Letters are the Order's <b>service</b> — no fee, ever. The town pays in <b>appreciation</b>, the walk pays in skill, and the mailroom trains whoever works it. Goods are luxury; luxury pays.</p>
+      <div class="tag">The outbound bag${runner ? ' · <span class="lumen">a runner is filling it</span>' : ''}</div>
+      <div class="meter" style="max-width:340px"><i style="width:${bag}%;background:#c6b47a;box-shadow:inset 0 2px 0 rgba(255,255,255,.16), inset 0 -2px 0 rgba(0,0,0,.28)"></i></div>
+      <div class="desc" style="margin:-4px 0 10px">${bag} / 100 — a run posts at ${T.bagCost}, a second at ${T.bagCost * 2}, the third when it brims. The town writes on its own; a <b>Letter runner</b> writes with them.</div>`;
+    // the ladder
+    const perks = [1, 2, 3, 4].map(lv => {
+      const on = alv >= lv;
+      return `<div class="rowline"><div class="grow"><h4 style="${on ? '' : 'color:var(--bone-faint)'}">${apprChip()(18)} ${T.apprNames[lv]} <span class="tag">${T.apprTiers[lv - 1]}</span></h4>
+        <div class="desc">${Economy.apprPerkLine(lv)}</div></div><span class="tag" style="${on ? 'color:var(--ok)' : ''}">${on ? 'EARNED' : '—'}</span></div>`;
+    }).join('');
+    htm += `<div class="tag" style="margin-bottom:2px">What ${def.name} extends — <span class="num">${Math.round(st.appr || 0)}</span> appreciation</div>` + perks;
+    const mUnlocked = (S.militia.unlocked || {})[stId];
+    htm += `<div class="rowline"><div class="grow"><h4 style="${mUnlocked ? '' : alv >= 3 ? '' : 'color:var(--bone-faint)'}">The Farkeeper riders</h4>
+      <div class="desc">${mUnlocked ? (S.militia.cdT > 0 ? `Riders answering your horn — ready again in ${U.fmtTime(S.militia.cdT)}` : 'Riders at the ready — trouble on the road brings them at the gallop') : alv >= 3 ? 'A rider’s dispatch waits on the Orders board — carry it, and they ride for you' : 'Earn HONOURED and the riders will trust you with their own post'}</div></div>
+      <span class="tag" style="${mUnlocked ? 'color:var(--ok)' : ''}">${mUnlocked ? 'SWORN' : alv >= 3 ? 'QUEST POSTED' : 'LOCKED'}</span></div>`;
+    // staff
+    htm += `<hr class="hairline"><div class="tag" style="margin-bottom:4px">The post's hands — ${staff.length} / ${cap2} desks${alv >= 4 ? ' · <span class="lumen">wages waived — they volunteer</span>' : ' · 1 provision a shift each'}</div>`;
+    for (const n of staff) {
+      const job = JOBS[n.job] || {};
+      const sk = job.skill, lv = n.skills[sk] || 0;
+      const need = NPC.npcTrainNeed(lv);
+      const xp = Math.round(((n.trainXp || {})[sk] || 0));
+      htm += `<div class="orderCard"><div class="top"><h4><img src="${Porter.portrait(n.seed, 28)}" width="28" height="28" style="vertical-align:-8px"> ${n.name} — <span style="color:var(--gold-hot)">${job.name || '?'}</span></h4>
+        <span class="tag">${n.hungry ? '<b class="rust">UNPAID — round stalled</b>' : 'on the round'}</span></div>
+        <div class="meta">${job.line || ''} · trains <b>${CHAR.SKILLS[sk] ? CHAR.SKILLS[sk].name : sk}</b> ${lv}${lv >= 8 ? ' (mastered the round)' : ` — <span class="num">${xp}/${need}</span> to ${lv + 1}`}</div>
+        <div class="actions">
+          <button class="miniBtn" data-postjob="${n.id}">change round</button>
+          <button class="miniBtn" data-postpool="${n.id}">relieve</button>
+          <button class="miniBtn" data-postcomp="${n.id}">take as companion</button>
+        </div>
+        <div class="routePick hidden" data-postpick="${n.id}" style="margin-top:6px">${Object.entries(JOBS).map(([jid, j]) => `<button class="miniBtn" data-postset="${n.id}:${jid}">${j.name} · ${CHAR.SKILLS[j.skill].name}</button>`).join(' ')}</div>
+      </div>`;
+    }
+    // v3.20 THE WORKING WORLD — the field crew: hands on the land itself
+    const FJOBS = CHAR.FIELD_JOBS;
+    const crew = NPC.fieldStaff(stId);
+    htm += `<hr class="hairline"><div class="tag" style="margin-bottom:4px">The field crew — ${crew.length} / 3 out working${crew.length ? '' : ' · pressers wear trails, masons cobble them, forresters fell timber, haulers walk freight'}</div>`;
+    for (const n of crew) {
+      const job = FJOBS[n.job] || {};
+      const caravan = n.job === 'hauler' && (n.skills.haul || 0) >= T.haulLvCaravan;
+      const far = n.route && n.route.b ? ` — to ${DATA.stations[n.route.b].name}` : '';
+      htm += `<div class="orderCard"><div class="top"><h4><img src="${Porter.portrait(n.seed, 28)}" width="28" height="28" style="vertical-align:-8px"> ${n.name} — <span style="color:var(--ok)">${caravan ? 'Donkey caravan' : job.name || '?'}</span>${far}</h4>
+        <span class="tag">${n.hungry ? '<b class="rust">UNPAID — stalled</b>' : 'in the field'}</span></div>
+        <div class="meta">${job.note || ''}${n.job === 'hauler' && !caravan ? ` · Hauling ${n.skills.haul || 0}/${T.haulLvCaravan} toward the caravan` : ''}</div>
+        <div class="actions"><button class="miniBtn" data-fieldrecall="${n.id}">call them in</button></div>
+      </div>`;
+    }
+    // hire from the fire
+    const pool = S.npcs.filter(n => n.state === 'pool' && n.at === stId);
+    if (pool.length && staff.length < cap2) {
+      htm += `<div class="tag" style="margin:10px 0 4px">By the fire — put them on a round, or into the field</div>`;
+      for (const n of pool) {
+        const cost = NPC.hireCost(n);
+        if (n.fk) {
+          // v3.22: a Farkeeper by the fire — the Republic's muscle. Not a mail person. A WARD.
+          const fkc = FACT.FK_CLASSES[n.fkCls || 'pugugly'];
+          htm += `<div class="orderCard" style="border-left-color:#8d979c"><div class="top"><h4><img src="${Porter.portrait(n.seed, 28)}" width="28" height="28" style="vertical-align:-8px"> ${n.name} <span class="constraint" style="color:#8d979c;border-color:#5a6a7a">FARKEEPER · ${fkc.name.toUpperCase()}</span></h4>
+            <span class="tag">${cost ? Systems.fmtCost(cost) : 'fee waived'}</span></div>
+            <div class="meta">${fkc.role} — ${fkc.line} Walks as your <b>ward</b>: scrappers meet the mountain first.</div>
+            <div class="routePick" style="margin-top:4px"><button class="miniBtn" data-postcomp="${n.id}" style="color:#8d979c">Take as ward</button></div>
+          </div>`;
+          continue;
+        }
+        htm += `<div class="orderCard"><div class="top"><h4><img src="${Porter.portrait(n.seed, 28)}" width="28" height="28" style="vertical-align:-8px"> ${n.name} ${n.bond ? '<span class="constraint">owes you</span>' : ''}</h4>
+          <span class="tag">${CHAR.CLASSES[n.cls].name}${cost ? ' · ' + Systems.fmtCost(cost) : ' · fee waived'}</span></div>
+          <div class="routePick" style="margin-top:4px">${Object.entries(JOBS).map(([jid, j]) => `<button class="miniBtn" data-posthire="${n.id}:${jid}" title="${j.line}">${j.name} · ${CHAR.SKILLS[j.skill].name}</button>`).join(' ')}</div>
+          <div class="routePick" style="margin-top:4px">${Object.entries(FJOBS).map(([jid, j]) => `<button class="miniBtn" data-fieldjob="${n.id}:${jid}" title="${j.note}" style="color:var(--ok)">${j.name}</button>`).join(' ')}</div>
+          <div class="routePick hidden" data-fieldpick="${n.id}" style="margin-top:4px"></div>
+        </div>`;
+      }
+    } else if (staff.length >= cap2) htm += `<p class="desc" style="color:var(--bone-faint)">Every desk is spoken for. Higher appreciation opens another.</p>`;
+    else htm += `<p class="desc" style="color:var(--bone-faint)">Nobody by the fire to hire just now — Waylighters drift in as stations grow.</p>`;
+    body.innerHTML = htm;
+    body.onclick = e => {
+      const g = a => e.target.getAttribute(a);
+      const find = id => S.npcs.find(x => x.id === +id);
+      const pj = g('data-postjob'), pp = g('data-postpool'), pc = g('data-postcomp'), ps = g('data-postset'), ph = g('data-posthire');
+      const fj = g('data-fieldjob'), fs = g('data-fieldset'), fr = g('data-fieldrecall');
+      if (pj) { const el = body.querySelector(`[data-postpick="${pj}"]`); if (el) el.classList.toggle('hidden'); return; }
+      if (pp) { const n = find(pp); if (n) { NPC.dismiss(n, stId); toast(`${n.name} settles back by the fire — trained hands wait well`); renderStation(); } return; }
+      if (pc) { const n = find(pc); if (n && NPC.hire(n, 'companion')) { renderStation(); } return; }
+      if (ps) { const [nid, jid] = ps.split(':'); const n = find(nid); if (n && NPC.assignPost(n, stId, jid)) renderStation(); return; }
+      if (ph) { const [nid, jid] = ph.split(':'); const n = find(nid); if (n && NPC.hire(n, 'post') && NPC.assignPost(n, stId, jid)) renderStation(); return; }
+      if (fj) {
+        const [nid, jid] = fj.split(':');
+        if (!CHAR.FIELD_JOBS[jid].dest) { const n = find(nid); if (n && NPC.hire(n, 'field') && NPC.assignField(n, stId, jid)) renderStation(); return; }
+        const el = body.querySelector(`[data-fieldpick="${nid}"]`);
+        if (el) {
+          el.innerHTML = (DATA.stationOrder.filter(id => id !== stId && S.stations[id].connected)
+            .map(id => `<button class="miniBtn" data-fieldset="${nid}:${jid}:${id}">&rarr; ${DATA.stations[id].name}</button>`).join(' ')
+            + (jid === 'presser' ? ` <button class="miniBtn" data-fieldpt="${nid}" style="color:var(--gold)">&rarr; a point on the land</button>` : ''))
+            || '<span class="desc">no connected far end yet — light another station first</span>';
+          el.classList.remove('hidden');
+        }
+        return;
+      }
+      if (fs) { const [nid, jid, dest] = fs.split(':'); const n = find(nid); if (n && NPC.hire(n, 'field') && NPC.assignField(n, stId, jid, dest)) renderStation(); return; }
+      const fpt = g('data-fieldpt');
+      if (fpt) { NPC.armPress(fpt, stId); closeStation(); return; }   // v3.28: the presser waits on your click
+      if (fr) { const n = find(fr); if (n && NPC.recallField(n)) renderStation(); return; }
+    };
+  }
+  /* v3.27 THE ECOSYSTEM — the terminal's two shelves, named as the two things they are:
+     UTILITIES ride the pack; WORKS hold the ground. One loop line per item says what it eats
+     and what it feeds, so the ecosystem reads at the counter. */
+  const LOOP_LINES = {
+    ladder: 'eats metal · opens the crossings your works and crews walk through',
+    kit: 'eats metal + ceramic · becomes any WORK on the ground',
+    flare: 'eats lumen (the still\'s own make) · buys the dark off your road',
+  };
   function renderFab(body, stId) {
     const list = Systems.fabList(stId);
-    let html = '', lastCat = '';
+    let html = `<div style="display:flex;gap:14px;margin-bottom:10px">
+      <div class="tag" style="border:1px solid var(--line);padding:4px 9px;color:var(--gold)">UTILITIES — WHAT RIDES THE PACK</div>
+      <div class="tag" style="border:1px solid var(--line2);padding:4px 9px">WORKS — WHAT HOLDS THE GROUND (press <span class="k">B</span> in the field)</div>
+    </div>
+    <p style="color:var(--bone-dim);font-size:12.5px;margin-bottom:10px">One loop, revolving: works PAY the bank while they stand mended · the bank prints utilities and kits · kits raise more works · repairs feed metal back. Everything has a purpose; everything helps the other.</p>`;
+    let lastCat = '';
     list.forEach((f, i) => {
       if (f.cat !== lastCat) { lastCat = f.cat; html += `<div class="tag" style="margin:${i ? 12 : 0}px 0 4px">${f.cat}</div>`; }
-      html += `<div class="rowline"><div class="grow"><h4>${f.name}${f.id === 'flare' ? ` <span class="tag">have ${S.gear.flares}</span>` : ''}</h4>
-      <div class="desc">${f.desc}</div></div>
-      <span class="costs">${Systems.fmtCost(f.cost)}</span>
-      <button class="btn ${State.canAfford(f.cost) ? '' : 'quiet'}" data-fab="${i}">Print</button></div>`;
+      const loop = LOOP_LINES[f.id] ? `<div class="desc" style="color:var(--bone-faint);font-size:11px">↻ ${LOOP_LINES[f.id]}</div>` : '';
+      if (f.locked) {
+        html += `<div class="rowline" style="opacity:.55"><div class="grow"><h4 style="color:var(--bone-dim)">${f.name}</h4>
+        <div class="desc">${f.desc}</div>${loop}</div>
+        <span class="costs">${Systems.fmtCost(f.cost)}</span>
+        <span class="tag" style="color:var(--gold);white-space:nowrap">LOCKED · ${f.locked}</span></div>`;
+      } else {
+        html += `<div class="rowline"><div class="grow"><h4>${f.name}${f.id === 'flare' ? ` <span class="tag">have ${S.gear.flares}</span>` : ''}</h4>
+        <div class="desc">${f.desc}</div>${loop}</div>
+        <span class="costs">${Systems.fmtCost(f.cost)}</span>
+        <button class="btn ${State.canAfford(f.cost) ? '' : 'quiet'}" data-fab="${i}">Print</button></div>`;
+      }
     });
     body.innerHTML = html + `<p style="color:var(--bone-faint);font-size:12px;margin-top:10px">Costs draw on banked materials. Station gear appears as its connection deepens — each station makes what it knows.</p>`;
   }
   function renderDonate(body, stId) {
     const mats = S.cargo.filter(c => c.cat === 'mat');
-    const sum = { metal: 0, ceramic: 0, lumen: 0 };
+    const sum = { metal: 0, ceramic: 0, lumen: 0, wood: 0 };
     for (const m of mats) sum[m.mat] += m.qty;
     body.innerHTML = `<p style="color:var(--bone-dim);margin-bottom:10px">Materials fund structures, fabrication, and roads. Donating also earns likes with this station.</p>
       <div class="rowline"><div class="grow"><h4>Carried materials</h4>
-      <div class="desc num">metal ${sum.metal} · ceramic ${sum.ceramic} · lumen ${sum.lumen}</div></div>
+      <div class="desc num">metal ${sum.metal} · ceramic ${sum.ceramic} · lumen ${sum.lumen} · timber ${sum.wood}</div></div>
       <button class="btn primary" id="donateBtn" ${mats.length ? '' : 'disabled'}>Donate all</button></div>
       <div class="rowline"><div class="grow"><h4>Banked (network-wide)</h4>
-      <div class="desc num">metal ${S.banked.metal} · ceramic ${S.banked.ceramic} · lumen ${S.banked.lumen}</div></div></div>`;
+      <div class="desc num">metal ${S.banked.metal} · ceramic ${S.banked.ceramic} · lumen ${S.banked.lumen} · timber ${S.banked.wood || 0}</div></div></div>`;
+    // v3.21 DONATION VISIBILITY: hand tools ARM a walker — ten armed and the roads answer to it
+    const toolCrates = S.cargo.filter(c => c.defId === 'tools' && !c.orderId && !c.lostTo);
+    const armedN = S.stations[stId].armed || 0;
+    body.insertAdjacentHTML('beforeend', `<div class="rowline"><div class="grow"><h4>Arm the walkers</h4>
+      <div class="desc">A crate of <b>hand tools</b> arms one waylighter. <span class="num">${armedN}/${T.armedSafe}</span> armed here${armedN >= T.armedSafe ? ' — <span style="color:var(--ok)">the roads around town are SAFER because of you</span>' : ' — at ten, the camps nearby keep their heads down'}</div></div>
+      <button class="btn ${toolCrates.length ? '' : 'quiet'}" id="armBtn" ${toolCrates.length ? '' : 'disabled'}>Give tools${toolCrates.length ? ` (${toolCrates.length})` : ''}</button></div>`);
     const junk = S.cargo.filter(c => DATA.items[c.defId] && DATA.items[c.defId].cat === 'junk');
     body.insertAdjacentHTML('beforeend', `<div class="rowline"><div class="grow"><h4>Junk on your back</h4>
       <div class="desc">${junk.length ? junk.map(j => j.name).join(' · ') : 'none — the ruins always have more'}</div></div>
       <button class="btn ${junk.length ? '' : 'quiet'}" id="scrapBtn" ${junk.length ? '' : 'disabled'}>Scrap it all</button></div>`);
+    const ab = body.querySelector('#armBtn');
+    if (ab) ab.onclick = () => {
+      const c = S.cargo.find(c2 => c2.defId === 'tools' && !c2.orderId && !c2.lostTo);
+      if (!c) return;
+      State.removeCargo(c.id);
+      Systems.armWalker(stId);
+      renderStation();
+    };
     const btn = body.querySelector('#donateBtn');
     if (btn) btn.onclick = () => {
       const r = Systems.donateCarried(stId);
@@ -568,6 +865,20 @@ const UI = (() => {
     const stats = S.stats;
     const wire = DATA.stationOrder.filter(id => S.stations[id].connected && (S.wireLog || {})[id] > 0.5).map(id => `${stations[id].name} +${Math.round(S.wireLog[id])}`);
     next += `<div class="rowline"><div class="grow"><h4>The wire</h4><div class="desc">${wire.length ? 'Stock carried between connected stations on its own: ' + wire.join(' · ') + '. Roads and chartered routes carry more.' : 'Nothing moves on its own yet — connect a second station and it will.'}</div></div></div>`;
+    { // v3.27 [ THE ECOSYSTEM ] — every producing work, its state and its lifetime pay, from ONE truth (Systems.workState)
+      const rows = [];
+      for (const st2 of S.structures) {
+        const ws = Systems.workState(st2);
+        if (!ws) continue;
+        const col = ws.s === 'WORKING' ? 'var(--ok)' : 'var(--rust)';
+        rows.push(`<div class="rowline"><div class="grow"><h4>${ws.w.label} <span class="tag" style="color:${col}">${ws.s}</span></h4>
+          <div class="desc num">pays 1 ${ws.w.kind} / ${Math.round(ws.w.rate)}s · made ${st2.made || 0} lifetime · ${Math.round(st2.hp)}% mended</div></div></div>`);
+      }
+      const tot = Object.entries((S.eco && S.eco.produced) || {}).map(([k, v]) => `${k} ${v}`).join(' · ');
+      next += `<hr class="hairline"><div class="tag" style="margin-bottom:6px">The ecosystem</div>` +
+        (rows.length ? rows.join('') + `<div class="rowline"><div class="grow"><h4>Produced, all works, all time</h4><div class="desc num">${tot || 'nothing yet'}</div></div></div>`
+          : `<p class="desc" style="color:var(--bone-faint)">No producing works yet. Raise a <b>sawcamp</b> by a treeline, a <b>clay oven</b> by wet ground, a <b>lumen still</b> at the veil's edge — or upgrade a watchtower to its armed post, a shelter to its room. They pay while they stand mended.</p>`);
+    }
     body.innerHTML = next +
       `<div class="rowline"><div class="grow"><h4>Your record</h4>
       <div class="desc num">${stats.delivered} delivered · ${stats.sranks} S-ranks · ${(stats.distance / 1000).toFixed(1)} km walked · ${stats.built} built · ${stats.paved} road segments</div></div></div>
@@ -627,13 +938,49 @@ const UI = (() => {
       animateGrade('A', r.likes);
       return;
     }
+    if (r.convoy) {
+      // THE CONVOY SLIP — the cargo walked in on its own feet
+      $('resultRoute').textContent = `${stations[r.order.from].name} → ${stations[r.order.to].name} · CONVOY THROUGH`;
+      $('gradeStamp').textContent = r.grade;
+      $('scoreRows').innerHTML =
+        `<div class="rowline"><span>Walk time — their pace</span><span class="num">${U.fmtTime(r.elapsed)} <span style="color:var(--bone-faint)">/ par ${U.fmtTime(r.par)}</span> ${'★'.repeat(r.ptsT)}</span></div>
+         <div class="rowline"><span>Crates still on their back</span><span class="num">${r.crates} / 3 ${'★'.repeat(r.ptsC)}</span></div>
+         <div class="rowline"><span>${r.name} settles in ${stations[r.order.to].name}</span><span class="num lumen">hireable — trained by the road</span></div>
+         <div class="rowline"><span>${stations[r.order.from].name} hears of it</span><span class="num">+10 appreciation</span></div>
+         <div class="rowline keeperSay"><span><b>${r.name.split(' ')[0]}</b> “Tell them I walked it. Tell them who walked it with me.”</span></div>`;
+      $('starUpNote').classList.add('hidden');
+      animateGrade(r.grade, r.likes);
+      return;
+    }
     const o = r.order;
-    $('resultRoute').textContent = `${stations[o.from].name} → ${stations[o.to].name}${o.premium ? ' · PREMIUM' : ''}${o.prio ? ' · PRIORITY' : ''}`;
+    if (r.service) {
+      // THE SERVICE SLIP — no fee line exists to be empty: the town's thanks is the total
+      $('resultRoute').textContent = `${stations[o.from].name} → ${stations[o.to].name} · ${Economy.TIER_TAG[r.tier] || 'LOCAL POST'} · SERVICE OF THE ORDER`;
+      $('gradeStamp').textContent = r.grade;
+      $('scoreRows').innerHTML =
+        `<div class="rowline"><span>Delivery time</span><span class="num">${U.fmtTime(r.elapsed)} <span style="color:var(--bone-faint)">/ par ${U.fmtTime(o.par)}</span> ${'★'.repeat(r.ptsT)}</span></div>
+         <div class="rowline"><span>Mail condition</span><span class="num">${Math.round(r.cond)}% ${'★'.repeat(r.ptsC)}</span></div>
+         <div class="rowline"><span>Fee taken</span><span class="num" style="color:var(--gold-hot)">NONE — Waylighters carry the mail</span></div>
+         <div class="rowline"><span>The walk taught</span><span class="num lumen">+${8 + r.tier * 6} Footwork${r.tier >= 2 ? ' · +8 Endurance' : ''}${r.tier >= 3 ? ' · +16 Lumenistry' : ''}</span></div>` +
+        (r.letter ? `<div class="rowline letter"><span>Read aloud at the terminal: <i>“${r.letter}”</i></span></div>` : '') +
+        (r.militiaFor ? `<div class="rowline keeperSay"><span><b>The Farkeeper riders</b> “Trouble finds you, our horns find trouble. Ride safe, Walker.”</span></div>` : '');
+      const su2 = $('starUpNote');
+      if (r.apprLvl) { su2.classList.remove('hidden'); su2.innerHTML = `${stations[o.to].name} HOLDS YOU <b>${T.apprNames[r.apprLvl]}</b><br><span style="font-size:13px;color:var(--bone-dim)">${Economy.apprPerkLine(r.apprLvl)}</span>`; }
+      else if (r.militiaFor) { su2.classList.remove('hidden'); su2.innerHTML = `THE FARKEEPERS OF ${stations[r.militiaFor].name.toUpperCase()} ANSWER FOR YOU NOW`; }
+      else su2.classList.add('hidden');
+      animateGrade(r.grade, 0, { appr: r.appr });
+      return;
+    }
+    $('resultRoute').textContent = o.circuit
+      ? `${stations[o.from].name} → ${o.legs.map(l => stations[l.to].name).join(' → ')} · CIRCUIT`
+      : `${stations[o.from].name} → ${stations[o.to].name}${o.premium ? ' · PREMIUM' : ''}${o.prio ? ' · PRIORITY' : ''}${o.salvage ? ' · SALVAGE' : ''}`;
     $('gradeStamp').textContent = r.grade;
     $('scoreRows').innerHTML =
       `<div class="rowline"><span>Delivery time</span><span class="num">${U.fmtTime(r.elapsed)} <span style="color:var(--bone-faint)">/ par ${U.fmtTime(o.par)}</span> ${'★'.repeat(r.ptsT)}</span></div>
-       <div class="rowline"><span>Cargo condition</span><span class="num">${Math.round(r.cond)}% ${'★'.repeat(r.ptsC)}</span></div>
+       <div class="rowline"><span>${r.circuit ? 'Condition across every door' : o.salvage ? 'Condition — against what the wreck gave' : 'Cargo condition'}</span><span class="num">${Math.round(r.cond)}% ${'★'.repeat(r.ptsC)}</span></div>
        <div class="rowline"><span>Weight carried</span><span class="num">${U.fmtKg(r.kg)} kg</span></div>` +
+      (r.circuit ? `<div class="rowline"><span>CIRCUIT — ${r.circuit.legs} doors, one contract</span><span class="num gold">×${T.circuitMul}</span></div>` : '') +
+      (r.salvage ? `<div class="rowline"><span>Grey work — out of the wreck</span><span class="num gold">×${T.salvageMul}</span></div>` : '') +
       (r.needMood ? `<div class="rowline"><span>${stations[o.to].name} ${r.needMood === 'critical' ? 'was out of this' : r.needMood === 'wanting' ? 'was running short' : r.needMood === 'thriving' ? 'had plenty already' : 'needed this'}</span><span class="num mult ${r.needMood}">×${r.needMul}</span></div>` : '') +
       (r.chainN > 1 ? `<div class="rowline"><span>Stop ${r.chainN} of one trip</span><span class="num gold">×${r.chain.toFixed(2)}</span></div>` : '') +
       (r.letter ? `<div class="rowline letter"><span>Read aloud at the terminal: <i>“${r.letter}”</i></span></div>` : '') +
@@ -647,7 +994,7 @@ const UI = (() => {
     } else su.classList.add('hidden');
     animateGrade(r.grade, r.likes);
   }
-  function animateGrade(grade, likes) {
+  function animateGrade(grade, likes, opts = {}) {
     const stamp = $('gradeStamp'), ring = $('gradeRing'), gl = $('gradeLine');
     stamp.classList.remove('slam'); ring.classList.remove('slam'); gl.classList.remove('slam');
     void stamp.offsetWidth;
@@ -655,9 +1002,14 @@ const UI = (() => {
     gl.textContent = DATA.gradeLines[grade] ? DATA.gradeLines[grade][(Math.random() * DATA.gradeLines[grade].length) | 0] : '';
     gl.classList.add('slam');
     Snd.sfx.grade(grade);
-    // likes count-up
     const el = $('likesTotal');
     if (likeAnim) cancelAnimationFrame(likeAnim);
+    if (opts.appr !== undefined) {   // a service slip totals in the town's thanks, not the Order's coin
+      el.innerHTML = `${apprChip()(30)} + ${opts.appr} APPRECIATION`;
+      Snd.sfx.accept();
+      return;
+    }
+    // likes count-up
     const t0 = performance.now(), dur = Math.min(1800, 400 + likes * 12);
     let lastTick = 0;
     const step = now => {
@@ -684,9 +1036,50 @@ const UI = (() => {
       c.width = c.clientWidth * devicePixelRatio; c.height = c.clientHeight * devicePixelRatio;
       mapView.z = Math.max(c.height / DATA.H * 0.9, 0.14) / devicePixelRatio;
       drawMap();
-    }
+      if (mapView3 !== 'valley') setMapView(mapView3);   // reopen where they left it
+      if (typeof LedgerUI !== 'undefined') LedgerUI.syncRail();   // v3.31: the rail's toggles read the save
+    } else { Globe.close(); Continent.close(); }   // bundle scope, not window — the chargen gate taught this lesson once already
   }
+  /* v3.26 — the scale ladder, honest at last: THE GREYMARCH (the survey sheet) → THE DARKLANDS
+     (the continental briefing table, the ACTUAL developed strategic map) → THE KNOWN WORLD
+     (the globe — the farthest the glass pulls back, an ornament for now) */
+  let mapView3 = 'valley';
+  function setMapView(which) {
+    mapView3 = which;
+    $('mapCanvasWrap').classList.toggle('hidden', which !== 'valley');
+    $('contWrap').classList.toggle('hidden', which !== 'continent');
+    $('globeWrap').classList.toggle('hidden', which !== 'world');
+    $('btnViewValley').classList.toggle('on', which === 'valley');
+    $('btnViewCont').classList.toggle('on', which === 'continent');
+    $('btnViewWorld').classList.toggle('on', which === 'world');
+    $('mapTitle').textContent = which === 'world' ? 'The Known World' : which === 'continent' ? 'The Darklands' : 'The Greymarch';
+    $('mapSub').textContent = which === 'world' ? 'Orbital survey · origin unknown · the Order keeps it working'
+      : which === 'continent' ? 'Continental survey · the middle distance · the recon table to come'
+      : 'Survey sheet · the Order of Waylighters';
+    Globe.close(); Continent.close();
+    if (which === 'world') {
+      const sc = $('globeStars');
+      if (sc && !sc._lit) {   // the star field behind the world, seeded once
+        sc._lit = true;
+        sc.width = sc.clientWidth; sc.height = sc.clientHeight;
+        const g = sc.getContext('2d'), rg = U.rng(77);
+        for (let i = 0; i < 210; i++) { const b = 0.25 + rg() * 0.75; g.fillStyle = `rgba(${200 + rg() * 55 | 0},${200 + rg() * 55 | 0},255,${b * 0.8})`; g.fillRect((rg() * sc.width) | 0, (rg() * sc.height) | 0, b > 0.85 ? 2 : 1, b > 0.85 ? 2 : 1); }
+      }
+      Globe.open();
+      Snd.sfx.ui();
+    } else if (which === 'continent') {
+      Continent.open();
+      Snd.sfx.ui();
+    } else drawMap();
+  }
+  (() => {
+    const bv = $('btnViewValley'), bc = $('btnViewCont'), bw = $('btnViewWorld');
+    if (bv) bv.addEventListener('click', () => setMapView('valley'));
+    if (bc) bc.addEventListener('click', () => setMapView('continent'));
+    if (bw) bw.addEventListener('click', () => setMapView('world'));
+  })();
   { const ck = $('mapPauseCk'); if (ck) { ck.checked = !!OPTS.mapPause; ck.addEventListener('change', () => { OPTS.mapPause = ck.checked; saveOpts(); Snd.sfx.ui && Snd.sfx.ui(); }); } }
+  { const ck = $('ckBgRun'); if (ck) { ck.checked = !!OPTS.bgRun; ck.addEventListener('change', () => { OPTS.bgRun = ck.checked; saveOpts(); Snd.sfx.ui && Snd.sfx.ui(); }); } }
   { const ck = $('ckIconColor'); if (ck) { ck.checked = !!OPTS.iconColor; ck.addEventListener('change', () => { OPTS.iconColor = ck.checked; saveOpts(); refreshCargo(); Snd.sfx.ui && Snd.sfx.ui(); }); } }
   function drawMap() {
     const c = $('map'), ctx = c.getContext('2d');
@@ -729,14 +1122,16 @@ const UI = (() => {
     // camps
     for (const cd of DATA.camps) {
       const cs = S.camps[cd.id];
-      ctx.strokeStyle = cs.pacified ? 'rgba(255,201,120,0.5)' : 'rgba(217,107,79,0.55)';
+      /* v3.34: a HELD camp reads as the Republic's — grey ring at the watchpost's safe radius, its own plate */
+      const held = !!cs.taken;
+      ctx.strokeStyle = held ? 'rgba(141,151,156,0.6)' : cs.pacified ? 'rgba(255,201,120,0.5)' : 'rgba(217,107,79,0.55)';
       ctx.setLineDash(cs.pacified ? [] : [10, 8]); ctx.lineWidth = 2 * px;
-      ctx.beginPath(); ctx.arc(cd.x, cd.y, cs.pacified ? 100 : cd.r, 0, 7); ctx.stroke();
+      ctx.beginPath(); ctx.arc(cd.x, cd.y, held ? cd.r * REP.WATCHPOST.safeR : cs.pacified ? 100 : cd.r, 0, 7); ctx.stroke();
       ctx.setLineDash([]);
-      ctx.fillStyle = cs.pacified ? '#ffc978' : '#d96b4f';
+      ctx.fillStyle = held ? '#b8c2c8' : cs.pacified ? '#ffc978' : '#d96b4f';
       ctx.font = `${12 * px}px Atkinson Hyperlegible, sans-serif`;
       ctx.textAlign = 'center';
-      ctx.fillText(cs.pacified ? cd.name + ' (rest stop)' : cd.name, cd.x, cd.y - (cs.pacified ? 110 : cd.r) - 6 * px);
+      ctx.fillText(held ? cd.name.replace(' Camp', '') + ' WATCHPOST' : cs.pacified ? cd.name + ' (rest stop)' : cd.name, cd.x, cd.y - (held ? cd.r * REP.WATCHPOST.safeR : cs.pacified ? 110 : cd.r) - 6 * px);
     }
     // structures
     for (const st of S.structures) {
@@ -744,6 +1139,17 @@ const UI = (() => {
       ctx.beginPath();
       ctx.moveTo(st.x, st.y - 6 * px); ctx.lineTo(st.x + 5 * px, st.y); ctx.lineTo(st.x, st.y + 6 * px); ctx.lineTo(st.x - 5 * px, st.y);
       ctx.fill();
+    }
+    // v3.29 — the memorial on the survey sheet: a gold lantern pip once the roll has names
+    if (typeof Memorial !== 'undefined' && (S.legacy || []).length) {
+      const ms = Memorial.site();
+      ctx.fillStyle = '#ffd98f';
+      ctx.fillRect(ms.x - 3 * px, ms.y - 3 * px, 6 * px, 6 * px);
+      ctx.fillStyle = 'rgba(255,217,143,0.35)';
+      ctx.fillRect(ms.x - 6 * px, ms.y - 6 * px, 12 * px, 12 * px);
+      ctx.font = `700 ${9 * px}px ui-monospace, Menlo, monospace`;
+      ctx.fillStyle = '#d8c9a0'; ctx.textAlign = 'center';
+      ctx.fillText('THE LANTERN ROWS', ms.x, ms.y + 14 * px);
     }
     // zip links
     ctx.strokeStyle = 'rgba(111,227,210,0.6)'; ctx.lineWidth = 1.6 * px;
@@ -800,22 +1206,64 @@ const UI = (() => {
     }
     // stations — coloured by how they are doing
     const MOODC = { critical: '#d96b4f', wanting: '#e0a05e', steady: '#b3c98a', thriving: '#9fd98a' };
+    const dcounts = Systems.deliverableCounts ? Systems.deliverableCounts() : {};
     for (const id of stationOrder) {
       const d = stations[id], st = S.stations[id];
       const lit = st.connected, knownSt = lit || st.met;
+      const rebel = typeof Republic !== 'undefined' && S.rep && Republic.isUnlit(id);   // v3.32: political dark reads DIFFERENT from starved dark
       const mood = knownSt ? Economy.stationMood(id) : null;
-      ctx.fillStyle = lit ? '#ffc978' : '#5a6472';
+      ctx.fillStyle = rebel ? '#642a2a' : lit ? '#ffc978' : '#5a6472';
       ctx.beginPath(); ctx.arc(d.x, d.y, 9 * px, 0, 7); ctx.fill();
       if (lit) { ctx.strokeStyle = 'rgba(255,201,120,0.35)'; ctx.lineWidth = 2 * px; ctx.beginPath(); ctx.arc(d.x, d.y, 15 * px, 0, 7); ctx.stroke(); }
+      if (rebel) {
+        ctx.strokeStyle = '#d96b4f'; ctx.lineWidth = 2.4 * px; ctx.setLineDash([4 * px, 4 * px]);
+        ctx.beginPath(); ctx.arc(d.x, d.y, 16 * px, 0, 7); ctx.stroke(); ctx.setLineDash([]);
+        ctx.fillStyle = '#d96b4f'; ctx.font = `800 ${9 * px}px ui-monospace, Menlo, monospace`;
+        ctx.fillText('UNLIT — BY CHOICE', d.x, d.y + 50 * px);
+      }
       if (mood) { ctx.strokeStyle = MOODC[mood]; ctx.lineWidth = (mood === 'critical' ? 3.5 : 2.2) * px; ctx.setLineDash(mood === 'critical' ? [6 * px, 5 * px] : []); ctx.beginPath(); ctx.arc(d.x, d.y, 21 * px, 0, 7); ctx.stroke(); ctx.setLineDash([]); }
       ctx.fillStyle = lit ? '#ffe3b0' : '#8a8f98';
       ctx.font = `600 ${14 * px}px Fraunces, Georgia, serif`;
       ctx.textAlign = 'center';
       ctx.fillText(d.name + (st.stars ? ' ' + '★'.repeat(st.stars) : ''), d.x, d.y - 24 * px);
+      const dc = dcounts[id];
+      if (dc) {   // v3.24: crates on backs bound for THIS door — see at a glance where to unload the most
+        const bx = d.x + 24 * px, by = d.y - 16 * px;
+        ctx.fillStyle = '#12161c'; ctx.fillRect(bx, by, 36 * px, 17 * px);
+        ctx.fillStyle = '#241d12'; ctx.fillRect(bx + px, by + px, 34 * px, 15 * px);
+        const ic = earnIconImg('mat');
+        if (ic.complete) { ctx.imageSmoothingEnabled = false; ctx.drawImage(ic, bx + 3 * px, by + 3.5 * px, 10 * px, 10 * px); ctx.imageSmoothingEnabled = true; }
+        ctx.fillStyle = '#ffd98f'; ctx.font = `700 ${11.5 * px}px Atkinson Hyperlegible, sans-serif`; ctx.textAlign = 'left';
+        ctx.fillText('×' + dc, bx + 16 * px, by + 12.5 * px);
+        ctx.textAlign = 'center';
+      }
       if (mood && mood !== 'steady' && mood !== 'thriving') {
         const short = stations[id].needs.filter(g => ['critical', 'wanting'].includes(Economy.needMood(id, g))).map(g => DATA.goodsInfo[g].name.toLowerCase());
         ctx.font = `${11 * px}px Atkinson Hyperlegible, sans-serif`; ctx.fillStyle = MOODC[mood];
         ctx.fillText(`${mood === 'critical' ? 'out of' : 'short of'} ${short.join(', ')}`, d.x, d.y + 36 * px);
+      }
+    }
+    /* v3.32 — the Republic on the survey sheet: shrines, larders, the marching column */
+    if (typeof Republic !== 'undefined' && S.rep) {
+      for (const s2 of Republic.sites('flameshrine')) {
+        const fed = s2.fedUntil > S.time;
+        ctx.fillStyle = fed ? '#ffb54f' : '#7a6238';
+        ctx.fillRect(s2.x - 4 * px, s2.y - 4 * px, 8 * px, 8 * px);
+        if (fed) { ctx.strokeStyle = 'rgba(255,181,79,.45)'; ctx.lineWidth = 2 * px; ctx.beginPath(); ctx.arc(s2.x, s2.y, 11 * px, 0, 7); ctx.stroke(); }
+      }
+      for (const s2 of Republic.sites('hollowfire')) {
+        ctx.strokeStyle = '#c25038'; ctx.lineWidth = 2 * px;
+        ctx.beginPath(); ctx.arc(s2.x, s2.y, 8 * px, 0, 7); ctx.stroke();
+        ctx.fillStyle = '#c25038'; ctx.fillRect(s2.x - 1.5 * px, s2.y - 5 * px, 3 * px, 10 * px);
+      }
+      const q = Republic.quell();
+      if (q) {
+        const lead = Republic.columnPos(q.t / q.dur, 0);
+        if (lead) {
+          ctx.fillStyle = '#8d979c'; ctx.fillRect(lead.x - 5 * px, lead.y - 5 * px, 10 * px, 10 * px);
+          ctx.fillStyle = '#12161c'; ctx.font = `800 ${9 * px}px ui-monospace, Menlo, monospace`; ctx.textAlign = 'center';
+          ctx.fillStyle = '#b8c2c8'; ctx.fillText('THE COLUMN', lead.x, lead.y - 10 * px);
+        }
       }
     }
     // the strung route: current leg, then every mark in order
@@ -927,13 +1375,6 @@ const UI = (() => {
 
   /* ---------- cinematics ---------- */
   function setLetterbox(on) { document.body.classList.toggle('cine', on); $('hud').classList.toggle('faded', on); }
-  function showCineTitle(big, small) {
-    const el = $('cineTitle');
-    el.querySelector('.big').textContent = big;
-    el.querySelector('.small').textContent = small;
-    el.classList.add('show');
-  }
-  function hideCineTitle() { $('cineTitle').classList.remove('show'); }
 
   /* ---------- misc ---------- */
   function modalExceptMap() {
@@ -941,7 +1382,12 @@ const UI = (() => {
       !$('pause').classList.contains('hidden') || !$('helpOv').classList.contains('hidden') ||
       !$('skillsOv').classList.contains('hidden') || !$('lootOv').classList.contains('hidden') ||
       !$('traderOv').classList.contains('hidden') || !$('deathOv').classList.contains('hidden') ||
-      !$('packOv').classList.contains('hidden') || !$('chargen').classList.contains('hidden');
+      !$('packOv').classList.contains('hidden') || !$('chargen').classList.contains('hidden') ||
+      !$('tailorOv').classList.contains('hidden') ||   // v3.28: the tailor is a modal like the rest — it freezes the world and counts against travel
+      !$('memOv').classList.contains('hidden') ||       // v3.29: the memorial sheet holds the world the same way
+      !$('ledgerOv').classList.contains('hidden') ||      // v3.31: the ledgers hold it too
+      !$('republicOv').classList.contains('hidden') ||    // v3.32: the Republic sits in session the same way
+      !$('musterOv').classList.contains('hidden');       // v3.36: the muster roll is a sheet like any
   }
   function anyModal() { return mapOpen || modalExceptMap(); }
   /* the world freezes for every document EXCEPT the survey sheet — unless the player asked it to */
@@ -949,14 +1395,48 @@ const UI = (() => {
   function closeAllModals() {
     closeStation();
     $('packOv').classList.add('hidden');
+    $('tailorOv').classList.add('hidden');
+    $('memOv').classList.add('hidden');
+    $('ledgerOv').classList.add('hidden');
+    $('republicOv').classList.add('hidden');
+    $('musterOv').classList.add('hidden');
     $('results').classList.add('hidden');
     toggleMap(false);
     $('pause').classList.add('hidden');
     $('helpOv').classList.add('hidden');
+    $('skillsOv').classList.add('hidden');   // v3.28b: ALL of them — a release that misses one sheet isn't a release
+    $('lootOv').classList.add('hidden');
+    $('traderOv').classList.add('hidden');
     toggleBuild(false);
+  }
+  /* v3.28b — the honest list of everything holding the boots, by name, for the ESC menu's
+     diagnostic and for FREE MY BOOTS. Reads the world as it IS (DOM included), never a cache. */
+  function gateReport() {
+    const out = [];
+    const vis = id => !$(id).classList.contains('hidden');
+    if (typeof S === 'undefined' || !S) return ['no world'];
+    if (S.dead) out.push('a committed death (the certificate is owed)');
+    if (S.cine || S.mcine || S.handoff || S.cineSeq) out.push('a scene');
+    if (S.qte) out.push('the steady-ring');
+    if (S.struggle) out.push('a struggle');
+    if (S.place) out.push('a blueprint in hand');
+    if (S.timeScale !== undefined && S.timeScale !== 1) out.push('a slowed clock');
+    if (S.state === 'zip') out.push('a zipline');
+    if (S.state === 'ride') out.push('a ride');
+    for (const id of ['stationOv', 'results', 'helpOv', 'skillsOv', 'lootOv', 'traderOv', 'deathOv', 'packOv', 'chargen', 'tailorOv', 'memOv', 'ledgerOv', 'republicOv', 'musterOv']) if (vis(id)) out.push(`the ${id.replace('Ov', '')} sheet`);
+    if (vis('pause')) out.push('paused');
+    if (mapOpen || vis('mapWrap')) out.push(OPTS.mapPause ? 'the survey sheet (set to pause the world)' : 'the survey sheet (walk continues)');
+    const ae = document.activeElement;
+    if (ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA')) out.push('a text field holding the keys');
+    return out;
   }
   function escPressed() {
     if (!$('deathOv').classList.contains('hidden') || !$('chargen').classList.contains('hidden')) return true;
+    if (!$('tailorOv').classList.contains('hidden')) { $('tailorOv').classList.add('hidden'); return true; }   // v3.28: the tailor answers ESC like every other sheet
+    if (!$('memOv').classList.contains('hidden')) { $('memOv').classList.add('hidden'); return true; }   // v3.29: the memorial answers ESC like every other sheet
+    if (!$('ledgerOv').classList.contains('hidden')) { $('ledgerOv').classList.add('hidden'); return true; }   // v3.31: the ledgers answer ESC
+    if (!$('republicOv').classList.contains('hidden')) { $('republicOv').classList.add('hidden'); return true; }   // v3.32: the session adjourns on ESC
+    if (!$('musterOv').classList.contains('hidden')) { $('musterOv').classList.add('hidden'); return true; }       // v3.36: the roll folds on ESC
     if (!$('packOv').classList.contains('hidden')) { $('packOv').classList.add('hidden'); return true; }
     if (!$('helpOv').classList.contains('hidden')) { $('helpOv').classList.add('hidden'); return true; }
     if (!$('skillsOv').classList.contains('hidden')) { $('skillsOv').classList.add('hidden'); return true; }
@@ -978,12 +1458,11 @@ const UI = (() => {
   return {
     updateHUD, hudFade, savedBlink, updatePrompts, toast, updateTray, updateObjective,
     showQTE, qteProgress, showStruggle, struggleProgress,
-    toggleCargo, refreshCargo, toggleBuild, buildHotkey, renderBuild,
-    openStation, closeStation, renderStation, showNextResult, flushResults, queueResults,
-    toggleMap, drawMap, mapPoint, setLetterbox, showCineTitle, hideCineTitle,
-    anyModal, worldFrozen, closeAllModals, escPressed, tick, likeBurst, drawHearts, crateChip, itemIcon, iconTag, isMission,
+    toggleCargo, refreshCargo, toggleBuild, buildHotkey, openStation, closeStation, renderStation, showNextResult, flushResults,
+    gotoTab: t => { curTab = t; renderStation(); }, queueResults,
+    toggleMap, drawMap, mapPoint, setMapView, earnIconImg, setLetterbox, anyModal, worldFrozen, closeAllModals, gateReport, escPressed, tick, drawHearts, iconTag, isMission, earn,
     get mapOpen() { return mapOpen; }, get buildOpen() { return buildOpen; },
-    get prompts() { return promptList; }, get opts() { return OPTS; },
+    get prompts() { return promptList; }, get opts() { return OPTS; }, saveOpts,
     get curStation() { return curStation; },
     get pendingResults() { return resultQueue.length > 0; },
   };

@@ -14,7 +14,7 @@ await page.evaluate(() => localStorage.clear());
 await page.click('#btnNew'); await page.waitForTimeout(150); await page.click('#btnBegin'); await page.waitForTimeout(250);
 await page.click('#briefGo'); await page.waitForTimeout(200); await page.click('#cgBegin'); await page.waitForTimeout(500);
 await page.evaluate(sc => { WL.timeScale = sc;
-  window.UI_orderPay = o => { const d = DATA.items[o.item], kg = d.kg * o.n; const a = DATA.stations[o.from], b = DATA.stations[o.to]; const par = Math.max(DATA.T.parFloor, WL.World.pathTime(a.x, a.y, b.x, b.y).seconds * DATA.T.parPad); return (DATA.T.likesBase + par * DATA.T.likesPerSec + kg * DATA.T.likesPerKg) * (o.likesMul || 1) * (o.mood ? DATA.T.needMul[o.mood] : 1); };
+  window.UI_orderPay = o => { if (o.circuit) { const kg2 = o.legs.reduce((a2, l) => a2 + DATA.items[l.item].kg * l.n, 0); return (DATA.T.likesBase + 200 * DATA.T.likesPerSec + kg2 * DATA.T.likesPerKg) * DATA.T.circuitMul; } if (!DATA.items[o.item]) return 0; const d = DATA.items[o.item], kg = d.kg * o.n; const a = DATA.stations[o.from], b = DATA.stations[o.to]; const par = Math.max(DATA.T.parFloor, WL.World.pathTime(a.x, a.y, b.x, b.y).seconds * DATA.T.parPad); return (DATA.T.likesBase + par * DATA.T.likesPerSec + kg * DATA.T.likesPerKg) * (o.likesMul || 1) * (o.mood ? DATA.T.needMul[o.mood] : 1); };
 }, SCALE);
 
 const log = [];
@@ -48,11 +48,12 @@ while (true) {
     // decide the load: the ★ if it fits, then best pay per kg while it fits (allow 10% over)
     const d = await page.evaluate(() => {
       const id = UI.curStation, board = Systems.boardFor(id); const out = [];
-      const cap = State.cap(); /* a sane porter does not overload on purpose */ const kgOf = def => def.items ? def.items.reduce((a, [it, n]) => a + DATA.items[it].kg * n, 0) : DATA.items[def.item].kg * def.n;
+      const cap = State.cap(); /* a sane porter does not overload on purpose */ const kgOf = def => def.circuit ? def.legs.reduce((a, l) => a + DATA.items[l.item].kg * l.n, 0) : def.items ? def.items.reduce((a, [it, n]) => a + DATA.items[it].kg * n, 0) : DATA.items[def.item] ? DATA.items[def.item].kg * def.n : 0;
       const pri = board.find(b => b.prio);
       if (pri && State.weight() + kgOf(pri.def) <= cap) { Systems.acceptOrder(pri.def, false); out.push('★' + pri.def.title); }
-      const rest = board.filter(b => !b.prio).map(b => b.def).sort((a, b2) => (UI_orderPay(b2) / kgOf(b2)) - (UI_orderPay(a) / kgOf(a)));
-      for (const o of rest) { if (State.weight() + kgOf(o) <= cap) { Systems.acceptOrder(o, false); out.push(`${o.item}×${o.n}→${o.to}${o.mood ? '(' + o.mood[0] + ')' : ''}`); } }
+      const rest = board.filter(b => !b.prio).map(b => b.def).filter(o => !o.convoy && !o.salvage)   // the teleporting bot cannot walk an escort or the wreck honestly — the shapes suite drives those
+        .sort((a, b2) => (UI_orderPay(b2) / Math.max(1, kgOf(b2))) - (UI_orderPay(a) / Math.max(1, kgOf(a))));
+      for (const o of rest) { if (State.weight() + kgOf(o) <= cap) { Systems.acceptOrder(o, false); out.push(o.circuit ? `CIRCUIT ${o.legs.map(l => l.to).join('→')}` : `${o.item}×${o.n}→${o.to}${o.mood ? '(' + o.mood[0] + ')' : ''}`); } }
       if (S.food < 40) Systems.eatQuick();
       // buy a ration if none carried and provisions allow
       if (!S.cargo.some(c => DATA.items[c.defId].cat === 'food') && S.banked.provisions >= 5) Systems.fabricate(Systems.fabList(id).find(f => f.id === 'ration'));

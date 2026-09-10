@@ -29,6 +29,10 @@ const CHAR = (() => {
     medic: { name: 'Field Medic', pts: 0, skills: { mend: 2, hearth: 1 }, perk: 'Steady hands — treatments 50% stronger, bandage while walking', line: 'Carries more gauze than food.' },
     hearthkeeper: { name: 'Hearthkeeper', pts: 2, skills: { hearth: 2, mend: 1 }, perk: 'Open table — meal buffs last twice as long, companions eat 30% less', line: 'Feeds first, asks after.' },
     drifter: { name: 'Drifter', pts: 6, skills: {}, perk: 'Nothing to unlearn — +15% XP in everything', line: 'Walked in from somewhere the maps gave up on.' },
+    /* v3.25 — unlocked for a world only after the exiles have found you (S.flags.lampClass) */
+    lamplighter: { name: 'Lamplighter', pts: -2, skills: { foot: 1, sal: 1 }, locked: 'lampClass',
+      perk: 'The cloaked torch — starts with the C14 Timberwolf and 6 rounds; exile-trained back (+6 kg)',
+      line: 'Chose the sword once. Pays for it in miles.' },
   };
 
   /* ---------- traits (cost > 0 spends budget, cost < 0 grants budget) ---------- */
@@ -148,18 +152,18 @@ const CHAR = (() => {
 
   /* ---------- gear fabrication (station, star-gated) ---------- */
   const FAB_GEAR = [
-    { id: 'boots_tread', at: 'haven', stars: 1, cost: { metal: 40, ceramic: 30 } },
-    { id: 'boots_tread', at: 'mill', stars: 2, cost: { metal: 40, ceramic: 30 } },
-    { id: 'boots_cleat', at: 'quarry', stars: 3, cost: { metal: 60, ceramic: 40 } },
-    { id: 'boots_grey', at: 'foundry', stars: 3, cost: { metal: 60, lumen: 25 } },
-    { id: 'coat_wax', at: 'elm', stars: 3, cost: { ceramic: 60 } },
-    { id: 'coat_high', at: 'green', stars: 3, cost: { ceramic: 80, metal: 20 } },
-    { id: 'coat_lumen', at: 'foundry', stars: 4, cost: { ceramic: 60, lumen: 40 } },
-    { id: 'pack_wide', at: 'mill', stars: 3, cost: { metal: 80, ceramic: 40 } },
-    { id: 'pack_rig', at: 'haven', stars: 3, cost: { metal: 70, ceramic: 30 } },
-    { id: 'pack_exo1', at: 'foundry', stars: 1, cost: { metal: 120, ceramic: 60, lumen: 20 } },
-    { id: 'pack_sled', at: 'foundry', stars: 2, cost: { metal: 180, ceramic: 80, lumen: 30 } },
-    { id: 'pack_exo2', at: 'foundry', stars: 4, cost: { metal: 240, ceramic: 140, lumen: 60 } },
+    { id: 'boots_tread', at: 'haven', stars: 1, cost: { metal: 24, ceramic: 18 } },
+    { id: 'boots_tread', at: 'mill', stars: 2, cost: { metal: 24, ceramic: 18 } },
+    { id: 'boots_cleat', at: 'quarry', stars: 3, cost: { metal: 36, ceramic: 24 } },
+    { id: 'boots_grey', at: 'foundry', stars: 3, cost: { metal: 36, lumen: 16 } },
+    { id: 'coat_wax', at: 'elm', stars: 3, cost: { ceramic: 36 } },
+    { id: 'coat_high', at: 'green', stars: 3, cost: { ceramic: 48, metal: 14 } },
+    { id: 'coat_lumen', at: 'foundry', stars: 4, cost: { ceramic: 38, lumen: 24 } },
+    { id: 'pack_wide', at: 'mill', stars: 3, cost: { metal: 48, ceramic: 26 } },
+    { id: 'pack_rig', at: 'haven', stars: 3, cost: { metal: 42, ceramic: 20 } },
+    { id: 'pack_exo1', at: 'foundry', stars: 1, cost: { metal: 70, ceramic: 36, lumen: 14 } },
+    { id: 'pack_sled', at: 'foundry', stars: 2, cost: { metal: 110, ceramic: 50, lumen: 20 } },
+    { id: 'pack_exo2', at: 'foundry', stars: 4, cost: { metal: 150, ceramic: 85, lumen: 38 } },
   ];
   const FAB_USE = [
     { id: 'bandage', cost: { ceramic: 4 } },
@@ -168,7 +172,7 @@ const CHAR = (() => {
     { id: 'lumentea', cost: { provisions: 3, lumen: 2 } },
   ];
   const FAB_MANUALS = { haven: 'foot', elm: 'hearth', mill: 'rig', green: 'mend', quarry: 'haul', relay: 'bal', foundry: 'lum', pharos: 'end' }; // vol I at 2★, cost below
-  const MANUAL_COST = { metal: 30, ceramic: 30 };
+  const MANUAL_COST = { metal: 20, ceramic: 20 };
 
   /* ---------- events ---------- */
   const EVENTS = {
@@ -183,13 +187,34 @@ const CHAR = (() => {
     crisis: { name: 'Crisis order', ttl: 1 },
   };
 
+  /* ---------- the city post: inner-city mail jobs, all letters, each training a different verb ----------
+     staff are the SAME waylighters you field — the mailroom is the training ground, the road is the exam */
+  const JOBS = {
+    runner: { name: 'Letter runner', skill: 'foot', line: 'door to door at a dead run', note: 'fills the mailbag twice as fast' },
+    parcels: { name: 'Parcel rounds', skill: 'haul', line: 'satchels up every stair in town', note: 'strong backs are made, not found' },
+    tower: { name: 'Tower courier', skill: 'climb', line: 'dispatches to the mast and back, all day', note: 'the ladder stops being a chore' },
+    nightpost: { name: 'Night post', skill: 'lum', line: 'the lamp-lit last round after dark', note: 'the town sleeps easier · extra appreciation' },
+    hearthpost: { name: 'Hearth post', skill: 'hearth', line: 'letters read aloud to the old by the fire', note: 'nobody is unreachable' },
+    sortmend: { name: 'Sort & mend', skill: 'mend', line: 'torn corners, retied string, readdressed hope', note: 'careful hands, made more careful' },
+  };
+
+  /* ---------- v3.20: field jobs — hands on the LAND itself ----------
+     Same pooled waylighters; the city trains, the road examines, the FIELD builds. Each is a walker
+     you can meet out there, doing the thing. */
+  const FIELD_JOBS = {
+    presser: { name: 'Path presser', skill: 'foot', line: 'walks the line until the ground agrees', note: 'wears a footpath in along the route — or out to any point you click. The valley\'s cheap roads', dest: true },
+    mason: { name: 'Mason', skill: 'mend', line: 'cobbles the trail a yard at a time', note: 'lays cobble on bare path along the route · 1 ceramic per stretch', dest: true },
+    hauler: { name: 'Hauler', skill: 'haul', line: 'freight on foot, slow and certain', note: 'carries stock between the two ends · a strong back becomes a DONKEY CARAVAN', dest: true },
+    forrester: { name: 'Forrester', skill: 'haul', line: 'the axe pays in planking', note: 'fells the near woods for timber — the land itself changes', dest: false },
+  };
+
   const PORTRAIT = {
     skins: ['#d8c9a8', '#c9a882', '#a87f5e', '#8a6248', '#6e4a36'],
     hoods: ['#33404d', '#4a3d55', '#3d5548', '#554233', '#2f4a5a', '#5a3d3d', '#46503a', '#3a3a4f'],
     scarves: ['#ffc978', '#6fe3d2', '#d96b4f', '#9fd98a', '#c9b0e0', '#e0d2a0'],
   };
 
-  return { XP_CURVE, SKILLS, SKILL_IDS, CLASSES, TRAITS, FIRST, LAST, QUIRKS, CAUSES, ITEMS2, MANUAL_VOLS, RUIN_TYPES, RUIN_SPREAD, FAB_GEAR, FAB_USE, FAB_MANUALS, MANUAL_COST, EVENTS, PORTRAIT };
+  return { XP_CURVE, SKILLS, SKILL_IDS, CLASSES, TRAITS, FIRST, LAST, QUIRKS, CAUSES, ITEMS2, MANUAL_VOLS, RUIN_TYPES, RUIN_SPREAD, FAB_GEAR, FAB_USE, FAB_MANUALS, MANUAL_COST, EVENTS, JOBS, FIELD_JOBS, PORTRAIT };
 })();
 
 /* merge expansion items into the base item table */

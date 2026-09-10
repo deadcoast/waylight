@@ -27,6 +27,7 @@
       <div id="dayRow">day · day 1</div>
     </div>
     <div id="saveNote">saved</div>
+    <div id="earnFeed"></div>
     <div id="cargoPanel" class="glass hidden">
       <h3>On your back</h3><span class="tag" id="cargoCount"></span>
       <div id="cargoList"></div>
@@ -49,8 +50,8 @@
 
   <div id="buildBar" class="glass hidden"></div>
   <div id="toasts"></div>
+  <div id="faultChip" class="hidden"></div>
   <div id="barTop" class="bar"></div><div id="barBot" class="bar"></div>
-  <div id="cineTitle"><div class="big"></div><div class="small"></div></div>
   <div id="announce"></div>
 
   <div id="packOv" class="overlay hidden">
@@ -103,8 +104,13 @@
 
   <div id="mapWrap" class="hidden">
     <div id="mapHead">
-      <h2>The Valley</h2>
-      <span class="tag">Survey sheet &middot; the Order of Waylighters</span>
+      <h2 id="mapTitle">The Greymarch</h2>
+      <span class="tag" id="mapSub">Survey sheet &middot; the Order of Waylighters</span>
+      <div id="mapViewBtns">
+        <button id="btnViewValley" class="viewBtn on">THE GREYMARCH</button>
+        <button id="btnViewCont" class="viewBtn">THE DARKLANDS</button>
+        <button id="btnViewWorld" class="viewBtn">THE KNOWN WORLD</button>
+      </div>
       <span style="flex:1"></span>
       <span class="tag">Waylight coverage <span class="num" id="mapCov">0%</span></span>
       <span class="tag">Roads paved <span class="num" id="mapRoads">0 / 24</span></span>
@@ -126,12 +132,37 @@
           <div id="railWalk" class="desc">standing still</div>
         </div>
         <div class="railSec">
+          <div class="railHead">The dossier</div>
+          <label class="pxCheck"><input type="checkbox" id="ckDossArrive"><span>Run dossier on arrival</span></label>
+          <label class="pxCheck"><input type="checkbox" id="ckDossLetters"><span>Grab all letters while in town</span></label>
+          <label class="pxCheck"><input type="checkbox" id="ckDossDeliver"><span>Deliver applicable automatically</span></label>
+          <button class="btn quiet" id="railLedgersBtn" style="margin-top:8px;width:100%">OPEN THE LEDGERS</button>
+        </div>
+        <div class="railSec">
+          <div class="railHead">The republic</div>
+          <button class="btn quiet" id="railRepublicBtn" style="margin-top:2px;width:100%">THE BANNER SHEET</button>
+          <div class="desc" style="margin-top:7px; font-size:11px; color:var(--bone-faint); text-transform:none; letter-spacing:0">every banner, every holding, the doctrines that answer the dark</div>
+        </div>
+        <div class="railSec">
           <div class="railHead">Field options</div>
           <label class="pxCheck"><input type="checkbox" id="mapPauseCk"><span>Pause Movement on Map</span></label>
           <div class="desc" style="margin-top:7px; font-size:11px; color:var(--bone-faint); text-transform:none; letter-spacing:0">unchecked, your boots keep walking while you read the sheet</div>
+          <button class="btn quiet" id="railMusterBtn" style="margin-top:8px;width:100%">THE MUSTER ROLL</button>
+          <button class="btn quiet" id="railManualBtn" style="margin-top:6px;width:100%">THE FIELD MANUAL</button>
         </div>
       </div>
       <div id="mapCanvasWrap"><canvas id="map"></canvas><div id="mapTip" class="glass"></div></div>
+      <div id="contWrap" class="hidden">
+        <canvas id="cont"></canvas>
+        <div id="contPanel" class="hidden"></div>
+        <div id="contCap">THE DARKLANDS &middot; continental survey &middot; drag to turn the table &middot; scroll to lean in &middot; click a far pin to work the frontier</div>
+      </div>
+      <div id="globeWrap" class="hidden">
+        <canvas id="globeStars"></canvas>
+        <canvas id="globe"></canvas>
+        <canvas id="globeOv"></canvas>
+        <div id="globeCap">THE KNOWN WORLD &middot; the farthest the glass pulls back &middot; an ornament of the survey, for now &middot; drag to turn it</div>
+      </div>
     </div>
     <div id="mapFoot"><span class="k">click</span>walk there <span class="k">&#8679;click</span>string a route around trouble <span class="k">drag</span>pan <span class="k">scroll</span>zoom <span class="k">M</span>close the sheet</div>
   </div>
@@ -142,42 +173,36 @@
       <div class="sheetBody">
         <div class="setRow"><span>Sound</span><button class="btn quiet" id="sndBtn">On</button></div>
         <div class="setRow"><span>Volume</span><input type="range" id="volSlider" min="0" max="100" value="70"></div>
-        <div class="setRow"><span>Screen effects (grain, shake)</span><button class="btn quiet" id="fxBtn">On</button></div>
+        <div class="setRow"><span>Rain volume <span class="tag" style="display:block; letter-spacing:.06em">slide to zero to mute the weather &mdash; the doorbells stay</span></span><input type="range" id="rainSlider" min="0" max="100" value="55"></div>
+        <div class="setRow"><span>Screen effects (grain)</span><button class="btn quiet" id="fxBtn">On</button></div>
         <div class="setRow"><span>Colour-code item icons <span class="tag" style="display:block; letter-spacing:.06em">consumables green &middot; gear blue &middot; junk grey &middot; mission always gold</span></span>
           <label class="pxCheck"><input type="checkbox" id="ckIconColor"></label></div>
-        <div class="setRow"><span>Controls</span><button class="btn quiet" id="helpBtn2">View</button></div>
+        <div class="setRow"><span>Keep walking when you switch away <span class="tag" style="display:block; letter-spacing:.06em">for long trips — the valley keeps moving while this window is hidden</span></span>
+          <label class="pxCheck"><input type="checkbox" id="ckBgRun"></label></div>
+        <div class="setRow"><span>Paper scale <span class="tag" style="display:block; letter-spacing:.06em">the sheets, prompts and toasts &mdash; read at the size you like</span></span>
+          <span style="white-space:nowrap; flex:none"><button class="miniBtn" data-scale="0.9">Small</button><button class="miniBtn" data-scale="1">Standard</button><button class="miniBtn" data-scale="1.15">Large</button><button class="miniBtn" data-scale="1.3">Larger</button></span></div>
+        <div class="setRow"><span>The field manual <span class="tag" style="display:block; letter-spacing:.06em">controls &amp; rebinding &middot; every lesson walked &middot; the papers &middot; the passage</span></span><button class="btn quiet" id="helpBtn2">Open <span class="k" style="margin:0 0 0 6px">F1</span></button></div>
+        <div class="setRow"><span>Return to the title <span class="tag" style="display:block; letter-spacing:.06em">saves this valley and steps out &mdash; change valleys, carry a code</span></span><button class="btn quiet" id="leaveBtn">Leave</button></div>
         <div class="setRow"><span>Abandon this valley (wipe save)</span><button class="btn quiet" id="wipeBtn">Wipe</button></div>
+        <div class="setRow"><span>Free my boots <span class="tag" style="display:block; letter-spacing:.06em">releases any stuck gate &mdash; scenes, rings, sheets, clocks. Deletes nothing, ever</span></span><button class="btn quiet" id="unstickBtn">Release</button></div>
+        <div id="pauseDiag" class="desc" style="margin-top:10px; font:600 10px ui-monospace, Menlo, monospace; color:var(--bone-faint); letter-spacing:.04em"></div>
         <div style="padding-top:16px; text-align:center"><button class="btn primary" id="resumeBtn">Resume</button></div>
       </div>
     </div>
   </div>
 
   <div id="helpOv" class="overlay hidden">
-    <div class="sheet glass">
+    <div class="sheet glass" style="width:min(900px,95vw)">
       <header><div><h2>Field manual</h2>
-        <div class="docStamp" style="text-align:left; margin-top:5px">FM-1 &middot; PROPERTY OF THE ORDER &middot; READ BY FIRELIGHT, CARRIED ANYWAY</div></div></header>
-      <div class="sheetBody">
-        <div class="helpCols">
-          <div class="rowline"><span><span class="k">M1</span></span><span class="desc">Click a place &mdash; walk there. Click a terminal, ruin, crate or your walking partner &mdash; walk there and use it</span></div>
-          <div class="rowline"><span><span class="k">&#8679;M1</span></span><span class="desc">Shift-click (world or map) &mdash; string waypoints; your feet take them in order, around what you route around</span></div>
-          <div class="rowline"><span><span class="k">M1</span>hold</span><span class="desc">Steer toward the cursor</span></div>
-          <div class="rowline"><span><span class="k">M1</span>+<span class="k">M2</span></span><span class="desc">Hold both &mdash; sprint</span></div>
-          <div class="rowline"><span><span class="k">W</span><span class="k">A</span><span class="k">S</span><span class="k">D</span></span><span class="desc">Walk by hand (overrides the mouse)</span></div>
-          <div class="rowline"><span><span class="k">Shift</span></span><span class="desc">Sprint (drains stamina)</span></div>
-          <div class="rowline"><span><span class="k">Space</span></span><span class="desc">Brace / steady a wobble / struggle</span></div>
-          <div class="rowline"><span><span class="k">E</span></span><span class="desc">Interact &middot; pick up</span></div>
-          <div class="rowline"><span><span class="k">B</span></span><span class="desc">Build</span></div>
-          <div class="rowline"><span><span class="k">F</span></span><span class="desc">Flare (banishes wraiths)</span></div>
-          <div class="rowline"><span><span class="k">M</span></span><span class="desc">Valley map</span></div>
-          <div class="rowline"><span><span class="k">I</span></span><span class="desc">Cargo &amp; equipment</span></div>
-          <div class="rowline"><span><span class="k">K</span></span><span class="desc">Skills &amp; self</span></div>
-          <div class="rowline"><span><span class="k">H</span></span><span class="desc">Eat</span></div>
-          <div class="rowline"><span><span class="k">Esc</span></span><span class="desc">Pause</span></div>
-        </div>
-        <hr class="hairline">
-        <p style="color:var(--bone-dim); font-size:13.5px; line-height:1.6">Heavy loads wobble on rough ground &mdash; steady them or hold <b style="color:var(--bone)">Space</b> to brace and walk slow. Greyfall rain eats containers in the dark; light protects. Wraiths hunt by movement in the deep grey &mdash; walk braced, or burn a flare. Scrappers only chase walkers carrying cargo.</p>
-        <div style="padding-top:10px; text-align:center"><button class="btn primary" id="helpClose">Understood</button></div>
+        <div class="docStamp" style="text-align:left; margin-top:5px">FM-1 &middot; PROPERTY OF THE ORDER &middot; READ BY FIRELIGHT, CARRIED ANYWAY</div></div>
+        <button class="btn quiet" id="helpClose">Close <span class="k" style="margin:0 0 0 6px">Esc</span></button></header>
+      <div class="tabs" id="fmTabs">
+        <button class="tab active" data-fm="controls">Controls</button>
+        <button class="tab" data-fm="lessons">Lessons</button>
+        <button class="tab" data-fm="papers">The papers</button>
+        <button class="tab" data-fm="passage">The passage</button>
       </div>
+      <div class="sheetBody" id="fmBody"></div>
     </div>
   </div>
 
@@ -208,6 +233,41 @@
         <div class="bank" id="traderBank"></div></header>
       <div class="sheetBody" id="traderBody"></div>
       <div style="padding:8px 22px 16px; text-align:right"><button class="btn quiet" id="traderClose">Walk on</button></div>
+    </div>
+  </div>
+
+  <div id="ledgerOv" class="overlay hidden">
+    <div class="sheet glass" style="width:min(860px,94vw)">
+      <header><div><h2>The Delivery Ledgers</h2><div class="tag">manifests &middot; dossiers &middot; the walk, managed &middot; the Order of Waylighters</div></div>
+        <button class="btn quiet" id="ledgerClose">Close the book <span class="k" style="margin:0 0 0 6px">Esc</span></button></header>
+      <nav class="tabs"><button class="tab" id="lgTabDossier">Delivery Dossier</button><button class="tab" id="lgTabManifest">Haulin' Manifest</button><button class="tab" id="lgTabChecklist">Cargo Checklist</button></nav>
+      <div class="sheetBody" id="ledgerBody"></div>
+    </div>
+  </div>
+
+  <div id="republicOv" class="overlay hidden">
+    <div class="sheet glass" style="width:min(920px,95vw)">
+      <header><div><h2>The Republic in Session</h2><div class="tag">the banner sheet &middot; stances &middot; holdings &amp; their owners &middot; the doctrines &middot; the world's own wars</div></div>
+        <button class="btn quiet" id="repClose">Close the session <span class="k" style="margin:0 0 0 6px">Esc</span></button></header>
+      <div class="sheetBody" id="repBody"></div>
+    </div>
+  </div>
+
+  <div id="musterOv" class="overlay hidden">
+    <div class="sheet glass" style="width:min(1060px,96vw)">
+      <header><div><h2>The Muster Roll</h2><div class="tag">everyone under your command &middot; where they stand &middot; their standing orders</div></div>
+        <div><button class="btn quiet" id="musterCall">Call the roll</button> <button class="btn quiet" id="musterClose">Close <span class="k" style="margin:0 0 0 6px">Esc</span></button></div></header>
+      <div class="sheetBody" id="musterBody"></div>
+    </div>
+  </div>
+
+  <div id="memOv" class="overlay hidden">
+    <div class="sheet glass" style="width:min(820px,94vw)">
+      <header><div id="memHead"></div>
+        <button class="btn quiet" id="memClose">Leave the ground <span class="k" style="margin:0 0 0 6px">Esc</span></button></header>
+      <div class="sheetBody"><div id="memBody"></div>
+        <div class="docFoot">FILE UNDER &middot; <b>THE ROLL OF THE ORDER</b> &mdash; EVERY LIFE BANKS SOMETHING VISIBLE</div>
+      </div>
     </div>
   </div>
 
@@ -271,10 +331,41 @@
         <div id="cgClasses"></div>
         <div class="tag" style="margin:14px 0 6px">Traits — virtues cost, burdens pay</div>
         <div id="cgTraits"></div>
+        <div class="tag" style="margin:12px 0 4px">The coat is YOURS — cut it</div>
+        <div id="cgLook" style="display:flex; gap:16px; align-items:flex-start">
+          <img id="cgRig" width="84" height="126" style="image-rendering:pixelated; border:3px solid #d8d2bd; box-shadow:var(--chunk); background:#10161f" alt="">
+          <div id="cgLookRows" style="flex:1"></div>
+        </div>
       </div>
       <div style="padding:10px 22px 18px; display:flex; justify-content:space-between; align-items:center">
         <span id="cgSummary" class="desc" style="color:var(--bone-dim)"></span>
         <button class="btn primary" id="cgBegin">Shoulder the pack</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="tailorOv" class="overlay hidden">
+    <div class="sheet glass" style="width:min(560px,94vw)">
+      <header><div><h2>The Tailor</h2><div class="tag">recut the coat · the valley will still know the walk</div></div></header>
+      <div class="sheetBody">
+        <div style="display:flex; gap:16px; align-items:flex-start">
+          <img id="tailorRig" width="96" height="144" style="image-rendering:pixelated; border:3px solid #d8d2bd; box-shadow:var(--chunk); background:#10161f" alt="">
+          <div id="tailorRows" style="flex:1"></div>
+        </div>
+        <div style="text-align:right; margin-top:12px"><button class="btn primary" id="tailorDone">Wear it out</button></div>
+      </div>
+    </div>
+  </div>
+  <div id="resetOv" class="overlay hidden" style="z-index:70">
+    <div class="sheet glass" style="width:min(560px,92vw)">
+      <header><div><h2>Reset the Valley?</h2><div class="tag">this burns the WORLD, not the walker</div></div></header>
+      <div class="sheetBody">
+        <p style="font:15px/1.6 var(--disp); color:var(--bone); margin-bottom:10px">This erases <b>everything</b>: every station's light and stars, every road, structure and cairn, all appreciation, the mail, the Roll of the Order. The valley starts over as if no Waylighter ever walked it.</p>
+        <p style="font:13.5px/1.6 var(--ui); color:var(--bone-dim)">This is <b style="color:var(--gold-hot)">not</b> the <b>New Waylighter</b> button. New Waylighter retires your current walker and hands the coat to a fresh one — the valley, its network, roads and reputation all <b>kept</b>. Use this only to unmake the world. There is no undo.</p>
+        <div style="display:flex; justify-content:space-between; padding-top:16px">
+          <button class="btn quiet" id="resetNo">Keep my valley</button>
+          <button class="btn" id="resetYes" style="color:var(--rust)">Burn it — start over</button>
+        </div>
       </div>
     </div>
   </div>
@@ -287,9 +378,11 @@
       <div id="tagline"></div>
     </div>
     <div id="titleMenu">
+      <div id="slotRow"></div>
       <button class="btn primary hidden" id="btnContinue">Continue</button>
       <button class="btn" id="btnNew">New Waylighter</button>
-      <button class="btn quiet" id="btnHelp">Controls</button>
+      <button class="btn quiet" id="btnHelp">The field manual</button>
+      <button class="btn quiet" id="btnReset" style="color:var(--bone-faint)">Reset the Valley</button>
     </div>
     <div id="introCard" class="glass hidden">
       <p>Eight settlements in one valley, and nobody has heard from anybody in a year.</p>
@@ -302,6 +395,6 @@
     </div>
     <div id="theRoll" class="glass"><div class="tag">THE ROLL OF THE ORDER</div><div id="rollBody"></div></div>
     <div id="cheatEcho" class="num"></div>
-    <div id="titleFoot">a delivery game about connecting people &middot; mouse or keyboard &middot; saves in this browser &middot; <span style="letter-spacing:.1em">CODES WORK HERE. TYPE ONE.</span></div>
+    <div id="titleFoot">a delivery game about connecting people &middot; mouse or keyboard &middot; three valleys, saved in this browser &middot; a passage code carries one anywhere &middot; <span style="letter-spacing:.1em">CODES WORK HERE. TYPE ONE.</span></div>
   </div>
 </div>

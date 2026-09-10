@@ -85,7 +85,8 @@ const Guide = (() => {
           const tgt = onIt ? far : nearEnd;   // walk to the foot of the span first, then along it
           return { id: 'cross', head: onIt ? `Cross on your ${near.type}` : `Take the ${near.type} across`, sub: onIt ? 'Dry feet, steady load, no wobble' : 'The ▲ marks its near end', color: CYAN, target: { x: tgt.x, y: tgt.y, label: onIt ? 'far bank' : near.type }, dist: U.dist(S.px, S.py, tgt.x, tgt.y) };
         }
-        if (S.cargo.some(c => c.tool === 'ladder')) return { id: 'ladder', head: 'Lay a ladder over the creek', sub: w.d > 110 ? 'Walk to the water’s edge and face across' : 'B opens build · 1 places the ladder', color: CYAN, target: { x: w.x, y: w.y, label: 'Elm Creek' }, dist: w.d };
+        if (S.place) return { id: 'ladder', head: S.place.valid ? 'The blueprint hangs — click or E lays it' : 'Aim the blueprint at the crossing', sub: S.place.valid ? 'Right where the ghost stands · Esc puts it away' : 'Point at the water — green means it will take', color: CYAN, target: S.place.valid ? { x: S.place.x, y: S.place.y, label: 'blueprint' } : { x: w.x, y: w.y, label: 'Elm Creek' }, dist: U.dist(S.px, S.py, S.place.x, S.place.y) };
+        if (S.cargo.some(c => c.tool === 'ladder')) return { id: 'ladder', head: 'Lay a ladder over the creek', sub: w.d > 110 ? 'Walk to the water’s edge and face across' : 'B opens build · 1 hangs the blueprint · click or E lays it', color: CYAN, target: { x: w.x, y: w.y, label: 'Elm Creek' }, dist: w.d };
         return { id: 'wade', head: 'Elm Creek — wade the shallows', sub: 'Slow and cold, and your load will wobble · SPACE when the ring appears', color: CYAN, target: { x: w.x, y: w.y, label: 'Elm Creek' }, dist: w.d };
       }
     }
@@ -97,6 +98,20 @@ const Guide = (() => {
   function planStep(prio) {
     const act = S.orders.active;
     if (act.length) {
+      // THE SHAPES OF WORK: a convoy in trouble outranks the arrow's usual habits
+      const cvO = act.find(x => x.convoy);
+      if (cvO && S.convoy) {
+        const cd2 = U.dist(S.px, S.py, S.convoy.x, S.convoy.y);
+        const nm = S.convoy.n.name.split(' ')[0];
+        if (S.convoy.frozen) return { id: 'convoy', head: `${nm} is frozen in the grey`, sub: 'A wraith has their nerve — stand beside them and your lantern breaks it', color: RUST, target: { x: S.convoy.x, y: S.convoy.y, label: nm }, dist: cd2 };
+        if (S.convoy.waiting || cd2 > 280) return { id: 'convoy', head: `${nm} can’t keep your pace`, sub: 'They stopped where you left them — walk back within reach and they move again', color: RUST, target: { x: S.convoy.x, y: S.convoy.y, label: nm }, dist: cd2 };
+      }
+      const svO = act.find(x => x.salvage && !x.looted);
+      if (svO && (!S.orders.focus || S.orders.focus === svO.idNum)) {
+        const sd2 = U.dist(S.px, S.py, svO.site.x, svO.site.y);
+        if (sd2 < 70) return { id: 'salvage', head: 'The wreck — search it', sub: 'E — load what the Grey left, then walk it home', color: GOLD, target: { x: svO.site.x, y: svO.site.y, label: 'the wreck' }, dist: sd2 };
+        return { id: 'salvage', head: 'The wreck run — out into the grey', sub: `${stations[svO.to].name}’s shortage lies in a downed caravan · the ▲ marks it`, color: GOLD, target: { x: svO.site.x, y: svO.site.y, label: 'the wreck' }, dist: sd2 };
+      }
       const byDist = [...act].sort((a, b) => U.dist(S.px, S.py, stations[a.to].x, stations[a.to].y) - U.dist(S.px, S.py, stations[b.to].x, stations[b.to].y));
       const o = act.find(x => x.idNum === S.orders.focus) || byDist[0];
       const to = stations[o.to], d = U.dist(S.px, S.py, to.x, to.y);
@@ -107,7 +122,7 @@ const Guide = (() => {
       const mood = o.item && !o.prio ? Economy.needMood(o.to, o.item) : null;
       const plan = stops.map(id => `${stations[id].name} ${U.fmtDist(U.dist(S.px, S.py, stations[id].x, stations[id].y))}`).join(' → ');
       const pd = o.prio ? DATA.priority.find(p => p.id === o.id) : null;
-      let sub = stops.length > 1 ? `${stops.length} stops: ${plan}` : (o.title || (DATA.items[o.item] ? DATA.items[o.item].name : 'cargo')) + (mood ? ` · they are ${mood === 'critical' ? 'out' : mood === 'wanting' ? 'running short' : mood} — ×${DATA.T.needMul[mood]}` : '');
+      let sub = stops.length > 1 ? `${stops.length} stops: ${plan}` : o.convoy ? 'walk together — you both must arrive' : o.circuit ? `circuit door ${o.leg + 1} of ${o.legs.length} — ${DATA.items[o.item] ? DATA.items[o.item].name : 'cargo'}` : (o.title || (DATA.items[o.item] ? DATA.items[o.item].name : 'cargo')) + (mood ? ` · they are ${mood === 'critical' ? 'out' : mood === 'wanting' ? 'running short' : mood} — ×${DATA.T.needMul[mood]}` : '');
       if (pd && pd.hint && stops.length === 1) sub = pd.hint;
       if (here.water && !Systems.crossingAt(S.px, S.py)) sub += ' · wading';
       return { id: 'carry', head: `${o.prio || o.relight ? '★ ' : ''}Carry to ${to.name}`, sub, color: GOLD, target: { x: to.x, y: to.y, label: to.name }, dist: d };

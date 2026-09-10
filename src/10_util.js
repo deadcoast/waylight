@@ -48,13 +48,6 @@ const U = (() => {
     t = clamp(t, 0, 1);
     return Math.hypot(px - (ax + dx * t), py - (ay + dy * t));
   }
-  function segNearest(px, py, ax, ay, bx, by) {
-    const dx = bx - ax, dy = by - ay;
-    const len2 = dx * dx + dy * dy;
-    let t = len2 ? ((px - ax) * dx + (py - ay) * dy) / len2 : 0;
-    t = clamp(t, 0, 1);
-    return { x: ax + dx * t, y: ay + dy * t, t };
-  }
   // sample a polyline at parameter t in [0,1] of its total length
   function polyLen(pts) {
     let L = 0;
@@ -92,6 +85,5 @@ const U = (() => {
   const setUidFloor = v => { _uid = Math.max(_uid, v); };
   const el = id => document.getElementById(id);
   function html(parent, markup) { parent.insertAdjacentHTML('beforeend', markup); return parent.lastElementChild; }
-  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-  return { rng, hash2, noise2, fbm, clamp, lerp, smooth, easeOut, easeInOut, dist, segDist, segNearest, polyLen, polyAt, fmtKg, fmtTime, fmtDist, pick, uid, setUidFloor, el, html, esc };
+  return { rng, hash2, fbm, clamp, lerp, smooth, easeOut, easeInOut, dist, segDist, polyLen, polyAt, fmtKg, fmtTime, fmtDist, pick, uid, setUidFloor, el, html };
 })();
