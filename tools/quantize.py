@@ -14,9 +14,12 @@ Doctrine applied (research-pixel-art-audited.md):
   · integer downscale only (--scale N): majority vote per N×N block, alpha-gated — never a resample
   · transparent → '.' ; the outline letter is whatever the palette maps black to
 """
-import sys, json, argparse
+import argparse
+import json
 from collections import Counter
+
 from PIL import Image
+
 
 def hex2rgb(h):
     h = h.lstrip('#'); return tuple(int(h[i:i + 2], 16) for i in (0, 2, 4))

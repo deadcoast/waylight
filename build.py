@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Assemble waylight parts into dist/waylight.html (artifact body, no skeleton)
 and dist/test.html (wrapped like the published artifact for local testing)."""
-import pathlib, re, sys
+import pathlib
 
 ROOT = pathlib.Path(__file__).parent
 SRC = ROOT / "src"

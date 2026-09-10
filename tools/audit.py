@@ -6,7 +6,9 @@ eyeballed before it's touched. Credits destructured imports (const { x } = Modul
 destructures (structures: SDEF), T() call-style reads, and brace-balanced export objects.
 Dynamic-key tables (items, epitaphs, barks, keepers, dispatch) are out of lexical reach and are
 NOT reported — that limit is printed, not hidden."""
-import re, os, glob
+import glob
+import os
+import re
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SRC = sorted(glob.glob(os.path.join(ROOT, 'src', '*.js')))
@@ -43,7 +45,7 @@ findings = []
 
 # ---------- 1 · module-scope declarations never referenced ----------
 for fname, txt in src_txt.items():
-    for m in re.finditer(r'^  (?:function (\w+)\s*\(|(?:const|let) (\w+)\s*=)', txt, re.M):
+    for m in re.finditer(r'^  (?:function (\w+)\s*\(|(?:const|let) (\w+)\s*=)', txt, re.MULTILINE):
         name = m.group(1) or m.group(2)
         if name == 'rand':
             continue  # per-module rng alias by design
@@ -67,7 +69,7 @@ def export_names(txt):
                 break
         i += 1
     body = txt[start:i]
-    body = re.sub(r'/\*.*?\*/', '', body, flags=re.S)
+    body = re.sub(r'/\*.*?\*/', '', body, flags=re.DOTALL)
     names, depth2, tok = [], 0, ''
     entries, cur = [], ''
     for ch in body:
@@ -88,7 +90,7 @@ def export_names(txt):
     return names
 
 for fname, txt in src_txt.items():
-    mm = re.search(r'^const (\w+) = \(\(\) => \{', txt, re.M)
+    mm = re.search(r'^const (\w+) = \(\(\) => \{', txt, re.MULTILINE)
     if not mm:
         continue
     module = mm.group(1)
@@ -107,8 +109,8 @@ for fname, txt in src_txt.items():
             findings.append(('DEAD-EXPORT', f'{fname} · {module}.{name}', 'consumed nowhere: no dot access, no destructure, no test use'))
 
 # ---------- 3 · DATA.T keys never read (T.k, DATA.T.k, T().k) ----------
-tm = re.search(r'const T = \{(.*?)\n  \};', src_txt['12_data.js'], re.S)
-for m in re.finditer(r'^\s{4}(\w+):', tm.group(1), re.M):
+tm = re.search(r'const T = \{(.*?)\n  \};', src_txt['12_data.js'], re.DOTALL)
+for m in re.finditer(r'^\s{4}(\w+):', tm.group(1), re.MULTILINE):
     k = m.group(1)
     n = len(re.findall(r'\bT(?:\(\))?\.' + re.escape(k) + r'\b', all_src + all_tests)) + \
         len(re.findall(r'DATA\.T\.' + re.escape(k) + r'\b', all_src + all_tests))
@@ -116,8 +118,8 @@ for m in re.finditer(r'^\s{4}(\w+):', tm.group(1), re.M):
         findings.append(('DEAD-TUNING', f'12_data.js · T.{k}', 'tuning constant read nowhere (T., DATA.T., T().)'))
 
 # ---------- 4 · tutorials never fired ----------
-tut_block = re.search(r'const tutorials = \{(.*?)\n  \};', src_txt['12_data.js'], re.S).group(1)
-for m in re.finditer(r'^\s{4}(\w+): [\'"`]', tut_block, re.M):
+tut_block = re.search(r'const tutorials = \{(.*?)\n  \};', src_txt['12_data.js'], re.DOTALL).group(1)
+for m in re.finditer(r'^\s{4}(\w+): [\'"`]', tut_block, re.MULTILINE):
     k = m.group(1)
     # a key counts as wired if it appears quoted on any line that calls tut( — ternary args included
     wired = any(('tut(' in line) and re.search(r'[\'"`]' + re.escape(k) + r'[\'"`]', line) for line in all_src.split('\n'))

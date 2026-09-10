@@ -2,12 +2,15 @@
 """lineup.py — render sprite row tables side by side at the game's texel size (×3, then ×2 for the eye)
    and VALIDATE them: every row the same width, every letter in the palette. Usage:
    python3 tools/lineup.py out.png  (reads src/12e_sprites.js + the walker rig from 17_render.js)"""
-import re, sys, json
+import re
+import sys
+
 from PIL import Image, ImageDraw
+
 src = open('src/12e_sprites.js').read()
 rs = open('src/17_render.js').read()
 def table(name_pat, text):
-    m = re.search(name_pat, text, re.S); return re.findall(r"'([^']*)'", m.group(1)) if m else None
+    m = re.search(name_pat, text, re.DOTALL); return re.findall(r"'([^']*)'", m.group(1)) if m else None
 def pal(name_pat, text):
     m = re.search(name_pat, text); return dict(re.findall(r"(\w): '(#[0-9a-f]{6})'", m.group(1))) if m else {}
 FK_PAL = pal(r"const FK_PAL = \{([^}]*)\}", src)
@@ -17,8 +20,8 @@ walker = table(r"idle: \[(.*?)\],\n    A:", rs)
 tender = table(r"const TENDER = \[(.*?)\];", src)
 kit = {}
 for cls in ['pugugly', 'longbowmen', 'berserker', 'rifle_rider', 'recon_rider']:
-    blk = re.search(cls + r": \{(.*?)\n    \},", src, re.S).group(1)
-    kit[cls] = { fr: re.findall(r"'([^']*)'", re.search(fr + r": \[(.*?)\]", blk, re.S).group(1)) for fr in ['idle', 'A', 'B'] }
+    blk = re.search(cls + r": \{(.*?)\n    \},", src, re.DOTALL).group(1)
+    kit[cls] = { fr: re.findall(r"'([^']*)'", re.search(fr + r": \[(.*?)\]", blk, re.DOTALL).group(1)) for fr in ['idle', 'A', 'B'] }
 errs = []
 def check(name, rows, p):
     w = len(rows[0])

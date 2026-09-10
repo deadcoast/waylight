@@ -8,11 +8,14 @@
    · rows quantized (tools/quantize.py machinery), orphans disciplined
    · emits a registry row: { w, h, pal, ground, seat, frames: { idle, walk[] } }
 """
-import sys, json, re
+import json
+import re
+import sys
 from collections import Counter
+
 sys.path.insert(0, 'tools')
-from quantize import load_grid, quantize, orphans, rgb2lab, hex2rgb
-from PIL import Image
+from quantize import hex2rgb, load_grid, orphans, quantize, rgb2lab
+
 
 # the game's sprite bands: every authored sprite palette colour in 17_render.js + coat bands
 def game_bands():

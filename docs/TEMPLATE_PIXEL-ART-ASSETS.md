@@ -962,7 +962,7 @@ box-shadow:2*$s+px 1*$s+px #8e1a19,3*$s+px 1*$s+px #ac0500,5*$s+px 1*$s+px #f73f
 
 ### RANDOM NPC ENCOUNTER POTENTIAL (REQUIRES TWEAKING OF THE OUTFITS BLACK SUIT TO A MORE WAYLIGHT COLOR AND AESTHETHIC. A SIMPLE LEATHER BROWN MAY SUFFICE. IT WILL NOT BE EASY. BUT VERY MUCH WORTH IT IF ITS DONE CORRECTLY)
 
-(haml)
+> (haml)
 
 ```html
 .pulp-fiction
@@ -971,7 +971,8 @@ box-shadow:2*$s+px 1*$s+px #8e1a19,3*$s+px 1*$s+px #ac0500,5*$s+px 1*$s+px #f73f
 %p Original gif: Dusan Cezek
 ```
 
-(scss)
+> (scss)
+
 ```scss
 html {
     background: #676766;
@@ -11515,7 +11516,8 @@ canvas {
 }
 ```
 
-(Babel)
+> (Babel)
+
 ```js
 (() => {
   function generateCrack({ deepness, segments } = {}) {
@@ -12756,7 +12758,8 @@ init();
 
 ### PIXEL ART BLOCK TEXTURE GENERATOR
 
-(pug)
+> (pug)
+
 ```html
 .pixel-wrapper
 
@@ -12764,7 +12767,8 @@ init();
     .pixel
 ```
 
-(scss)
+> (scss)
+
 ```scss
 $s: 20px;
 
