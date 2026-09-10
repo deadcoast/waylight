@@ -102,7 +102,7 @@ r = await ev(() => {
   for (let i = 0; i < 10; i++) Systems.update(0.25, {});
   const closedBefore = d0 - U.dist(rr.x, rr.y, S.px, S.py);
   for (let i = 0; i < DATA.T.armedSafe; i++) Systems.armWalker(stId);
-  const armed = S.stations[stId].armed;
+  const {armed} = S.stations[stId];
   rr.x = camp.x + camp.r * 0.5; rr.y = camp.y; rr.cd = 0;
   const d1 = U.dist(rr.x, rr.y, S.px, S.py);
   for (let i = 0; i < 10; i++) Systems.update(0.25, {});

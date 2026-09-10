@@ -190,7 +190,7 @@ r = await page.evaluate(() => {
   return { oldName };
 });
 await boot();
-const oldName = r.oldName;
+const {oldName} = r;
 await page.click('#btnNew');
 await page.waitForFunction(() => !document.getElementById('chargen').classList.contains('hidden'), null, { timeout: 10000 });
 await page.click('#cgBegin');

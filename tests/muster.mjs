@@ -219,7 +219,7 @@ ok('the muster is in the papers, on the keys, and in the manual\'s lessons', r.p
 r = await ev(() => {
   const a = NPC.party().find(n => !n.fk), k = NPC.party().find(n => n.fk);
   NPC.setOrder(a, 'mess', 'own'); NPC.setTreeMark(a, 'hand', 'curios', true);
-  const km = NPC.svc(a).km;
+  const {km} = NPC.svc(a);
   State.save(); const loaded = State.load();
   const a2 = S.npcs.find(n => n.name === a.name), k2 = S.npcs.find(n => n.name === k.name);
   return { loaded, mess: NPC.ordersOf(a2).mess, curios: NPC.allows(a2, 'hand', 'relic_coin') || NPC.allows(a2, 'hand', Object.keys(DATA.items).find(id => DATA.items[id].cat === 'relic')), km: NPC.svc(a2).km === km, kStation: NPC.ordersOf(k2).station };

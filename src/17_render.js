@@ -2196,7 +2196,7 @@ const Render = (() => {
     else if (c.defId === 'filters' || c.defId === 'coolant') { key = 'drum'; pal.B = c.defId === 'coolant' ? '#4a8ad0' : '#7aa2a0'; }
     else if (c.defId === 'lumenCell') { key = 'cell'; glow = 'rgba(140,240,225,0.4)'; }
     if (c.cat === 'mat' && c.mat === 'lumen') glow = 'rgba(140,240,225,0.35)';
-    let rows = CG[key].rows;
+    let {rows} = CG[key];
     if (gold && key !== 'core') {
       pal.B = '#ffd98f'; pal.O = '#241708';
       if (key === 'mail') pal.W = '#ffd98f';

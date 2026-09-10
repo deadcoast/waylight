@@ -253,7 +253,7 @@ const UI = (() => {
       htm += `<div class="trayCard" style="border-left-color:var(--rust)"><div class="dest">! ${nm}</div>
         <div class="sub"><span>${U.fmtDist(U.dist(S.px, S.py, ev.x, ev.y))}</span><span class="num">${U.fmtTime(ev.t)}</span></div></div>`;
     }
-    const focus = S.orders.focus;
+    const {focus} = S.orders;
     const sorted = [...S.orders.active].sort((a, b) => U.dist(S.px, S.py, stations[a.to].x, stations[a.to].y) - U.dist(S.px, S.py, stations[b.to].x, stations[b.to].y));
     for (const o of sorted.slice(0, 5)) {
       const d = stations[o.to];
@@ -669,7 +669,7 @@ const UI = (() => {
     const cap2 = NPC.postCap(stId);
     const alv = Economy.apprLevel(stId);
     const runner = staff.some(n => n.job === 'runner' && !n.hungry);
-    const JOBS = CHAR.JOBS;
+    const {JOBS} = CHAR;
     let htm = `<p style="color:var(--bone-dim);font-size:13px;margin-bottom:10px">Letters are the Order's <b>service</b> — no fee, ever. The town pays in <b>appreciation</b>, the walk pays in skill, and the mailroom trains whoever works it. Goods are luxury; luxury pays.</p>
       <div class="tag">The outbound bag${runner ? ' · <span class="lumen">a runner is filling it</span>' : ''}</div>
       <div class="meter" style="max-width:340px"><i style="width:${bag}%;background:#c6b47a;box-shadow:inset 0 2px 0 rgba(255,255,255,.16), inset 0 -2px 0 rgba(0,0,0,.28)"></i></div>
@@ -862,7 +862,7 @@ const UI = (() => {
     const rewards = DATA.starRewards[stId];
     let next = '';
     if (st.stars < 5 && rewards[st.stars + 1]) next = `<div class="rowline"><div class="grow"><h4>Next star unlocks</h4><div class="desc">${rewards[st.stars + 1].note}</div></div></div>`;
-    const stats = S.stats;
+    const {stats} = S;
     const wire = DATA.stationOrder.filter(id => S.stations[id].connected && (S.wireLog || {})[id] > 0.5).map(id => `${stations[id].name} +${Math.round(S.wireLog[id])}`);
     next += `<div class="rowline"><div class="grow"><h4>The wire</h4><div class="desc">${wire.length ? 'Stock carried between connected stations on its own: ' + wire.join(' · ') + '. Roads and chartered routes carry more.' : 'Nothing moves on its own yet — connect a second station and it will.'}</div></div></div>`;
     { // v3.27 [ THE ECOSYSTEM ] — every producing work, its state and its lifetime pay, from ONE truth (Systems.workState)

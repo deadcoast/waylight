@@ -321,7 +321,9 @@ const UI2 = (() => {
   $('packOv') && $('packOv').addEventListener('click', e => {
     const g = e.target.closest('[data-txgive]'), t = e.target.closest('[data-txtake]');
     if (g && !g.classList.contains('stuck')) { const c = S.cargo.find(x => x.id === +g.getAttribute('data-txgive')); if (c && NPC.give(c)) { Snd.sfx.pickup(); renderTransfer(); UI.updateHUD(); } }
-    else if (t) { if (NPC.take(+t.getAttribute('data-txtake'))) { Snd.sfx.pickup(); renderTransfer(); UI.updateHUD(); } }
+    else if (t && NPC.take(+t.getAttribute('data-txtake'))) {
+               Snd.sfx.pickup(); renderTransfer(); UI.updateHUD();
+         }
   });
   $('txClose') && $('txClose').addEventListener('click', () => { Snd.sfx.ui(); $('packOv').classList.add('hidden'); });
 

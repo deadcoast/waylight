@@ -53,7 +53,7 @@ r = await ev(() => new Promise(res => {
   const cd = DATA.camps[0], c = S.camps[cd.id];
   c.pacified = false; c.alert = 1;
   let px = cd.x + cd.r * 0.4, py = cd.y;
-  for (let r2 = 0; r2 < 300; r2 += 24) { if (!World.terrainAt(px, py + r2).blocked) { py = py + r2; break; } }
+  for (let r2 = 0; r2 < 300; r2 += 24) { if (!World.terrainAt(px, py + r2).blocked) { py += r2; break; } }
   WL.tp([px, py]);
   S.cargo = S.cargo.filter(x => x.tool); State.addCargo(State.makeItem('meds'));
   c.runners = [{ x: px - 120, y: py, wa: 0, state: 'patrol', cd: 0 }];

@@ -44,7 +44,7 @@ const Cine = (() => {
   function subj(sh) { return typeof sh.at === 'function' ? sh.at() : (sh.at || { x: S.px, y: S.py }); }
   function end() {
     if (!seq) return;
-    const onEnd = seq.opts.onEnd;
+    const {onEnd} = seq.opts;
     seq = null;
     S.cineSeq = false;
     S.timeScale = 1;
@@ -99,7 +99,7 @@ const Cine = (() => {
       c.x += (p.x - c.x) * Math.min(1, 0.25 * dt); c.y += (p.y - c.y) * Math.min(1, 0.25 * dt);
       c.z *= 1 + (sh.drift !== undefined ? sh.drift : 0.02) * dt;
     }
-    const cut = seq.cut; seq.cut = false;
+    const {cut} = seq; seq.cut = false;
     return { x: c.x, y: c.y, z: c.z, cut };
   }
   function fx() { return seq ? seq.fx : null; }

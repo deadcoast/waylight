@@ -239,7 +239,7 @@ const Systems = (() => {
     const sum = ptsT + ptsC;
     const grade = sum >= 8 ? 'S' : sum >= 7 ? 'A' : sum >= 5 ? 'B' : 'C';
     const likes = Math.round((T.likesBase + o.par * T.likesPerSec + 40) * (o.likesMul || 1) * T.gradeMult[grade] * Porter.eff().likesMul);
-    const n = c.n;
+    const {n} = c;
     // the walker joins the town they walked to — talent the road delivered
     n.state = 'pool'; n.at = o.to; n.age = 0; n.line = 'walked the road behind your lantern once';
     NPC.trainNpc(n, 'foot', 26, 'the road');
@@ -1915,7 +1915,7 @@ const Systems = (() => {
     const lit = World.lightAt(S.px, S.py) > 0.32;
     const add = (type, needUnlock) => {
       if (needUnlock && !un[needUnlock]) return;
-      const cost = SDEF[type].cost;
+      const {cost} = SDEF[type];
       opts.push({ type, have: kit, lit, afford: State.canAfford(cost) });
     };
     if (un.kit) { add('bridge'); add('generator'); add('pobox'); }
@@ -2634,20 +2634,19 @@ const Systems = (() => {
           Render.crtTitle(`${def.name.toUpperCase()} — ON THE WIRE`, feeds.length ? `${feeds.join(' and ')} now send what ${def.name} lacks · coverage ${Math.round(S.cov * 100)}%` : `waylight coverage ${Math.round(S.cov * 100)}%`, { low: true, hold: 4.2 }); }
       }
     } else if (c.phase === 2) {
-      if (c.t > 2.6) {
-        c.phase = 3; c.t = 0;
-      }
-    } else {
-      if (c.t > 0.5) {
-        S.cine = null;
-        UI.setLetterbox(false);
-        afterConnect(c.stId);
-      }
-    }
+                 if (c.t > 2.6) {
+                   c.phase = 3; c.t = 0;
+                 }
+               }
+           else if (c.t > 0.5) {
+                   S.cine = null;
+                   UI.setLetterbox(false);
+                   afterConnect(c.stId);
+                 }
   }
   function finishCine() {
     if (!S.cine) return;
-    const stId = S.cine.stId;
+    const {stId} = S.cine;
     S.stations[stId].litT = 1;
     S.cine = null;
     UI.setLetterbox(false);

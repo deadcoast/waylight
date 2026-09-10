@@ -189,7 +189,7 @@ r = await ev(() => {
   WL.tp([spot[0] + 150, spot[1]]); S.moveTo = null;
   S.wraiths.push({ id: U.uid(), x: spot[0] + 80, y: spot[1], alert: 0, state: 'drift', cd: 0, ph: 0 });
   Systems.update(0.05, {});
-  const frozen = c.frozen;
+  const {frozen} = c;
   const cx0 = c.x;
   for (let i = 0; i < 8; i++) Systems.update(0.1, {});
   const held = Math.abs(c.x - cx0) < 2;

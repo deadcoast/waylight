@@ -238,7 +238,7 @@ const NPC = (() => {
   }
   function fieldPathFor(n) {
     if (n.fpath && S.time - n.fpath.t < 240) return n.fpath;
-    const A = DATA.stations[n.route.a], B = n.route.custom ? n.route.custom : DATA.stations[n.route.b];
+    const A = DATA.stations[n.route.a], B = n.route.custom || DATA.stations[n.route.b];
     const r = World.pathTime(A.x, A.y, B.x, B.y, true, Systems.walkOpts ? Systems.walkOpts(true) : { walk: true });
     const pts0 = r.found && r.path && r.path.length > 1 ? r.path : [[A.x, A.y], [B.x, B.y]];
     n.fpath = { t: S.time, pts: Systems.snapCrossings ? Systems.snapCrossings(pts0) : pts0 };   // v3.31: field crews walk the rungs too
@@ -290,7 +290,7 @@ const NPC = (() => {
       }
       // routed jobs walk the A↔B line the valley itself would take
       const path = fieldPathFor(n);
-      const pts = path.pts;
+      const {pts} = path;
       const tgt = pts[n.fseg];
       const d = U.dist(n.fx, n.fy, tgt[0], tgt[1]);
       /* v3.31 — no-ground is measured over a FULL window against position, never per-frame
@@ -481,7 +481,7 @@ const NPC = (() => {
     for (const n of party()) {
       if (n.hungry || n.shoveCd > 0) continue;
       /* v3.36 STAND: quiet keeps the hands down; hold meets trouble only inside the ring around YOU */
-      const stand = ordersOf(n).stand;
+      const {stand} = ordersOf(n);
       if (stand === 'quiet') continue;
       if (stand === 'hold' && U.dist(r.x, r.y, S.px, S.py) > MUSTER.HOLD_SCREEN) continue;
       const cls = n.fk ? FACT.FK_CLASSES[n.fkCls || 'pugugly'] : null;
@@ -886,7 +886,7 @@ const NPC = (() => {
   }
   function resolveRescue(flavor) {
     const ev = S.event;
-    const npc = ev.data.npc;
+    const {npc} = ev.data;
     npc.bond = true; npc.feeWaived = true; npc.age = -2;
     npc.state = 'pool'; npc.at = nearestConnected(ev.x, ev.y);
     S.npcs.push(npc);
@@ -949,15 +949,14 @@ const NPC = (() => {
       return State.makeItem(`man_${sid}${vol}`);
     }
     if (kind === 'mat') {
-      const it = State.makeItem(U.pick(rand, ['metal', 'ceramic', 'metal', 'lumen']));
-      return it;
+      return State.makeItem(U.pick(rand, ['metal', 'ceramic', 'metal', 'lumen']));
     }
     return null;
   }
   function lootRuin(ruin) {
     const def = RUIN_TYPES[ruin.type];
     const got = [];
-    const luck = Porter.eff().luck;
+    const {luck} = Porter.eff();
     for (let i = 0; i < def.rolls; i++) {
       let r = rand() * 100;
       if (luck > 1 && rand() < 0.3) r *= 0.75; // lean toward the rarer end

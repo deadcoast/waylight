@@ -47,8 +47,10 @@ def load_grid(path, alpha_min):
     im = Image.open(path).convert('RGBA')
     w, h = im.size
     px = im.load()
-    grid = [[(px[x, y] if px[x, y][3] >= alpha_min else None) for x in range(w)] for y in range(h)]
-    return grid
+    return [
+        [(px[x, y] if px[x, y][3] >= alpha_min else None) for x in range(w)]
+        for y in range(h)
+    ]
 
 def trim(grid):
     rows = [y for y, row in enumerate(grid) if any(p is not None for p in row)]

@@ -91,7 +91,7 @@ r = await ev(() => {
   const prompt = Systems.getInteractions().find(a => a.label.includes('salvage tithe'));
   const n0 = S.cargo.length;
   if (prompt) prompt.fn();
-  return { one, capped, cap: REP.WATCHPOST.titheCap, good: c.stash.every ? true : false, prompt: !!prompt, carried: S.cargo.length > n0 };
+  return { one, capped, cap: REP.WATCHPOST.titheCap, good: !!c.stash.every, prompt: !!prompt, carried: S.cargo.length > n0 };
 });
 ok('THE WATCHPOST HAULS: a salvage crate per period, the pile CAPPED at four, and the prompt at the post reads the tithe — carried off in the Order\'s papers', r.one === 1 && r.capped === r.cap && r.prompt && r.carried, JSON.stringify(r));
 r = await ev(() => new Promise(res => {

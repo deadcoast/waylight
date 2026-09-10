@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Assemble waylight parts into dist/waylight.html (artifact body, no skeleton)
 and dist/test.html (wrapped like the published artifact for local testing)."""
+
 import pathlib
 
 ROOT = pathlib.Path(__file__).parent
@@ -10,8 +11,11 @@ DIST.mkdir(exist_ok=True)
 
 css = (SRC / "00_style.css").read_text()
 dom = (SRC / "01_dom.html").read_text()
-js_parts = sorted(p for p in SRC.glob("*.js"))
-js = "\n\n".join(f"/* ================ {p.name} ================ */\n" + p.read_text() for p in js_parts)
+js_parts = sorted(iter(SRC.glob("*.js")))
+js = "\n\n".join(
+    f"/* ================ {p.name} ================ */\n{p.read_text()}"
+    for p in js_parts
+)
 
 body = f"""<title>Waylight</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Atkinson+Hyperlegible:wght@400;700&display=swap">

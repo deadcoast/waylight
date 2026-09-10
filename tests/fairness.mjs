@@ -30,7 +30,7 @@ const stage = (mounted, extraKg = 0) => ev(([m, kg]) => {
   c.pacified = false; c.alert = 1;
   // stand INSIDE the claim on open ground
   let px = cd.x + cd.r * 0.5, py = cd.y;
-  for (let r2 = 0; r2 < 300; r2 += 24) { if (!World.terrainAt(px, py + r2).blocked) { py = py + r2; break; } }
+  for (let r2 = 0; r2 < 300; r2 += 24) { if (!World.terrainAt(px, py + r2).blocked) { py += r2; break; } }
   WL.tp([px, py]);
   S.cargo = S.cargo.filter(x => x.tool);
   State.addCargo(State.makeItem('meds'));

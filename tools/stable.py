@@ -20,7 +20,7 @@ from quantize import hex2rgb, load_grid, orphans, quantize, rgb2lab
 # the game's sprite bands: every authored sprite palette colour in 17_render.js + coat bands
 def game_bands():
     rs = open('src/17_render.js').read()
-    hexes = set(h.lower() for h in re.findall(r"'(#[0-9a-fA-F]{6})'", rs))
+    hexes = {h.lower() for h in re.findall(r"'(#[0-9a-fA-F]{6})'", rs)}
     coats = ['#8a6a42', '#6b5030', '#a88a5c', '#d1b48a', '#e8dcc0', '#b39264', '#8a6f48', '#8a4a2a', '#663520', '#b56a3e',
              '#d8c090', '#c9c4b8', '#9a958a', '#ece8e0', '#2e2c30', '#1f1d21', '#48464c', '#8a8578', '#6e6a5e', '#a8a394',
              '#241708', '#2e1c0c', '#4a3418', '#3a3a40', '#5a2a14', '#12161c', '#23282f']

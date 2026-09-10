@@ -23,9 +23,9 @@ dom_txt = open(DOM, encoding='utf8').read()
 css_txt = open(CSS, encoding='utf8').read()
 
 def bare_refs(name, hay):
-    n = len(re.findall(r'(?<![\w$.])' + re.escape(name) + r'\b', hay))
-    n += len(re.findall(r'\.\.\.' + re.escape(name) + r'\b', hay))   # spread syntax is a reference too
-    return n
+    return len(
+        re.findall(r'(?<![\w$.])' + re.escape(name) + r'\b', hay)
+    ) + len(re.findall(r'\.\.\.' + re.escape(name) + r'\b', hay))
 
 # destructure map: which modules import which names from which module objects (with renames)
 # imports[module_obj][local_name] = [importing files]
@@ -38,7 +38,7 @@ for fname, txt in src_txt.items():
             if not part:
                 continue
             mm = re.match(r'(\w+)\s*:\s*(\w+)', part)
-            orig, local = (mm.group(1), mm.group(2)) if mm else (part, part)
+            orig, local = (mm[1], mm[2]) if mm else (part, part)
             imports.setdefault(mod, {}).setdefault(orig, []).append((fname, local))
 
 findings = []
@@ -73,9 +73,9 @@ def export_names(txt):
     names, depth2, tok = [], 0, ''
     entries, cur = [], ''
     for ch in body:
-        if ch == '{' or ch == '[' or ch == '(':
+        if ch in ['{', '[', '(']:
             depth2 += 1
-        elif ch == '}' or ch == ']' or ch == ')':
+        elif ch in ['}', ']', ')']:
             depth2 -= 1
         if ch == ',' and depth2 == 0:
             entries.append(cur); cur = ''
@@ -84,16 +84,17 @@ def export_names(txt):
     entries.append(cur)
     for e in entries:
         e = e.split('//')[0].strip()
-        m2 = re.match(r'^(?:get |set )?([A-Za-z_$][\w$]*)\s*(?:\(|:|,|$)', e)
-        if m2:
-            names.append(m2.group(1))
+        if m2 := re.match(
+            r'^(?:get |set )?([A-Za-z_$][\w$]*)\s*(?:\(|:|,|$)', e
+        ):
+            names.append(m2[1])
     return names
 
 for fname, txt in src_txt.items():
     mm = re.search(r'^const (\w+) = \(\(\) => \{', txt, re.MULTILINE)
     if not mm:
         continue
-    module = mm.group(1)
+    module = mm[1]
     others_src = '\n'.join(t for f, t in src_txt.items() if f != fname)
     for name in export_names(txt):
         dot = len(re.findall(re.escape(module) + r'\.' + re.escape(name) + r'\b', all_src + all_tests))
@@ -110,7 +111,7 @@ for fname, txt in src_txt.items():
 
 # ---------- 3 · DATA.T keys never read (T.k, DATA.T.k, T().k) ----------
 tm = re.search(r'const T = \{(.*?)\n  \};', src_txt['12_data.js'], re.DOTALL)
-for m in re.finditer(r'^\s{4}(\w+):', tm.group(1), re.MULTILINE):
+for m in re.finditer(r'^\s{4}(\w+):', tm[1], re.MULTILINE):
     k = m.group(1)
     n = len(re.findall(r'\bT(?:\(\))?\.' + re.escape(k) + r'\b', all_src + all_tests)) + \
         len(re.findall(r'DATA\.T\.' + re.escape(k) + r'\b', all_src + all_tests))
@@ -118,7 +119,9 @@ for m in re.finditer(r'^\s{4}(\w+):', tm.group(1), re.MULTILINE):
         findings.append(('DEAD-TUNING', f'12_data.js · T.{k}', 'tuning constant read nowhere (T., DATA.T., T().)'))
 
 # ---------- 4 · tutorials never fired ----------
-tut_block = re.search(r'const tutorials = \{(.*?)\n  \};', src_txt['12_data.js'], re.DOTALL).group(1)
+tut_block = re.search(
+    r'const tutorials = \{(.*?)\n  \};', src_txt['12_data.js'], re.DOTALL
+)[1]
 for m in re.finditer(r'^\s{4}(\w+): [\'"`]', tut_block, re.MULTILINE):
     k = m.group(1)
     # a key counts as wired if it appears quoted on any line that calls tut( — ternary args included
@@ -132,8 +135,8 @@ for m in re.finditer(r'id="([\w-]+)"([^>]*)>([^<]*)<', dom_txt):
     if m.group(3).strip():
         continue  # a static element with content renders — alive by existing
     n_js = len(re.findall(r'[\'"`]' + re.escape(i) + r'[\'"`]', all_src))
-    n_css = len(re.findall(r'#' + re.escape(i) + r'\b', css_txt))
-    n_test = len(re.findall(r'#?' + re.escape(i) + r'\b', all_tests))
+    n_css = len(re.findall(f'#{re.escape(i)}' + r'\b', css_txt))
+    n_test = len(re.findall(f'#?{re.escape(i)}' + r'\b', all_tests))
     if n_js == 0 and n_css == 0 and n_test == 0:
         findings.append(('DEAD-DOM', f'01_dom.html · #{i}', 'id referenced nowhere (js, css, tests)'))
 
@@ -145,12 +148,16 @@ for fname, txt in src_txt.items():
 
 # ---------- 7 · save() strips fields that nothing sets or reads ----------
 sm = re.search(r'const s = \{ \.\.\.S,([^}]*)\}', src_txt['14_state.js'])
-for m in re.finditer(r'(\w+):', sm.group(1)):
+for m in re.finditer(r'(\w+):', sm[1]):
     f = m.group(1)
     if f == 'savedAt':
         continue
     writes = len(re.findall(r'S\.' + re.escape(f) + r'\s*=', all_src)) + len(re.findall(r'S\.' + re.escape(f) + r'\.(?:push|unshift|splice)', all_src))
-    reads = bare_refs('S.' + f, all_src) if False else len(re.findall(r'S\.' + re.escape(f) + r'\b', all_src))
+    reads = (
+        bare_refs(f'S.{f}', all_src)
+        if False
+        else len(re.findall(r'S\.' + re.escape(f) + r'\b', all_src))
+    )
     if writes <= 1 and reads <= 2:
         findings.append(('GHOST-FIELD', f'14_state.js · save strips "{f}"', f'writes {writes}, reads {reads} across src'))
 
@@ -166,7 +173,7 @@ kind = None
 for k, where, evd in findings:
     if k != kind:
         kind = k
-        print(f'\n[ {k} ]')
+        print(f'\n[ {kind} ]')
     print(f'  {where:<52} {evd}')
 print('\n' + '-' * W)
 print(f'  {len(findings)} findings' if findings else '  CLEAN — no findings')
