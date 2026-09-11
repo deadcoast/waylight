@@ -226,7 +226,7 @@ const Myth = (() => {
         UI.toast('The story of the ride will beat you to every yard in the valley.', 'gold', 6000);
       },
     });
-    if (!ok) { S.flags.rideSeen = !!force; return false; }
+    if (!ok) { S.flags.rideSeen = force ? true : false; return false; }
     S.ride = R;
     return true;
   }

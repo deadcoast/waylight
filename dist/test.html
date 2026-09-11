@@ -657,14 +657,24 @@ input[type=range]::-moz-range-thumb { width:12px; height:14px; border:none; bord
 .moodle.good { color:var(--ok); }
 @keyframes moodlePulse { 50% { filter:brightness(1.6); } }
 
-/* ---------- companion chip ---------- */
-#compChip { position:absolute; left:18px; bottom:150px; display:flex; gap:9px; align-items:center; padding:7px 11px; pointer-events:auto; cursor:pointer; transition:border-color .15s, background .15s; }
+/* ---------- companion chip → v3.37 THE WEDGE CARD ---------- */
+#compChip { position:absolute; left:18px; bottom:150px; display:flex; gap:10px; align-items:stretch; padding:7px 9px 6px 7px; pointer-events:auto; cursor:pointer; transition:border-color .15s, background .15s; max-width:330px; }
 #compChip:hover { border-color:var(--gold); background:rgba(255,201,120,.08); }
 #compChip .st b { color:var(--gold); }
-#compChip img { border:1px solid var(--line2); }
-#compChip .nm { font:600 13px var(--disp); color:var(--bone); }
+#compChip .nm { font:600 13px var(--disp); color:var(--bone); line-height:1.1; }
 #compChip .st { font:11px var(--ui); color:var(--bone-dim); }
 #compChip .st .hungry { color:var(--rust); font-weight:700; }
+#compChip .wcGlyph { flex:none; width:64px; height:72px; image-rendering:pixelated; border:2px solid var(--line2); box-shadow:var(--chunk); background:#0b1017; align-self:center; }
+#compChip .wcRows { display:flex; flex-direction:column; gap:3px; min-width:0; }
+#compChip .wcRow { display:flex; gap:7px; align-items:center; }
+#compChip .wcRow img { image-rendering:pixelated; flex:none; border:1px solid var(--line2); background:#10161f; }
+#compChip .wcMood { font:800 8px var(--mono); letter-spacing:.14em; font-style:normal; margin-left:4px; vertical-align:1px; }
+#compChip .wcFoot { display:flex; align-items:center; gap:6px; margin-top:2px; font:10px var(--ui); color:var(--bone-faint); }
+#compChip .wcBtn { font:800 8px var(--mono); letter-spacing:.12em; color:var(--gold); background:rgba(0,0,0,.25); border:1px solid var(--line); padding:2px 5px; cursor:pointer; margin-left:auto; }
+#compChip .wcBtn.dim { color:var(--bone-faint); margin-left:0; padding:2px 6px; }
+#compChip .wcBtn:hover { border-color:var(--gold); color:var(--gold-hot); }
+#wcTab { position:absolute; left:18px; bottom:150px; pointer-events:auto; cursor:pointer; font:800 8.5px var(--mono); letter-spacing:.14em; color:var(--bone-dim); padding:4px 8px; border:1px solid var(--line2); }
+#wcTab:hover { color:var(--gold); border-color:var(--gold); }
 
 /* ---------- char-gen ---------- */
 #cgTop { display:flex; gap:16px; align-items:flex-start; }
@@ -858,6 +868,15 @@ input[type=range]::-moz-range-thumb { width:12px; height:14px; border:none; bord
 .muLast { font:italic 11px var(--disp); color:var(--bone-faint); margin-top:4px; line-height:1.4; }
 .muOrd { font:800 8px var(--mono); letter-spacing:.14em; font-style:normal; color:var(--gold); border:1px solid var(--line); padding:0 4px; margin-right:2px; }
 .muOrd.own { color:var(--bone-dim); border-color:var(--line2); }
+.muOrd.work { color:#8fb08a; border-color:rgba(143,176,138,.5); }
+/* v3.37 — the mood on the plate, the marks pane */
+.muMood { display:flex; align-items:baseline; gap:7px; margin-top:4px; font:11px var(--ui); color:var(--bone-dim); flex-wrap:wrap; }
+.muBand { font:800 8px var(--mono); letter-spacing:.14em; padding:0 4px; border:1px solid; flex:none; }
+.muWhy b { font-weight:700; }
+.muMarkRow { display:flex; gap:8px; align-items:baseline; padding:4px 2px; border-bottom:1px solid rgba(233,226,208,.05); font:12px var(--ui); color:var(--bone-dim); }
+.muMarkRow.trail { color:var(--bone); }
+.muMarkNo { flex:none; width:16px; height:16px; display:inline-flex; align-items:center; justify-content:center; font:800 9px var(--mono); color:var(--gold); border:1px solid var(--line); }
+.muMarkBtns { display:flex; gap:6px; padding:6px 0 2px; }
 .muWedge { width:100%; height:auto; image-rendering:pixelated; border:2px solid var(--line); box-shadow:var(--chunk); background:#0b1017; display:block; }
 .muOrdHead { display:flex; align-items:baseline; gap:10px; margin:2px 0 8px; }
 .muPresets { display:flex; flex-wrap:wrap; gap:4px; }
@@ -911,6 +930,7 @@ input[type=range]::-moz-range-thumb { width:12px; height:14px; border:none; bord
       <div id="cargoList"></div>
     </div>
     <div id="compChip" class="glass hidden"></div>
+    <button id="wcTab" class="glass hidden" title="bring the wedge card back">THE WEDGE &#9652;</button>
     <div id="prompts"></div>
     <div id="orderTray"></div>
     <div id="qte" class="hidden">
@@ -1026,6 +1046,7 @@ input[type=range]::-moz-range-thumb { width:12px; height:14px; border:none; bord
           <label class="pxCheck"><input type="checkbox" id="mapPauseCk"><span>Pause Movement on Map</span></label>
           <div class="desc" style="margin-top:7px; font-size:11px; color:var(--bone-faint); text-transform:none; letter-spacing:0">unchecked, your boots keep walking while you read the sheet</div>
           <button class="btn quiet" id="railMusterBtn" style="margin-top:8px;width:100%">THE MUSTER ROLL</button>
+          <button class="btn quiet" id="railWedgeBtn" style="margin-top:6px;width:100%">THE WEDGE CARD</button>
           <button class="btn quiet" id="railManualBtn" style="margin-top:6px;width:100%">THE FIELD MANUAL</button>
         </div>
       </div>
@@ -2151,6 +2172,9 @@ const DATA = (() => {
     firstUpgrade: 'Your builds can be RAISED: stand by one and press <b>U</b>. First upgrades are cheap and useful; the last one asks for real work — and earns it.',
     firstPobox: 'The PO Box holds what you stash — <b>E</b> stashes your non-mission load, <b>G</b> takes it back, <b>L</b> leaves it for the walkers as a donation. Hand tools left this way ARM a walker.',
     firstArmed: 'A donated crate of hand tools ARMS a waylighter. Ten armed, and the roads around that town are measurably safer — and everyone will know it was you.',
+    firstWorking: 'WORKING ORDERS: a field hand or a charter runner keeps its orders on the muster roll, like a walker keeps its wedge. A hauler and a charter carry only what is on THE FREIGHT LIST; THE LOAD splits a hauler\'s pack across two shelves; a mason holds THE RESERVE of ceramic you name; a forrester walks THE REACH and leaves THE WOODS standing or not; a charter runs the post or freight, steady or hard.',
+    firstMarks: 'THE MARKS: a presser walks a CHAIN of points in order from the town and back — add a mark from the muster roll, then click the ground. The trail is measured every time they reach an end; bare end to end, a presser under COME IN walks to the fire and the wage stops with the work.',
+    firstMood: 'A walker\'s MOOD is on the muster roll — summed from what the walk is doing to them: hunger, the Grey, nights, a load near the cap, a meal, a bond, company. A BRIGHT walker steadies your pack more and reaches further; a LOW one less. One who says they are DONE sits down at the next fire they pass. The plate says why.',
   };
   /* v3.35 THE FIELD MANUAL — every lesson above has a page title; the manual indexes the pages a
      walker has walked (S.flags.tut) in full and seals the rest. A new lesson wants a title here. */
@@ -2163,6 +2187,7 @@ const DATA = (() => {
     firstOutpost: 'An outpost stands', firstBurn: 'The light\'s edge', firstWraith: 'A wraith', firstCircuit: 'The circuit',
     firstConvoy: 'The convoy', firstSalvage: 'Salvage', firstSnag: 'A snag', firstPaver: 'The road paver', firstZip: 'Ziplines',
     firstPave: 'Paving a path', firstField: 'Field work', firstUpgrade: 'Raising a build', firstPobox: 'The PO Box', firstArmed: 'Walkers armed',
+    firstWorking: 'Working orders', firstMarks: 'The marks', firstMood: 'A walker\'s mood',
   };
 
   return { W, H, features, rivers, stations, stationOrder, goodsInfo, letterLines, starRewards, roads, camps, echoNames, echoSpots, structures, MIGRATE_TYPES, items, priority, fabItems, T, titles, tutorials, tutorialTitles, keepers, barks, gradeLines, epitaphs, scrapShouts, dispatch, rollSeed, taglines, cheats };
@@ -3814,7 +3839,9 @@ const PAPERS = [
    into their own pack, what they TAKE off your back when you are overloaded), four scalar orders
    (where they STAND in the wedge, how they eat at the MESS, how they STAND to trouble, whether
    they have a VOICE), five named presets the Order hands out, and the slot geometry the wedge
-   walks. A new order is a row; a new preset is a row; the engine and the sheet read both. */
+   walks. A new order is a row; a new preset is a row; the engine and the sheet read both.
+   v3.37 THE WORKING ORDERS adds, on the same law: the FREIGHT LIST tree, seven working-order rows
+   the field jobs and the road walk under, and the MOOD — causes, bands, effects, the lines. */
 
 const MUSTER = (() => {
   /* ---------- the scalar orders: each a row with its choices, a default, and a line per choice ---------- */
@@ -3900,7 +3927,115 @@ const MUSTER = (() => {
     stand: { meet: 'meeting what comes', hold: 'holding your back', quiet: 'hands down' },
   };
 
-  return { ORDERS, TREES, TREE_DEFAULT, PRESETS, STATIONS, STATION_FX, HOLD_SCREEN, CALL };
+  /* ================= v3.37 THE WORKING ORDERS: the field and the roads, on the same stores =================
+     A hauler, a presser, a mason, a forrester, a charter runner — each keeps its orders in the SAME
+     n.orders store a companion keeps, read by the same engine: scalar rows here, and the FREIGHT
+     LIST as a third policy tree (verb 'haul') over the freight branch of the cargo taxonomy — the
+     station goods ARE item defs, so a hauler's list and a charter's list are marks on the ledger's
+     own tree. A job's orders are the rows its registry entry names; a new field job is an entry. */
+  TREES.haul = { name: 'THE FREIGHT LIST', line: 'what a hauler or a charter carries between the ends', def: { freight: true, post: false }, root: 'freight' };
+  const WORK_ORDERS = {
+    load: {
+      name: 'THE LOAD', line: 'how a hauler fills the pack',
+      choices: {
+        full: { name: 'Full', line: 'one good to the cap — the emptiest shelf on the freight list, filled hard' },
+        split: { name: 'Split', line: 'two goods, half each — two shelves climb at once, neither as far' },
+      }, def: 'full',
+    },
+    marks: {
+      name: 'THE MARKS', line: 'what a presser does when the trail is bare end to end',
+      choices: {
+        home: { name: 'Come in', line: 'the trail bare, they walk in to the fire — the wage stops with the work' },
+        keep: { name: 'Keep the beat', line: 'they walk the marks for as long as you pay — a presence on the line' },
+      }, def: 'home',
+    },
+    reserve: {
+      name: 'THE RESERVE', line: 'the ceramic a mason will not touch',
+      choices: {
+        none: { name: 'None', line: 'every slab in the bank is theirs to lay' },
+        twenty: { name: 'Keep 20', line: 'the laying stops at twenty slabs — your own builds keep a floor' },
+        sixty: { name: 'Keep 60', line: 'the laying stops at sixty — cobbles only from what you can spare' },
+      }, def: 'none', floor: { none: 0, twenty: 20, sixty: 60 },
+    },
+    reach: {
+      name: 'THE REACH', line: 'how far a forrester walks for wood',
+      choices: {
+        near: { name: 'Near', line: 'the near woods — short trips, planking by the round' },
+        far: { name: 'Far', line: 'twice the ground — the deep stands, slower to the bank' },
+      }, def: 'near', mul: { near: 1, far: 1.9 },
+    },
+    woods: {
+      name: 'THE WOODS', line: 'what a forrester leaves standing',
+      choices: {
+        clear: { name: 'Clear', line: 'every tree in reach — the land itself changes' },
+        thin: { name: 'Thin', line: 'every other tree — the wood stands, thinner; half the planking' },
+      }, def: 'clear',
+    },
+    run: {
+      name: 'THE RUN', line: 'what a charter carries',
+      choices: {
+        post: { name: 'The post', line: 'letters both ways — appreciation at both ends, the Order\'s own service' },
+        freight: { name: 'Freight', line: 'a crate each run onto the far end\'s emptiest shelf, from the freight list — half the thanks, real stock' },
+      }, def: 'post', likesMul: { post: 1, freight: 0.5 },
+    },
+    pace: {
+      name: 'THE PACE', line: 'how hard a charter runs',
+      choices: {
+        steady: { name: 'Steady', line: 'the run as the road allows' },
+        hard: { name: 'Hard', line: 'the run pushed — runs come faster, and eat twice for it' },
+      }, def: 'steady', mul: { steady: 1, hard: 0.7 }, eat: { steady: 1, hard: 2 },
+    },
+  };
+  /* which rows a job walks under — the registry entry IS the job's orders sheet */
+  const FIELD = {
+    hauler: { rows: ['load'], tree: 'haul' },
+    presser: { rows: ['marks'] },
+    mason: { rows: ['reserve'] },
+    forrester: { rows: ['reach', 'woods'] },
+  };
+  const ROAD = { rows: ['run', 'pace'], tree: 'haul' };
+  const TRAIL_DONE = 0.9;   // the fraction of a trail's wearable ground that must be bare before a presser's work is DONE
+
+  /* ---------- the mood: what a walker feels, summed from causes the game already tracks ----------
+     bands are [minimum, name, colour], lowest first; fx per band are what a mood DOES; causes carry
+     their own line so the plate can say WHY without a second table. */
+  const MOOD = {
+    bands: [[-99, 'DONE', '#e0654a'], [-7, 'LOW', '#d9a06b'], [-4, 'WORN', '#b8b29d'], [-1, 'STEADY', '#c9c3a8'], [4, 'BRIGHT', '#ffd98f']],
+    fx: {
+      DONE: { steadyMul: 0.5, reachMul: 0.7, quits: true },
+      LOW: { steadyMul: 0.7, reachMul: 0.85 },
+      WORN: { steadyMul: 1, reachMul: 1 },
+      STEADY: { steadyMul: 1, reachMul: 1 },
+      BRIGHT: { steadyMul: 1.3, reachMul: 1.15 },
+    },
+    causes: {
+      hungry: { v: -6, line: 'hungry' },
+      unpaid: { v: -3, line: 'unpaid' },
+      fasting: { v: -2, line: 'fasting by orders' },
+      fed: { v: 1, line: 'a meal in them', within: 400 },
+      bond: { v: 2, line: 'owes you their walk' },
+      grey: { v: -2, line: 'walking the Grey', mist: 0.55 },
+      night: { v: -1, line: 'walking nights' },
+      loaded: { v: -1, line: 'loaded near the cap', at: 0.85 },
+      point: { v: -1, line: 'walking point' },
+      mounted: { v: 1, line: 'in the saddle' },
+      downed: { v: -1, line: 'went down for you lately', within: 1800 },
+      mending: { v: -2, line: 'mending' },
+      fire: { v: 1, line: 'by a fire' },
+      company: { v: 1, line: 'walking in company', party: 2 },
+      seasoned: { v: 1, line: 'seasoned beside you', km: 10 },
+      longOut: { v: -1, line: 'long out of a fire', after: 900 },
+    },
+    quitAfter: 60,   // seconds DONE before a companion sits down at the next fire
+    fireR: 120,      // how near a lit town counts as a fire
+    lines: {
+      LOW: ['I need a fire, Walker.', 'How much further.', 'My feet have opinions.'],
+      DONE: ['That is enough. Next fire, I sit.', 'I am done. I mean it.'],
+      BRIGHT: ['Good ground. Good company.', 'I could walk this all year.'],
+    },
+  };
+
+  return { ORDERS, TREES, TREE_DEFAULT, PRESETS, STATIONS, STATION_FX, HOLD_SCREEN, CALL, WORK_ORDERS, FIELD, ROAD, TRAIL_DONE, MOOD };
 })();
 
 
@@ -4386,18 +4521,40 @@ const World = (() => {
   }
   function packFell() { return [...felled]; }
   function loadFell(list) { if (!list) return; for (const i of list) { if (cls[i] === FOREST) { cls[i] = MEADOW; felled.add(i); paintFellCell(i); } } if (list.length) pcost = null; }
-  /* nearest standing forest cell to a point, within reach — the forrester's next tree */
-  function nearestForest(x, y, r) {
+  /* nearest standing forest cell to a point, within reach — the forrester's next tree.
+     v3.37: the result carries its cell index, and a `skip` set of indices is the stand a THIN
+     forrester leaves — every other tree, kept on the map for good. */
+  function nearestForest(x, y, r, skip) {
     let best = null, bd = r;
     const c0x = Math.max(0, ((x - r) / CS) | 0), c1x = Math.min(CW - 1, ((x + r) / CS) | 0);
     const c0y = Math.max(0, ((y - r) / CS) | 0), c1y = Math.min(CH - 1, ((y + r) / CS) | 0);
     for (let cy = c0y; cy <= c1y; cy++) for (let cx = c0x; cx <= c1x; cx++) {
-      if (cls[cy * CW + cx] !== FOREST) continue;
+      const i = cy * CW + cx;
+      if (cls[i] !== FOREST || (skip && skip.has(i))) continue;
       const wx = cx * CS + CS / 2, wy = cy * CS + CS / 2;
       const d = Math.hypot(wx - x, wy - y);
-      if (d < bd) { bd = d; best = { x: wx, y: wy }; }
+      if (d < bd) { bd = d; best = { x: wx, y: wy, i }; }
     }
     return best;
+  }
+  /* v3.37 — the state of a trail: sampled along a polyline, how much of the ground that CAN wear
+     is bare (or already laid). A presser's work is measured here, never guessed. */
+  function trailState(pts) {
+    let bare = 0, total = 0;
+    if (!pts || pts.length < 2) return { bare, total, frac: 0 };
+    for (let k = 0; k + 1 < pts.length; k++) {
+      const [x1, y1] = pts[k], [x2, y2] = pts[k + 1];
+      const len = Math.hypot(x2 - x1, y2 - y1), steps = Math.max(1, Math.round(len / WSC));
+      for (let s = 0; s < steps; s++) {
+        const t = s / steps, x = x1 + (x2 - x1) * t, y = y1 + (y2 - y1) * t;
+        const c = classAt(x, y);
+        if (c !== MEADOW && c !== MARSH) continue;
+        const i = wearIdx(x, y); if (i < 0) continue;
+        total++;
+        if (pave[i] || wear[i] >= W_BARE) bare++;
+      }
+    }
+    return { bare, total, frac: total ? bare / total : 1 };
   }
 
   function coverage() {
@@ -4665,7 +4822,7 @@ const World = (() => {
     W, H, MEADOW, FOREST, SCREE, ROCK, SNOW, MARSH, SHALLOW, DEEP, CLIFF, bake, hgtAt, classAt, terrainAt, riverAt,
     setSources, lightAt, mistAt, mistBase, rebuildLight, coverage, tc, TS, overlayC, lightOv, lightOvN, lightWarm, lightDim, repaintRoads,
     addWear, wearAt, flushWear, packWear, loadWear, clearWear, W_TRAMPLE, W_BARE,
-    paveAt, layPave, packPave, loadPave, fellAt, packFell, loadFell, nearestForest, paintRoadSegment, paverPos, pathTime, buildPathGrid, pathCell, PS,
+    paveAt, layPave, packPave, loadPave, fellAt, packFell, loadFell, nearestForest, trailState, paintRoadSegment, paverPos, pathTime, buildPathGrid, pathCell, PS,
   };
 })();
 
@@ -8389,7 +8546,7 @@ const NPC = (() => {
     const n = p[p.length - 1];                          // the newest hire falls first; the oldest bond holds longest
     const stId = nearestConnected(S.px, S.py);
     if (n.carry.length) { for (const it of n.carry) S.stations[stId].storage.push(it); n.carry = []; }
-    n.state = 'recover'; n.at = stId; n.recoverT = DATA.T.koRecover; n.koCount = (n.koCount || 0) + 1; n.koFromParty = true;
+    n.state = 'recover'; n.at = stId; n.recoverT = DATA.T.koRecover; n.koCount = (n.koCount || 0) + 1; n.koFromParty = true; n.koT = S.time;   // v3.37: the mood remembers the fall for a while
     if (n.horse && !n.horse.owned) n.horse = null;      // the loaner bolts home
     Render.say(S.px + 20, S.py - 14, U.pick(rand, ['NOT TODAY. Get UP.', 'I have you. GO.', 'Walk. WALK!']), '224,101,74');
     Render.burst(S.px, S.py);
@@ -8557,10 +8714,12 @@ const NPC = (() => {
     if (def.dest && !custom && (!dest || !S.stations[dest] || !S.stations[dest].connected)) { UI.toast('Field work wants a CONNECTED far end for its route', 'rust'); return false; }
     if (fieldStaff(stId).length >= 3 && !(n.state === 'field' && n.at === stId)) { UI.toast(`${DATA.stations[stId].name} can feed three field hands, no more`, 'rust'); return false; }
     n.state = 'field'; n.at = stId; n.job = job;
-    n.route = { a: stId, b: def.dest && !custom ? dest : null, custom: custom ? { x: Math.round(dest.x), y: Math.round(dest.y) } : null };
+    /* v3.37: a presser's clicked mark is the first of its MARKS — a chain the orders pane extends */
+    n.route = { a: stId, b: def.dest && !custom ? dest : null, custom: custom ? { x: Math.round(dest.x), y: Math.round(dest.y) } : null, marks: custom ? [{ x: Math.round(dest.x), y: Math.round(dest.y) }] : [] };
     n.fx = DATA.stations[stId].x + 30 + rand() * 30; n.fy = DATA.stations[stId].y + 40 + rand() * 24;
-    n.fpath = null; n.fseg = 0; n.fdirn = 1; n.fwork = 0; n.facc = 0; n.ftarget = null; n.fstall = false;
+    n.fpath = null; n.fseg = 0; n.fdirn = 1; n.fwork = 0; n.facc = 0; n.ftarget = null; n.fstall = false; n.ftrail = null; n.fkept = [];
     n.shiftT = DATA.T.fieldShift;
+    svcNote(n, `took the field as a ${def.name.toLowerCase()}`);
     const far = custom ? ` — ${DATA.stations[stId].name} out to your pressed mark` : def.dest ? ` — ${DATA.stations[stId].name} to ${DATA.stations[dest].name}` : ` around ${DATA.stations[stId].name}`;
     UI.toast(`<b>${n.name}</b> takes the field as a <b>${def.name}</b>${far}. ${def.line}.`, 'gold', 6000);
     Snd.sfx.accept();
@@ -8568,24 +8727,62 @@ const NPC = (() => {
     return true;
   }
   /* v3.28 — the click lands here: the pending presser takes the mark as their far end */
-  let pendingPress = null;   // { nid, stId }
-  function armPress(nid, stId) { pendingPress = { nid, stId }; UI.toast('Click the GROUND — the presser wears a trail from town to your mark. Right-click or ESC to think better of it.', 'gold', 7000); }
+  let pendingPress = null;   // { nid, stId, append }
+  function armPress(nid, stId, append) {
+    pendingPress = { nid, stId, append: !!append };
+    UI.toast(append ? 'Click the GROUND — the presser walks this mark after the last one. Right-click or ESC to think better of it.'
+      : 'Click the GROUND — the presser wears a trail from town to your mark. Right-click or ESC to think better of it.', 'gold', 7000);
+  }
   function pressArmed() { return !!pendingPress; }
   function disarmPress() { pendingPress = null; }
   function pressAt(x, y) {
     if (!pendingPress) return false;
-    const { nid, stId } = pendingPress;
+    const { nid, stId, append } = pendingPress;
     pendingPress = null;
     const n = S.npcs.find(q => q.id === +nid);
     if (!n) return false;
+    if (append) {
+      if (n.state !== 'field' || n.job !== 'presser') return false;
+      addMark(n, x, y);
+      if (typeof MusterUI !== 'undefined') MusterUI.open(n.id);
+      return true;
+    }
     if (n.state === 'pool' && !hire(n, 'field')) return false;
     return assignField(n, stId, 'presser', { x, y });
   }
+  /* v3.37 THE MARKS — a presser's chain of clicked points, walked in order from the town and back */
+  function marksOf(n) { if (n.route && !n.route.marks) n.route.marks = n.route.custom ? [{ x: n.route.custom.x, y: n.route.custom.y }] : []; return n.route ? n.route.marks : []; }
+  function addMark(n, x, y) {
+    if (!n.route || n.job !== 'presser') return false;
+    const m = marksOf(n);
+    m.push({ x: Math.round(x), y: Math.round(y) });
+    n.route.custom = m[0]; n.fpath = null; n.ftrail = null;
+    const ord = k => k + (k % 10 === 1 && k !== 11 ? 'st' : k % 10 === 2 && k !== 12 ? 'nd' : k % 10 === 3 && k !== 13 ? 'rd' : 'th');
+    svcNote(n, `took a ${ord(m.length)} mark`);
+    UI.toast(`<b>${n.name.split(' ')[0]}</b> takes the mark — ${m.length} on the chain, walked in order from ${DATA.stations[n.route.a].name}`, 'gold', 5000);
+    Systems.tut && Systems.tut('firstMarks');
+    return true;
+  }
+  function strikeMark(n) {
+    const m = marksOf(n);
+    if (m.length <= 1) return false;   // the first mark is the route itself — a presser with no far end is a presser with no job
+    m.pop(); n.fpath = null; n.ftrail = null;
+    svcNote(n, 'struck the last mark');
+    return true;
+  }
   function fieldPathFor(n) {
     if (n.fpath && S.time - n.fpath.t < 240) return n.fpath;
-    const A = DATA.stations[n.route.a], B = n.route.custom ? n.route.custom : DATA.stations[n.route.b];
-    const r = World.pathTime(A.x, A.y, B.x, B.y, true, Systems.walkOpts ? Systems.walkOpts(true) : { walk: true });
-    const pts0 = r.found && r.path && r.path.length > 1 ? r.path : [[A.x, A.y], [B.x, B.y]];
+    const A = DATA.stations[n.route.a];
+    const legs = n.route.custom ? marksOf(n) : [DATA.stations[n.route.b]];
+    const opts = Systems.walkOpts ? Systems.walkOpts(true) : { walk: true };
+    /* the chain: town → mark → mark …, each leg the valley's own walk, joined into one line */
+    let pts0 = [[A.x, A.y]], from = A;
+    for (const B of legs) {
+      const r = World.pathTime(from.x, from.y, B.x, B.y, true, opts);
+      const leg = r.found && r.path && r.path.length > 1 ? r.path : [[from.x, from.y], [B.x, B.y]];
+      pts0 = pts0.concat(leg.slice(1));
+      from = B;
+    }
     n.fpath = { t: S.time, pts: Systems.snapCrossings ? Systems.snapCrossings(pts0) : pts0 };   // v3.31: field crews walk the rungs too
     n.fseg = nearestSeg(n.fpath.pts, n.fx, n.fy);
     return n.fpath;
@@ -8605,6 +8802,7 @@ const NPC = (() => {
         } else { S.banked.provisions -= DATA.T.shiftWage; if (n.hungry) n.hungry = false; trainNpc(n, def.skill, DATA.T.shiftXp, `grew into the ${def.name.toLowerCase()}'s work`); }
       }
       if (n.hungry) continue;
+      const O = ordersOf(n), WO = MUSTER.WORK_ORDERS;   // v3.37: the job's working orders, from the same store
       const caravan = n.job === 'hauler' && (n.skills.haul || 0) >= DATA.T.haulLvCaravan;
       const spMul = n.job === 'hauler' ? (caravan ? 0.5 : 0.6) : n.job === 'mason' ? 0.45 : 0.9;
       const sp = speedOf(n) * spMul;
@@ -8612,22 +8810,33 @@ const NPC = (() => {
         // the axe: walk to the nearest standing wood, work it, fell it, bank the timber
         const home = DATA.stations[n.route.a];
         if (!n.ftarget) {
-          n.ftarget = World.nearestForest(home.x, home.y, DATA.T.fellRadius);
+          /* THE REACH stretches the search; THE WOODS: thin keeps every other tree as a stand —
+             after a fell, the next tree the axe would take is KEPT (by cell, for good) and the one past it falls */
+          const kept = new Set(n.fkept || []), reachR = DATA.T.fellRadius * (WO.reach.mul[O.reach] || 1);
+          n.ftarget = World.nearestForest(home.x, home.y, reachR, kept);
+          if (n.ftarget && O.woods === 'thin' && n.fthinNext) {
+            kept.add(n.ftarget.i); n.fkept = [...kept]; n.fthinNext = false;
+            n.ftarget = World.nearestForest(home.x, home.y, reachR, kept);
+          }
           if (!n.ftarget) {
-            if (!n.fcleared) { n.fcleared = true; UI.toast(`<b>${n.name}</b>: the near woods at ${home.name} are CLEARED — the land remembers the axe`, 'gold', 6000); Systems.addMail(`${n.name} leans on the axe`, `Every tree within reach of ${home.name} is planking now. Reassign them, or let them rest.`); }
+            if (!n.fcleared) { n.fcleared = true; UI.toast(`<b>${n.name}</b>: the ${O.reach === 'far' ? 'far' : 'near'} woods at ${home.name} are ${O.woods === 'thin' ? 'THINNED' : 'CLEARED'} — the land remembers the axe`, 'gold', 6000); Systems.addMail(`${n.name} leans on the axe`, O.woods === 'thin' ? `Every other tree within reach of ${home.name} is planking now; the rest stand. Reassign them, widen the reach, or let them rest.` : `Every tree within reach of ${home.name} is planking now. Reassign them, or let them rest.`); }
             continue;
           }
           n.fcleared = false;
         }
         const d = U.dist(n.fx, n.fy, n.ftarget.x, n.ftarget.y);
-        if (d > 16) { n.fx += (n.ftarget.x - n.fx) / d * Math.min(sp * dt, d); n.fy += (n.ftarget.y - n.fy) / d * Math.min(sp * dt, d); n.fmoving = true; n.fwork = 0; }
+        if (d > 16) { n.fx += (n.ftarget.x - n.fx) / d * Math.min(sp * dt, d); n.fy += (n.ftarget.y - n.fy) / d * Math.min(sp * dt, d); n.fmoving = true; n.fwork = 0; svc(n).km += Math.min(sp * dt, d) / 1000; }
         else {
           n.fmoving = false;
           // v3.27: a sawcamp on the same stand sharpens the axe — and the camp saws faster for the company
           n.fwork += dt * (Systems.sawcampNear && Systems.sawcampNear(n.fx, n.fy) ? DATA.T.workSynergy : 1);
           if (n.fwork >= DATA.T.fellTime) {
             n.fwork = 0;
-            if (World.fellAt(n.ftarget.x, n.ftarget.y)) { State.bank('wood', DATA.T.fellWood); Render.buildFx(n.ftarget.x, n.ftarget.y); Snd.sfx.build(); }
+            if (World.fellAt(n.ftarget.x, n.ftarget.y)) {
+              State.bank('wood', DATA.T.fellWood); Render.buildFx(n.ftarget.x, n.ftarget.y); Snd.sfx.build();
+              svc(n).felled = (svc(n).felled || 0) + 1; svcNote(n, O.woods === 'thin' ? 'felled a tree, left the next' : 'felled a tree');
+              n.fthinNext = true;   // under THE WOODS: thin, the next tree stands
+            }
             n.ftarget = null;
           }
         }
@@ -8653,37 +8862,78 @@ const NPC = (() => {
         if (n.fseg >= pts.length || n.fseg < 0) {
           n.fdirn *= -1; n.fseg = U.clamp(n.fseg, 0, pts.length - 1);
           if (n.job === 'hauler') haulerArrive(n, n.fdirn === 1 ? n.route.a : n.route.b, caravan);
+          /* v3.37 THE MARKS — at every end the presser MEASURES the trail; bare end to end, the
+             'come in' order walks them to the fire and the wage stops with the work */
+          if (n.job === 'presser') {
+            n.ftrail = World.trailState(pts);
+            if (n.ftrail.frac >= MUSTER.TRAIL_DONE && O.marks === 'home') { trailDone(n); continue; }
+          }
         }
       } else {
         const step = Math.min(sp * dt, d);
         n.fx += (tgt[0] - n.fx) / d * step; n.fy += (tgt[1] - n.fy) / d * step;
         n.fmoving = true; n.fdir = Math.atan2(tgt[1] - n.fy, tgt[0] - n.fx);
         n.facc = (n.facc || 0) + step;
+        svc(n).km += step / 1000;
         if (n.job === 'presser' && n.facc >= 9) { n.facc = 0; World.addWear(n.fx, n.fy, DATA.T.trafficWear + 1); }
         if (n.job === 'hauler' && n.facc >= 14) { n.facc = 0; World.addWear(n.fx, n.fy, 1); }
         if (n.job === 'mason' && n.facc >= 26) {
           n.facc = 0;
-          if ((S.banked.ceramic || 0) >= 1) {
+          /* THE RESERVE: the slabs a mason will not touch — the laying stops at the floor, and says so */
+          const floor = WO.reserve.floor[O.reserve] || 0;
+          if ((S.banked.ceramic || 0) - floor >= 1) {
             const laid = World.layPave(n.fx, n.fy, 34, 2);
-            if (laid > 0) { S.banked.ceramic -= 1; n.flaid = (n.flaid || 0) + laid; if (!n.fsaid && n.flaid > 40) { n.fsaid = true; UI.toast(`<b>${n.name}</b>'s cobbles are taking — the ${DATA.stations[n.route.a].name} road firms underfoot`, 'gold', 5000); } }
-          } else if (!n.fstall) { n.fstall = true; UI.toast(`<b>${n.name}</b> is out of ceramic for cobbles — bank slabs and the laying resumes`, 'rust', 5000); }
-          if ((S.banked.ceramic || 0) >= 1) n.fstall = false;
+            if (laid > 0) { S.banked.ceramic -= 1; n.flaid = (n.flaid || 0) + laid; svc(n).laid = (svc(n).laid || 0) + laid; if (!n.fsaid && n.flaid > 40) { n.fsaid = true; svcNote(n, 'the cobbles are taking'); UI.toast(`<b>${n.name}</b>'s cobbles are taking — the ${DATA.stations[n.route.a].name} road firms underfoot`, 'gold', 5000); } }
+          } else if (!n.fstall) { n.fstall = true; svcNote(n, floor ? `holding the reserve of ${floor}` : 'out of ceramic'); UI.toast(floor ? `<b>${n.name}</b> holds at the reserve — ${floor} slabs stay banked by your orders; bank more and the laying resumes` : `<b>${n.name}</b> is out of ceramic for cobbles — bank slabs and the laying resumes`, 'rust', 5000); }
+          if ((S.banked.ceramic || 0) - floor >= 1) n.fstall = false;
         }
       }
     }
   }
+  /* the presser's work, done: the trail measured bare, they come in to the fire with a note */
+  function trailDone(n) {
+    const home = DATA.stations[n.route.a];
+    const m = marksOf(n).length;
+    n.state = 'pool'; n.at = n.route.a; n.job = null; n.fpath = null; n.ftarget = null;
+    svcNote(n, 'walked the trail bare and came in');
+    UI.toast(`<b>${n.name}</b>: the trail ${m ? `to the mark${m > 1 ? 's' : ''}` : `to ${DATA.stations[n.route.b] ? DATA.stations[n.route.b].name : 'the far end'}`} is BARE end to end — they come in to ${home.name}'s fire, and the wage stops.`, 'gold', 7000);
+    Systems.addMail(`${n.name} came in`, `The trail out of ${home.name} is packed earth the whole way now. They sat down by the fire and asked for nothing. A mason could lay cobbles on it; a presser could walk another mark.`);
+    return true;
+  }
+  /* the freight a walker may carry into a town: the town's needs, filtered by THE FREIGHT LIST —
+     the same marks-over-taxonomy read a companion's sweep uses, verb 'haul'. Emptiest shelf first;
+     what the other end MAKES is preferred when both ends are known. */
+  function freightFor(n, here, other) {
+    const st = S.stations[here], hereDef = DATA.stations[here], otherDef = other ? DATA.stations[other] : null;
+    const may = hereDef.needs.filter(g => allows(n, 'haul', g));
+    const byShelf = (a, b) => (st.stock[a] || 0) - (st.stock[b] || 0);
+    const made = otherDef ? may.filter(g => otherDef.makes.includes(g)).sort(byShelf) : [];
+    const rest = may.filter(g => !made.includes(g)).sort(byShelf);
+    return made.concat(rest);
+  }
+  const goodName = g => DATA.goodsInfo[g] ? DATA.goodsInfo[g].name.toLowerCase() : g;
   function haulerArrive(n, endId, caravan) {
     const here = endId, other = here === n.route.a ? n.route.b : n.route.a;
-    const st = S.stations[here], hereDef = DATA.stations[here], otherDef = DATA.stations[other];
-    // freight: what THIS end wants most, of what the other end makes — else mixed goods for the worst shelf
-    let good = hereDef.needs.filter(g => otherDef.makes.includes(g)).sort((a, b) => (st.stock[a] || 0) - (st.stock[b] || 0))[0];
-    if (!good) good = hereDef.needs.slice().sort((a, b) => (st.stock[a] || 0) - (st.stock[b] || 0))[0];
-    if (!good) return;
+    const st = S.stations[here], hereDef = DATA.stations[here];
     const cap2 = caravan ? DATA.T.caravanCap : DATA.T.haulCap;
-    st.stock[good] = Math.min(100, (st.stock[good] || 0) + cap2);
-    Economy.addAppr(here, 2);
+    const list = freightFor(n, here, other);
     n.fruns = (n.fruns || 0) + 1;
-    if (n.fruns % 3 === 1 && U.dist(S.px, S.py, hereDef.x, hereDef.y) < 900) UI.toast(`${caravan ? 'The caravan' : n.name.split(' ')[0]} walks ${cap2} of ${DATA.goodsInfo[good] ? DATA.goodsInfo[good].name.toLowerCase() : good} into <b>${hereDef.name}</b>`, '', 3500);
+    svc(n).runs = (svc(n).runs || 0) + 1;
+    if (!list.length) {
+      /* nothing on the freight list that this end wants: they walk in empty, and the roll says so */
+      n.fempty = (n.fempty || 0) + 1;
+      svcNote(n, `walked into ${hereDef.name} empty — nothing on the freight list`);
+      if (n.fempty === 1) UI.toast(`<b>${n.name.split(' ')[0]}</b> walks into ${hereDef.name} with an empty pack — nothing ${hereDef.name} wants is on their freight list. Open the muster roll and mark what they may carry.`, 'rust', 7000);
+      return;
+    }
+    /* THE LOAD: full is one good to the cap; split is two goods, half each — two shelves at once */
+    const O = ordersOf(n);
+    const picks = O.load === 'split' && list.length >= 2 ? [[list[0], Math.round(cap2 / 2)], [list[1], cap2 - Math.round(cap2 / 2)]] : [[list[0], cap2]];
+    for (const [good, amt] of picks) st.stock[good] = Math.min(100, (st.stock[good] || 0) + amt);
+    Economy.addAppr(here, 2);
+    svc(n).crates = (svc(n).crates || 0) + picks.length;
+    svcNote(n, `walked ${picks.map(([g, a]) => `${a} ${goodName(g)}`).join(' and ')} into ${hereDef.name}`);
+    if (n.fruns % 3 === 1 && U.dist(S.px, S.py, hereDef.x, hereDef.y) < 900) UI.toast(`${caravan ? 'The caravan' : n.name.split(' ')[0]} walks ${picks.map(([g, a]) => `${a} of ${goodName(g)}`).join(' and ')} into <b>${hereDef.name}</b>`, '', 3500);
   }
   function recallField(n) {
     if (n.state !== 'field') return false;
@@ -8734,27 +8984,132 @@ const NPC = (() => {
   function ordersOf(n) {
     if (!n.orders) applyPreset(n, n.fk ? 'shield' : 'own', true);
     for (const [k, row] of Object.entries(MUSTER.ORDERS)) if (!row.choices[n.orders[k]]) n.orders[k] = row.def;
+    for (const [k, row] of Object.entries(MUSTER.WORK_ORDERS)) if (!row.choices[n.orders[k]]) n.orders[k] = row.def;   // v3.37: the working orders ride the same store
     n.orders.policy = n.orders.policy || {};
+    /* a tree with no mark at all in the store (a save from before that tree existed) takes its
+       registry default — derived, never purged: every mark the store already holds stands */
+    for (const [verb, T2] of Object.entries(MUSTER.TREES)) {
+      if (!Object.values(n.orders.policy).some(m => m && m[verb] !== undefined)) Ledger.seedStore(n.orders.policy, verb, T2.def);
+    }
     return n.orders;
   }
   function applyPreset(n, id, silent) {
     const P = MUSTER.PRESETS[id]; if (!P) return false;
+    const old = n.orders || {};
     n.orders = { preset: id, station: P.station, mess: P.mess, stand: P.stand, voice: P.voice, policy: {} };
-    Ledger.seedStore(n.orders.policy, 'loot', P.loot);
-    Ledger.seedStore(n.orders.policy, 'hand', P.hand);
+    for (const k of Object.keys(MUSTER.WORK_ORDERS)) if (old[k] !== undefined) n.orders[k] = old[k];   // a preset is the WALK's orders; the working orders keep
+    for (const [verb, T2] of Object.entries(MUSTER.TREES)) Ledger.seedStore(n.orders.policy, verb, P[verb] || T2.def);
     if (!silent) svcNote(n, `took ${P.name.toLowerCase()} as standing orders`);
     return true;
   }
-  const allows = (n, verb, defId) => Ledger.effectiveIn(ordersOf(n).policy, defId, verb, { loot: MUSTER.TREE_DEFAULT, hand: MUSTER.TREE_DEFAULT });
+  const treeDefaults = () => { const d = {}; for (const v of Object.keys(MUSTER.TREES)) d[v] = MUSTER.TREE_DEFAULT; return d; };
+  const allows = (n, verb, defId) => Ledger.effectiveIn(ordersOf(n).policy, defId, verb, treeDefaults());
   function setOrder(n, key, val) {
-    const row = MUSTER.ORDERS[key]; if (!row || !row.choices[val]) return false;
-    ordersOf(n)[key] = val; n.orders.preset = null;   // a hand-set order is no longer the Order's preset
+    const row = MUSTER.ORDERS[key] || MUSTER.WORK_ORDERS[key]; if (!row || !row.choices[val]) return false;
+    ordersOf(n)[key] = val;
+    if (MUSTER.ORDERS[key]) n.orders.preset = null;   // a hand-set WALK order is no longer the Order's preset; a working order never was
     svcNote(n, `${row.name.toLowerCase()}: ${row.choices[val].name.toLowerCase()}`);
+    if (key === 'reach' || key === 'woods') n.ftarget = null;   // the axe re-reads the ground
     return true;
   }
-  function setTreeMark(n, verb, node, val, isItem) { Ledger.setMarkIn(ordersOf(n).policy, node, verb, val, isItem); n.orders.preset = null; }
+  function setTreeMark(n, verb, node, val, isItem) { Ledger.setMarkIn(ordersOf(n).policy, node, verb, val, isItem); if (verb !== 'haul') n.orders.preset = null; }
+  /* v3.37 — the sheet a walker's WORK answers to: the walk's rows for a companion, the job's rows for
+     a field hand, the road's rows for a charter. The kind names the sheet; the registry names the rows. */
+  function workOf(n) {
+    const rows = {};
+    if (n.state === 'field' && MUSTER.FIELD[n.job]) {
+      const F = MUSTER.FIELD[n.job];
+      for (const k of F.rows) rows[k] = MUSTER.WORK_ORDERS[k];
+      return { kind: 'field', job: n.job, rows, trees: F.tree ? [F.tree] : [], name: (CHAR.FIELD_JOBS[n.job] || {}).name || 'field hand' };
+    }
+    if (n.state === 'route') {
+      for (const k of MUSTER.ROAD.rows) rows[k] = MUSTER.WORK_ORDERS[k];
+      return { kind: 'road', job: 'route', rows, trees: [MUSTER.ROAD.tree], name: 'charter runner' };
+    }
+    return { kind: 'walk', job: null, rows: MUSTER.ORDERS, trees: ['loot', 'hand'], name: 'walker' };
+  }
   function svc(n) { n.svc = n.svc || { km: 0, crates: 0, met: 0, sweeps: 0, meals: 0, steadies: 0, last: '', lastT: 0 }; return n.svc; }
   function svcNote(n, line) { const v = svc(n); v.last = line; v.lastT = S.time; }
+
+  /* ---------- v3.37 THE MOOD: summed from causes the game already tracks, read live, never stored ----------
+     mood(n) → { v, band, col, causes:[{id, v, line}] }. moodFx(n) → what the band DOES. A companion
+     at DONE for long enough sits down at the next fire — after saying so on the ground. */
+  /* mood(n) reads LIVE — the sheet, the card's rows and the mails want the truth of this instant;
+     moodCached(n) is the half-second read the per-frame engine and the card's glyph use */
+  const moodCache = new Map();   // id → { t, m }
+  function moodCached(n) {
+    const hit = moodCache.get(n.id);
+    if (hit && Math.abs(S.time - hit.t) < 0.5) return hit.m;
+    const m = mood(n);
+    moodCache.set(n.id, { t: S.time, m });
+    return m;
+  }
+  function mood(n) {
+    const M = MUSTER.MOOD, C = M.causes, causes = [];
+    const add = id => causes.push({ id, v: C[id].v, line: C[id].line });
+    const v = svc(n), now = S.time;
+    const walking = n.state === 'companion';
+    const working = n.state === 'field' || n.state === 'route' || n.state === 'post';
+    if (walking && n.hungry) add('hungry');
+    if (working && n.hungry) add('unpaid');
+    if (walking && !n.hungry && ordersOf(n).mess === 'fast') add('fasting');
+    if (walking && v.lastMeal !== undefined && now - v.lastMeal < C.fed.within) add('fed');
+    if (n.bond) add('bond');
+    if (walking && World.mistAt(n.cx !== undefined ? n.cx : S.px, n.cy !== undefined ? n.cy : S.py) > C.grey.mist) add('grey');
+    if (walking && Economy.dayPhase().night && S.speed > 8) add('night');
+    if (walking && (n.carry || []).reduce((a, c) => a + c.kg, 0) >= capOf(n) * C.loaded.at) add('loaded');
+    if (walking && ordersOf(n).station === 'point') add('point');
+    if (walking && n.horse) add('mounted');
+    if (n.koT !== undefined && now - n.koT < C.downed.within) add('downed');
+    if (n.state === 'recover') add('mending');
+    if (n.state === 'pool' || n.state === 'post') add('fire');
+    if (walking && party().length >= C.company.party) add('company');
+    if (v.km >= C.seasoned.km) add('seasoned');
+    if (walking && n.fireT !== undefined && now - n.fireT > C.longOut.after) add('longOut');
+    const sum = causes.reduce((a, c) => a + c.v, 0);
+    let band = M.bands[0];
+    for (const b of M.bands) if (sum >= b[0]) band = b;
+    return { v: sum, band: band[1], col: band[2], causes };
+  }
+  const moodFx = n => MUSTER.MOOD.fx[moodCached(n).band] || MUSTER.MOOD.fx.STEADY;
+  let moodT = 0;
+  function tickMood(dt) {
+    moodT -= dt; if (moodT > 0) return;
+    moodT = 2;
+    const M = MUSTER.MOOD;
+    for (const n of party()) {
+      if (n.fireT === undefined) n.fireT = S.time;
+      for (const id of DATA.stationOrder) { const d = DATA.stations[id]; if (S.stations[id].connected && U.dist(n.cx !== undefined ? n.cx : S.px, n.cy !== undefined ? n.cy : S.py, d.x, d.y) < M.fireR) { n.fireT = S.time; break; } }
+      const m = mood(n), was = n.moodBand;
+      if (was !== m.band) {
+        n.moodBand = m.band;
+        if (was !== undefined && M.lines[m.band] && (m.band === 'LOW' || m.band === 'DONE' || (m.band === 'BRIGHT' && was !== 'BRIGHT'))) {
+          Render.say(n.cx !== undefined ? n.cx : S.px, (n.cy !== undefined ? n.cy : S.py) - 8, U.pick(rand, M.lines[m.band]), m.band === 'DONE' ? '224,101,74' : '198,206,186');
+          if (m.band === 'LOW' || m.band === 'DONE') { svcNote(n, m.band === 'DONE' ? 'said they were done' : 'asked for a fire'); Systems.tut && Systems.tut('firstMood'); }
+        }
+        n.doneT = 0;
+      }
+      if (m.band === 'DONE' && moodFx(n).quits) {
+        n.doneT = (n.doneT || 0) + 2;
+        if (n.doneT >= M.quitAfter && S.time - n.fireT < 1) sitDown(n, m);   // at a fire, after saying so: they sit
+      }
+    }
+  }
+  /* a walker at the end of their patience sits down at the fire they are standing beside — the
+     cargo racked in the lockers, a mail that says why, and the hire open again once the causes lift */
+  function sitDown(n, m) {
+    let stId = n.at || 'haven', bd = 1e9;
+    for (const id of DATA.stationOrder) { if (!S.stations[id].connected) continue; const d = U.dist(n.cx, n.cy, DATA.stations[id].x, DATA.stations[id].y); if (d < bd) { bd = d; stId = id; } }
+    if (n.carry.length) { for (const it of n.carry) S.stations[stId].storage.push(it); n.carry = []; }
+    n.state = 'pool'; n.at = stId; n.age = 0; n.doneT = 0; n.moodBand = undefined;
+    if (n.horse && !n.horse.owned) n.horse = null;
+    svcNote(n, `sat down at ${DATA.stations[stId].name} — ${m.causes.filter(c => c.v < 0).map(c => c.line).join(', ') || 'done'}`);
+    const why = m.causes.filter(c => c.v < 0).map(c => c.line).join(', ');
+    UI.toast(`<b>${n.name}</b> sits down at ${DATA.stations[stId].name}'s fire — they were DONE: ${why}. Their cargo is racked in the lockers. They will walk again when it lifts.`, 'rust', 9000);
+    Systems.addMail(`${n.name} sat down`, `They walked as far as they had in them. The roll said why for a while: ${why}. Feed them, keep them out of the Grey, and they will follow you out of ${DATA.stations[stId].name} again — no fee, you paid it.`);
+    Snd.sfx.stumble && Snd.sfx.stumble();
+    return true;
+  }
   /* everyone under your command, wherever they stand — the roll's rows */
   function everyone() {
     const out = [];
@@ -8764,7 +9119,7 @@ const NPC = (() => {
       else if (n.state === 'pool') place = `at ${DATA.stations[n.at] ? DATA.stations[n.at].name : 'Haven'}'s fire`;
       else if (n.state === 'route' && n.route) place = `${DATA.stations[n.route.a].name} ⇄ ${DATA.stations[n.route.b].name}`;
       else if (n.state === 'post') place = `${(CHAR.JOBS[n.job] || {}).name || 'posted'} at ${DATA.stations[n.at] ? DATA.stations[n.at].name : '?'}`;
-      else if (n.state === 'field') place = `${(CHAR.FIELD_JOBS[n.job] || {}).name || 'field work'} in the field`;
+      else if (n.state === 'field') place = `${(CHAR.FIELD_JOBS[n.job] || {}).name || 'field work'} out of ${DATA.stations[n.route && n.route.a] ? DATA.stations[n.route.a].name : (DATA.stations[n.at] || {}).name || '?'}${n.job === 'presser' && marksOf(n).length ? ` · ${marksOf(n).length} mark${marksOf(n).length > 1 ? 's' : ''}` : n.route && n.route.b ? ` to ${DATA.stations[n.route.b].name}` : ''}`;
       else if (n.state === 'recover') place = `mending at ${DATA.stations[n.at] ? DATA.stations[n.at].name : '?'}`;
       else continue;
       out.push({ n, where, place });
@@ -8795,7 +9150,7 @@ const NPC = (() => {
   function assistWobble() {
     for (const n of party()) {
       if (n.hungry) continue;
-      if (rand() < (n.skills.bal || 0) * 0.03 + (n.bond ? 0.06 : 0.02) + (MUSTER.STATION_FX[ordersOf(n).station] || {}).steady) {
+      if (rand() < ((n.skills.bal || 0) * 0.03 + (n.bond ? 0.06 : 0.02) + ((MUSTER.STATION_FX[ordersOf(n).station] || {}).steady || 0)) * moodFx(n).steadyMul) {   // v3.37: a bright walker steadies more, a low one less
         svc(n).steadies++; svcNote(n, 'steadied your pack');
         UI.toast(`${n.name.split(' ')[0]} steadies your pack`, '', 1800);
         Snd.sfx.steady();
@@ -8915,6 +9270,7 @@ const NPC = (() => {
     let looted = false;
     tickRollCall(dt);
     tickOverflow(dt, pt);
+    tickMood(dt);
     const slotIdx = {};   // v3.36: slots are dealt per STATION, so two backs at close never share a spot
     pt.forEach((n, pi) => {
       if (n.cx === undefined) { n.cx = S.px + 26; n.cy = S.py + 26; }
@@ -8963,7 +9319,7 @@ const NPC = (() => {
       const [wb, wp] = slots[si % slots.length];
       const ca = Math.cos(S.dir), sa = Math.sin(S.dir), cp = Math.cos(S.dir + Math.PI / 2), sp2 = Math.sin(S.dir + Math.PI / 2);
       let tx = S.px + ca * wb + cp * wp, ty = S.py + sa * wb + sp2 * wp;
-      const reach = ((n.skills.haul || 0) >= 2 ? DATA.T.looterBase + ((n.skills.haul || 0) - 2) * DATA.T.looterPer : 0) * FX.reachMul;
+      const reach = ((n.skills.haul || 0) >= 2 ? DATA.T.looterBase + ((n.skills.haul || 0) - 2) * DATA.T.looterPer : 0) * FX.reachMul * moodFx(n).reachMul;
       if (reach && !n.hungry && !looted) {
         let fd = reach, fetch = null;
         const w2 = n.carry.reduce((a, c) => a + c.kg, 0);
@@ -9032,7 +9388,7 @@ const NPC = (() => {
         if (ownFood >= 0) {
           const ate = n.carry.splice(ownFood, 1)[0];
           n.fedT = 360 * Porter.eff().upkeepMul;
-          svc(n).meals++; svcNote(n, `ate ${ate.name.toLowerCase()} from the pack`);
+          svc(n).meals++; svc(n).lastMeal = S.time; svcNote(n, `ate ${ate.name.toLowerCase()} from the pack`);
           if (n.hungry) { n.hungry = false; UI.toast(`${n.name.split(' ')[0]} eats from the pack — back in step`); }
           UI.refreshCargo();
         } else if (O.mess === 'fast') {
@@ -9041,7 +9397,7 @@ const NPC = (() => {
         } else if (S.banked.provisions >= 1) {
           S.banked.provisions -= 1;
           n.fedT = 360 * Porter.eff().upkeepMul;
-          svc(n).meals++; svcNote(n, 'ate from the bank');
+          svc(n).meals++; svc(n).lastMeal = S.time; svcNote(n, 'ate from the bank');
           if (n.hungry) { n.hungry = false; UI.toast(`${n.name.split(' ')[0]} eats — back in step`); }
         } else if (!n.hungry) {
           n.hungry = true;
@@ -9056,22 +9412,33 @@ const NPC = (() => {
       n.recoverT = (n.recoverT || 0) - dt;
       if (n.recoverT <= 0) { n.state = 'pool'; n.age = 0; Systems.addMail(`${n.name} is back on their feet`, `The keepers at ${DATA.stations[n.at].name} cleared them for the road. They asked after you first thing. No fee — you already paid it in blood.`); }
     }
-    // routes
+    // routes — v3.37: by THE RUN and THE PACE, from the runner's own store
     for (const r of S.npcs) {
       if (r.state !== 'route' || !r.route) continue;
       r.route.t -= dt;
       if (r.route.t <= 0) {
-        r.route.t = routeInterval(r);
-        if (S.banked.provisions >= 0.5) {
-          S.banked.provisions = Math.round((S.banked.provisions - 0.5) * 10) / 10;
+        const O = ordersOf(r), WO = MUSTER.WORK_ORDERS;
+        r.route.t = routeInterval(r) * (WO.pace.mul[O.pace] || 1);
+        const eat = 0.5 * (WO.pace.eat[O.pace] || 1);
+        if (S.banked.provisions >= eat) {
+          S.banked.provisions = Math.round((S.banked.provisions - eat) * 10) / 10;
           r.route.runs++;
-          const likes = 5 + Math.round(((r.skills.foot || 0) + (r.skills.bal || 0)) * 0.8);
+          svc(r).runs = (svc(r).runs || 0) + 1;
+          const likes = Math.round((5 + Math.round(((r.skills.foot || 0) + (r.skills.bal || 0)) * 0.8)) * (WO.run.likesMul[O.run] || 1));
           Systems.addStationLikes(r.route.a, likes);
           Systems.addStationLikes(r.route.b, likes);
           State.grantLikes(Math.round(likes * 0.6));
           Systems.stampTraffic(r.route.a, r.route.b);   // v3.20: every run's feet are REAL — the line between the towns wears in
           if (rand() < 0.25) S.banked.metal += 4;
-          if (r.route.runs % 4 === 0) UI.toast(`${r.name.split(' ')[0]}'s run: ${DATA.stations[r.route.a].name} ⇄ ${DATA.stations[r.route.b].name} · +${likes} ◆ each end`, '', 3500);
+          let carried = '';
+          if (O.run === 'freight') {
+            /* a crate each run onto the emptiest shelf on the freight list — the ends take turns */
+            const here = r.route.runs % 2 ? r.route.b : r.route.a, other = here === r.route.a ? r.route.b : r.route.a;
+            const good = freightFor(r, here, other)[0];
+            if (good) { S.stations[here].stock[good] = Math.min(100, (S.stations[here].stock[good] || 0) + DATA.T.stockPerCrate); svc(r).crates = (svc(r).crates || 0) + 1; carried = ` · a crate of ${goodName(good)} onto ${DATA.stations[here].name}'s shelf`; svcNote(r, `ran a crate of ${goodName(good)} into ${DATA.stations[here].name}`); }
+            else { svcNote(r, `ran empty — nothing on the freight list for ${DATA.stations[here].name}`); if (!r.fempty) { r.fempty = 1; UI.toast(`<b>${r.name.split(' ')[0]}</b>'s run carried nothing — nothing ${DATA.stations[here].name} wants is on their freight list. Mark it on the muster roll.`, 'rust', 6000); } }
+          } else svcNote(r, `ran the post ${DATA.stations[r.route.a].name} ⇄ ${DATA.stations[r.route.b].name}`);
+          if (r.route.runs % 4 === 0) UI.toast(`${r.name.split(' ')[0]}'s run: ${DATA.stations[r.route.a].name} ⇄ ${DATA.stations[r.route.b].name} · +${likes} ◆ each end${carried}`, '', 3500);
         } else if (!r.hungry) {
           r.hungry = true;
           Systems.addMail(`${r.name}'s route is stalled`, 'No provisions banked. Waylighters cannot eat gratitude.');
@@ -9398,6 +9765,7 @@ const NPC = (() => {
     forresterNear: (x, y, r) => S.npcs.some(n => n.state === 'field' && n.job === 'forrester' && n.fx !== undefined && U.dist(n.fx, n.fy, x, y) < r),
     give, take, assistWobble, struggleBonus, tryShove, intercept, onPorterDeath, update, eventInteractions, lootRuin, seedRuins, peddlerStock,
     ordersOf, applyPreset, setOrder, setTreeMark, allows, svc, everyone, rollCall, callLine,   // v3.36 THE MUSTER
+    workOf, marksOf, addMark, strikeMark, freightFor, mood, moodCached, moodFx,   // v3.37 THE WORKING ORDERS
   };
 })();
 
@@ -12606,6 +12974,7 @@ const UI = (() => {
   }
   function tick() { // called every frame while playing
     updateCompass(); updateTray();
+    if (typeof UI2 !== 'undefined' && UI2.tickWedge) UI2.tickWedge();   // v3.37: the wedge card's glyph is live
     drawHearts();
     if (mapOpen && (S.qte || S.struggle)) { toggleMap(false); return; }   // something has you — drop the paper
     if (mapOpen && (S.time % (worldFrozen() ? 0.5 : 0.15)) < 0.02) drawMap();
@@ -12909,18 +13278,84 @@ const UI2 = (() => {
     if (showWarm) $('warmFill').style.width = S.warmth + '%';
     updateCompChip();
   }
-  function updateCompChip() {
-    const n = NPC.companion();
-    const chip = $('compChip');
-    if (!n) { chip.classList.add('hidden'); return; }
-    chip.classList.remove('hidden');
-    const kg = n.carry.reduce((a, c) => a + c.kg, 0);
-    const htm = `<img src="${Porter.portrait(n.seed, 36)}" width="36" height="36">
-      <div><div class="nm">${n.name}</div>
-      <div class="st">${CLASSES[n.cls].name} · carrying <b>${U.fmtKg(kg)}/${NPC.capOf(n)} kg</b> · ${n.hungry ? '<span class="hungry">HUNGRY</span>' : 'fed'} · <span style="color:var(--bone-faint)">click to hand over</span></div></div>`;
-    if (chip._last !== htm) { chip._last = htm; chip.innerHTML = htm; }
+  /* ---------- v3.37 THE WEDGE CARD: the companion chip, grown into the party's own HUD card ----------
+     every back walking with you on one glass: their own figure, first name, MOOD in its band colour,
+     what they carry, and beside it a LIVE formation glyph — the slots the orders describe and where
+     each back actually stands right now, in your frame. Click the card to hand over; the cap opens
+     the muster. The card can be put away and comes back from the tab or the rail; the choice keeps. */
+  const HUD_KEY = 'waylight.hud';
+  function hudPref() { try { return JSON.parse(localStorage.getItem(HUD_KEY) || '{}') || {}; } catch (e) { return {}; } }
+  function setHudPref(k, v) { const p = hudPref(); p[k] = v; try { localStorage.setItem(HUD_KEY, JSON.stringify(p)); } catch (e) {} }
+  const wedgeShown = () => hudPref().wedge !== false;
+  function toggleWedge(on) {
+    setHudPref('wedge', on === undefined ? !wedgeShown() : !!on);
+    updateCompChip();
+    const rb = $('railWedgeBtn'); if (rb) rb.innerHTML = `THE WEDGE CARD · ${wedgeShown() ? 'SHOWN' : 'PUT AWAY'}`;
   }
-  $('compChip') && $('compChip').addEventListener('click', () => { Snd.sfx.ui(); openTransfer(); });
+  function updateCompChip() {
+    const pt = NPC.party();
+    const chip = $('compChip'), tab = $('wcTab');
+    if (!pt.length) { chip.classList.add('hidden'); if (tab) tab.classList.add('hidden'); return; }
+    if (!wedgeShown()) { chip.classList.add('hidden'); if (tab) tab.classList.remove('hidden'); return; }
+    if (tab) tab.classList.add('hidden');
+    chip.classList.remove('hidden');
+    const rows = pt.map(n => {
+      const kg = n.carry.reduce((a, c) => a + c.kg, 0), m = NPC.mood(n);
+      const why = m.causes.length ? m.causes.map(c => `${c.line} ${c.v > 0 ? '+' : ''}${c.v}`).join(' · ') : 'nothing weighs on them';
+      const kit = n.fk && typeof SPRITES !== 'undefined' && SPRITES.KIT[n.fkCls];
+      return `<div class="wcRow"><img src="${Render.npcRigURL(n, 2)}" width="${kit ? 28 : 24}" height="${kit ? 44 : 36}" alt="">
+        <div><div class="nm">${n.name.split(' ')[0]} <i class="wcMood" style="color:${m.col}" title="${why}">${m.band}</i></div>
+        <div class="st">${n.fk ? ((FACT.FK_CLASSES[n.fkCls] || {}).name || 'Farkeeper') : CLASSES[n.cls].name} · carrying <b>${U.fmtKg(kg)}/${NPC.capOf(n)} kg</b> · ${n.hungry ? '<span class="hungry">HUNGRY</span>' : 'fed'}</div></div></div>`;
+    }).join('');
+    const htm = `<canvas id="wcGlyph" width="64" height="72" class="wcGlyph" title="the wedge — where each back stands, live"></canvas>
+      <div class="wcRows">${rows}<div class="wcFoot"><span>click to hand over</span><button class="wcBtn" id="wcMuster" title="the muster roll">THE MUSTER</button><button class="wcBtn dim" id="wcHide" title="put the wedge card away">&minus;</button></div></div>`;
+    if (chip._last !== htm) { chip._last = htm; chip.innerHTML = htm; chip._gt = 0; }
+    drawWedgeGlyph(true);
+  }
+  let wedgeT = 0;
+  function drawWedgeGlyph(force) {
+    const cv = $('wcGlyph'); if (!cv || !S) return;
+    const now = performance.now();
+    if (!force && now - wedgeT < 100) return;
+    wedgeT = now;
+    const g = cv.getContext('2d'), W = cv.width, H = cv.height;
+    g.imageSmoothingEnabled = false;
+    g.fillStyle = '#0b1017'; g.fillRect(0, 0, W, H);
+    g.fillStyle = '#131a23'; for (let y = 3; y < H; y += 6) for (let x = (y % 12) ? 3 : 6; x < W; x += 6) g.fillRect(x, y, 1, 1);
+    const cxp = W / 2, cyp = H * 0.6, k = 0.26;
+    /* the way you walk: north */
+    g.fillStyle = '#3a4048'; g.fillRect(cxp - 1, 3, 2, 6); g.fillRect(cxp - 3, 3, 6, 1);
+    const pt = NPC.party(), idx = {};
+    const ca = Math.cos(S.dir), sa = Math.sin(S.dir), pa = Math.cos(S.dir + Math.PI / 2), ps = Math.sin(S.dir + Math.PI / 2);
+    let hold = false;
+    for (const n of pt) {
+      const O = NPC.ordersOf(n); if (O.stand === 'hold') hold = true;
+      const slots = MUSTER.STATIONS[O.station] || MUSTER.STATIONS.wedge;
+      const i = idx[O.station] = (idx[O.station] || 0); idx[O.station]++;
+      const [back, side] = slots[i % slots.length];
+      const sx = Math.round(cxp + side * k), sy = Math.round(cyp - back * k);
+      g.strokeStyle = 'rgba(184,178,157,0.35)'; g.strokeRect(sx - 3.5, sy - 1.5, 7, 3);   // the slot
+      if (n.cx !== undefined) {
+        const dx = n.cx - S.px, dy = n.cy - S.py;
+        const b2 = dx * ca + dy * sa, s2 = dx * pa + dy * ps;
+        const lx = Math.round(cxp + s2 * k), ly = Math.round(cyp - b2 * k);
+        const m = NPC.moodCached(n);
+        g.fillStyle = m.col; g.fillRect(U.clamp(lx, 1, W - 3) - 1, U.clamp(ly, 1, H - 3) - 1, 3, 3);   // where they ARE, in their mood's colour
+      }
+    }
+    if (hold) { g.strokeStyle = 'rgba(255,181,79,0.4)'; g.setLineDash([2, 2]); g.beginPath(); g.arc(cxp, cyp, MUSTER.HOLD_SCREEN * k * 0.55, 0, 7); g.stroke(); g.setLineDash([]); }
+    g.fillStyle = '#ffd98f'; g.fillRect(cxp - 1, cyp - 2, 3, 4);   // you
+    g.fillStyle = '#7a7666'; g.font = '800 6px ui-monospace, Menlo, monospace'; g.textAlign = 'center'; g.fillText('THE WEDGE', cxp, H - 3);
+  }
+  function tickWedge() { if ($('compChip').classList.contains('hidden')) return; drawWedgeGlyph(false); }
+  $('compChip') && $('compChip').addEventListener('click', e => {
+    const b = e.target.closest('.wcBtn');
+    if (b && b.id === 'wcHide') { Snd.sfx.ui(); toggleWedge(false); return; }
+    if (b && b.id === 'wcMuster') { Snd.sfx.ui(); MusterUI.open(); return; }
+    Snd.sfx.ui(); openTransfer();
+  });
+  $('wcTab') && $('wcTab').addEventListener('click', () => { Snd.sfx.ui(); toggleWedge(true); });
+  { const rb = $('railWedgeBtn'); if (rb) { rb.innerHTML = `THE WEDGE CARD · ${wedgeShown() ? 'SHOWN' : 'PUT AWAY'}`; rb.addEventListener('click', () => { Snd.sfx.ui(); toggleWedge(); }); } }
 
   /* ---------- the hand-over: your pack and theirs, side by side ---------- */
   function openTransfer() {
@@ -13119,8 +13554,15 @@ const UI2 = (() => {
     const btn = $('briefGo');
     btn.onclick = () => { ov.classList.add('hidden'); Snd.sfx.accept(); if (onDone) onDone(); };
   }
+  /* v3.37 (the v3.35 note kept): the hint strip prints the caps KEYS holds NOW — a rebound key reads here too */
+  function renderHint() {
+    const h = $('hintStrip'); if (!h) return;
+    const cap = a => (typeof KEYS !== 'undefined' ? KEYS.capFor(a) : '');
+    h.innerHTML = `<span class="k">M1</span>walk there <span class="k">M1+M2</span>sprint <span class="k">${cap('cargo') || 'I'}</span>pack <span class="k">${cap('skills') || 'K'}</span>skills <span class="k">${cap('eat') || 'H'}</span>eat <span class="k">${cap('map') || 'M'}</span>map <span class="k">${cap('interact') || 'E'}</span>interact <span class="k">${cap('build') || 'B'}</span>build`;
+  }
   function showHint(seconds) {
     const h = $('hintStrip');
+    renderHint();
     h.classList.remove('hidden');
     clearTimeout(h._t);
     h._t = setTimeout(() => h.classList.add('hidden'), seconds * 1000);
@@ -13128,7 +13570,8 @@ const UI2 = (() => {
 
   return {
     openTailor,
- openCharGen, showDeath, toggleSkills, updateMoodles, openLoot, openTrader, renderWaylighters, showBriefing, showHint, openTransfer };
+ openCharGen, showDeath, toggleSkills, updateMoodles, openLoot, openTrader, renderWaylighters, showBriefing, showHint, openTransfer,
+    tickWedge, toggleWedge, wedgeShown, renderHint };   // v3.37: the wedge card, the hint strip in YOUR keys
 })();
 
 
@@ -15341,6 +15784,7 @@ const ManualUI = (() => {
     const r = KEYS.rebind(listening, e.code);
     verdict = r.ok ? `${KEYS.ACTIONS[listening].name} answers ${KEYS.label(e.code)} now.` : `Refused — ${r.why}.`;
     if (r.ok) Snd.sfx.accept && Snd.sfx.accept(); else Snd.sfx.denied && Snd.sfx.denied();
+    if (r.ok && typeof UI2 !== 'undefined' && UI2.renderHint) UI2.renderHint();   // v3.37: the rail's hint strip reads the new cap at once
     listening = null;
     render();
   }
@@ -15467,7 +15911,7 @@ const ManualUI = (() => {
       const t = e.target.closest('[data-act],[data-fmreset],[data-fmopen],[data-fmuse],[data-fmimport]');
       if (!t) return;
       if (t.dataset.act !== undefined) { if (!t.classList.contains('fixed')) startListen(t.dataset.act); }
-      else if (t.dataset.fmreset) { KEYS.reset(t.dataset.fmreset === 'all' ? null : t.dataset.fmreset); verdict = t.dataset.fmreset === 'all' ? 'Every key stands as the Order printed it.' : `${KEYS.ACTIONS[t.dataset.fmreset].name} answers its printed key again.`; render(); }
+      else if (t.dataset.fmreset) { KEYS.reset(t.dataset.fmreset === 'all' ? null : t.dataset.fmreset); verdict = t.dataset.fmreset === 'all' ? 'Every key stands as the Order printed it.' : `${KEYS.ACTIONS[t.dataset.fmreset].name} answers its printed key again.`; if (typeof UI2 !== 'undefined' && UI2.renderHint) UI2.renderHint(); render(); }
       else if (t.dataset.fmopen) openPaper(t.dataset.fmopen);
       else if (t.dataset.fmuse) { ctx.useSlot(+t.dataset.fmuse); render(); }
       else if (t.dataset.fmimport) { importTarget = +t.dataset.fmimport; render(); const box = $('fmImportBox'); if (box) box.focus(); }
@@ -15489,7 +15933,10 @@ const ManualUI = (() => {
    from what they actually did beside you, and the last thing they did in their own words; the
    WEDGE PLATE draws the formation the orders describe, the walker at its centre; the orders pane
    is the ledgers' grammar — pressed choice plates, tri-state marks over the taxonomy, the parent
-   law — over a store that belongs to ONE back. CALL THE ROLL and they sound off on the ground. */
+   law — over a store that belongs to ONE back. CALL THE ROLL and they sound off on the ground.
+   v3.37: the roll hands the pane whichever sheet a walker answers to (NPC.workOf) — the walk's
+   orders, a field job's working orders with the chain of marks, a charter's road orders — with
+   the FREIGHT LIST by good's name; every plate reads the walker's MOOD and the work it did. */
 
 const MusterUI = (() => {
   const $ = id => document.getElementById(id);
@@ -15507,19 +15954,30 @@ const MusterUI = (() => {
     const skills = Object.entries(n.skills || {}).filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([k, v]) => `<span class="muSk" title="${S2[k] ? S2[k].name : k}">${S2[k] ? S2[k].icon : '·'}${v}</span>`).join('');
     const v = NPC.svc(n), [stName, stCol] = STATE_PLATE[row.where] || ['—', 'var(--bone-faint)'];
     const chips = [];
-    if (n.hungry) chips.push('<span class="muChip rust">HUNGRY</span>');
+    if (n.hungry) chips.push(`<span class="muChip rust">${row.where === 'companion' || row.where === 'pool' ? 'HUNGRY' : 'UNPAID'}</span>`);
     if (n.horse) chips.push(`<span class="muChip">${(FACT.HORSES[n.horse.breed] || {}).name || 'MOUNTED'}</span>`);
     if (n.bond) chips.push('<span class="muChip gold">OWES YOU</span>');
-    const O = NPC.ordersOf(n), P = O.preset ? MUSTER.PRESETS[O.preset] : null;
+    const O = NPC.ordersOf(n), P = O.preset ? MUSTER.PRESETS[O.preset] : null, W2 = NPC.workOf(n);
     const kg = (n.carry || []).reduce((a, c) => a + c.kg, 0);
+    /* v3.37: the stripe counts the WORK a field hand or a runner does, in its own words; the mood reads beside it */
+    let stripe;
+    if (W2.kind === 'field' && n.job === 'presser') { const tr = n.ftrail; stripe = `<b>${v.km.toFixed(1)}</b> km walked · trail <b>${tr ? Math.round(tr.frac * 100) + '%' : '—'}</b> bare${tr ? ' (measured at the last end)' : ' (not yet measured)'} · <b>${NPC.marksOf(n).length}</b> mark${NPC.marksOf(n).length === 1 ? '' : 's'}`; }
+    else if (W2.kind === 'field' && n.job === 'mason') stripe = `<b>${v.km.toFixed(1)}</b> km walked · <b>${v.laid || 0}</b> stretches cobbled · reserve <b>${MUSTER.WORK_ORDERS.reserve.floor[O.reserve] || 0}</b> of <b>${Math.floor(S.banked.ceramic || 0)}</b> banked`;
+    else if (W2.kind === 'field' && n.job === 'forrester') stripe = `<b>${v.km.toFixed(1)}</b> km walked · <b>${v.felled || 0}</b> felled · <b>${(n.fkept || []).length}</b> left standing`;
+    else if (W2.kind === 'field' || W2.kind === 'road') stripe = `<b>${v.km.toFixed(1)}</b> km walked · <b>${v.runs || 0}</b> runs · <b>${v.crates || 0}</b> crates walked in${n.fempty ? ` · <span class="rust">${n.fempty} empty</span>` : ''}`;
+    else stripe = `<b>${v.km.toFixed(1)}</b> km · <b>${v.crates}</b> crates · <b>${v.met}</b> met · <b>${v.sweeps}</b> swept · <b>${v.meals}</b> meals · <b>${v.steadies}</b> steadied`;
+    const m = NPC.mood(n);
+    const why = m.causes.length ? m.causes.map(c => `${c.line} <b style="color:${c.v > 0 ? 'var(--ok)' : 'var(--rust)'}">${c.v > 0 ? '+' : ''}${c.v}</b>`).join(' · ') : 'nothing weighs on them';
+    const ordPlate = W2.kind === 'walk' ? (P ? `<span class="muOrd">${P.name}</span>` : '<span class="muOrd own">HAND-SET ORDERS</span>') : `<span class="muOrd work">${W2.name.toUpperCase()} — WORKING ORDERS</span>`;
     return `<div class="muPlate ${sel === n.id ? 'sel' : ''} ${row.where}" data-mu="${n.id}">
       <div class="muFig"><img src="${Render.npcRigURL(n, 3)}" alt="" width="${n.fk && SPRITES.KIT[n.fkCls] ? 42 : 36}" height="${n.fk && SPRITES.KIT[n.fkCls] ? 66 : 54}"></div>
       <div class="muBody">
         <div class="muTop"><span class="muName">${n.name}</span><span class="muState" style="color:${stCol};border-color:${stCol}">${stName}</span></div>
         <div class="muSub">${cls} · ${row.place}${row.where === 'companion' ? ` · ${U.fmtKg(kg)}/${NPC.capOf(n)} kg` : ''}</div>
         <div class="muStripe"><span class="muSkills">${skills || '<span class="muSk dim">green</span>'}</span>
-          <span class="muSvc" title="the service stripe — counted from what they did beside you"><b>${v.km.toFixed(1)}</b> km · <b>${v.crates}</b> crates · <b>${v.met}</b> met · <b>${v.sweeps}</b> swept · <b>${v.meals}</b> meals · <b>${v.steadies}</b> steadied</span>${chips.join('')}</div>
-        <div class="muLast">${P ? `<span class="muOrd">${P.name}</span>` : '<span class="muOrd own">HAND-SET ORDERS</span>'}${v.last ? ` <i>— ${v.last}</i>` : ''}</div>
+          <span class="muSvc" title="the service stripe — counted from what they actually did">${stripe}</span>${chips.join('')}</div>
+        <div class="muMood"><span class="muBand" style="color:${m.col};border-color:${m.col}" title="the mood: summed from what the walk is doing to them">${m.band}</span><span class="muWhy">${why}</span></div>
+        <div class="muLast">${ordPlate}${v.last ? ` <i>— ${v.last}</i>` : ''}</div>
       </div></div>`;
   }
   function roll() {
@@ -15599,10 +16057,19 @@ const MusterUI = (() => {
 
   /* ---------- the standing orders pane ---------- */
   const NODE_ORDER = ['resources', 'consumables', 'freight', 'curios', 'buildables', 'equipable'];
+  const treeDflt = () => { const d = {}; for (const v of Object.keys(MUSTER.TREES)) d[v] = MUSTER.TREE_DEFAULT; return d; };
   function treeRows(n, verb) {
-    const P = NPC.ordersOf(n).policy, dflt = { loot: MUSTER.TREE_DEFAULT, hand: MUSTER.TREE_DEFAULT };
-    const box = (id, isItem) => { const st = Ledger.markStateIn(P, id, verb, dflt); return `<span class="lgBox ${st === 'on' ? 'on' : st === 'mixed' ? 'mixed' : ''}" data-tree="${verb}" data-node="${id}"></span>`; };
+    const P = NPC.ordersOf(n).policy, dflt = treeDflt();
+    const box = (id, isItem) => { const st = isItem ? (Ledger.effectiveIn(P, id, verb, dflt) ? 'on' : 'off') : Ledger.markStateIn(P, id, verb, dflt); return `<span class="lgBox ${st === 'on' ? 'on' : st === 'mixed' ? 'mixed' : ''}" data-tree="${verb}" data-node="${id}"${isItem ? ' data-item="1"' : ''}></span>`; };
     const NODES = {}; (function walk(node) { NODES[node.id] = node; for (const k of node.kids || []) walk(k); })(Ledger.TAXO);
+    /* v3.37 THE FREIGHT LIST: the freight branch only, with every station good by name — a mark per crate kind */
+    if (MUSTER.TREES[verb].root === 'freight') {
+      const goods = Object.keys(DATA.goodsInfo).filter(g => DATA.items[g] && !DATA.items[g].service);
+      let htm = `<div class="muTreeRow root">${box('freight')}<span class="lgName">All freight</span><span class="muTreeLine">every crate the valley lives on — the parent law governs every child</span></div>`;
+      htm += `<div class="muTreeRow">${box('post')}<span class="lgName">The Post</span><span class="muTreeLine">letters and dispatches — a charter under THE RUN: the post carries them regardless</span></div>`;
+      htm += `<div class="muTreeRow">${box('trade')}<span class="lgName">Trade goods</span><span class="muKids">${goods.map(g => `<span class="muKid" title="${DATA.goodsInfo[g].why}">${box(g, true)}<span>${DATA.goodsInfo[g].name}</span></span>`).join('')}</span></div>`;
+      return htm;
+    }
     let htm = `<div class="muTreeRow root">${box('cargo')}<span class="lgName">All cargo</span><span class="muTreeLine">the whole taxonomy — the parent law governs every child</span></div>`;
     for (const id of NODE_ORDER) {
       const node = NODES[id]; if (!node) continue;
@@ -15610,18 +16077,44 @@ const MusterUI = (() => {
     }
     return htm;
   }
+  const dirWord = (dx, dy) => { const a = Math.atan2(dy, dx); const k = Math.round(a / (Math.PI / 4)); return ['E', 'SE', 'S', 'SW', 'W', 'NW', 'N', 'NE'][((k % 8) + 8) % 8]; };
+  /* the presser's chain of marks, in order from the town, with the ground's own distances */
+  function marksPane(n) {
+    const home = DATA.stations[n.route.a], marks = NPC.marksOf(n);
+    const tr = n.ftrail;
+    let htm = `<div class="fmGroup">THE CHAIN OF MARKS<i class="muTreeHint">walked in order from ${home.name} and back — click ADD A MARK, then the ground</i></div>`;
+    if (!marks.length) htm += `<div class="muMarkRow"><span class="muMarkNo">→</span><span>to <b>${DATA.stations[n.route.b] ? DATA.stations[n.route.b].name : 'the far end'}</b> — a town at the far end; marks are for a presser sent to a point</span></div>`;
+    let from = home;
+    marks.forEach((m, i) => {
+      htm += `<div class="muMarkRow"><span class="muMarkNo">${i + 1}</span><span>${U.fmtDist(U.dist(from.x, from.y, m.x, m.y))} ${dirWord(m.x - from.x, m.y - from.y)} of ${i === 0 ? home.name : `mark ${i}`}</span></div>`;
+      from = m;
+    });
+    htm += `<div class="muMarkRow trail"><span class="muMarkNo">◇</span><span>the trail: <b>${tr ? Math.round(tr.frac * 100) + '%' : '—'}</b> bare of what can wear${tr ? ` · ${tr.bare} of ${tr.total} stretches` : ' · measured each time they reach an end'} · done at ${Math.round(MUSTER.TRAIL_DONE * 100)}%</span></div>`;
+    if (marks.length) htm += `<div class="muMarkBtns"><button class="miniBtn" data-addmark="1">ADD A MARK</button>${marks.length > 1 ? '<button class="miniBtn" data-strikemark="1">STRIKE THE LAST</button>' : ''}</div>`;
+    return htm;
+  }
   function orders() {
     const row = rows.find(r => r.n.id === sel); if (!row) return `<div class="fmNote">Choose a walker on the roll — their standing orders open here, and the wedge plate shows where they will stand.</div>`;
-    const n = row.n, O = NPC.ordersOf(n);
-    let htm = `<div class="muOrdHead"><span class="muName">${n.name}</span><span class="muSub">standing orders${row.where !== 'companion' ? ' — kept until they walk with you' : ''}</span></div>
-      <div class="muPresets">${Object.entries(MUSTER.PRESETS).map(([id, P]) => `<button class="miniBtn ${O.preset === id ? 'on' : ''}" data-preset="${id}" title="${P.line}">${P.name}</button>`).join('')}</div>
-      <div class="muPresetLine">${O.preset ? MUSTER.PRESETS[O.preset].line : 'hand-set — the Order\'s presets are a starting point, not a leash'}</div>`;
-    for (const [key, rowD] of Object.entries(MUSTER.ORDERS)) {
+    const n = row.n, O = NPC.ordersOf(n), W2 = NPC.workOf(n);
+    let htm;
+    if (W2.kind === 'walk') {
+      htm = `<div class="muOrdHead"><span class="muName">${n.name}</span><span class="muSub">standing orders${row.where !== 'companion' ? ' — kept until they walk with you' : ''}</span></div>
+        <div class="muPresets">${Object.entries(MUSTER.PRESETS).map(([id, P]) => `<button class="miniBtn ${O.preset === id ? 'on' : ''}" data-preset="${id}" title="${P.line}">${P.name}</button>`).join('')}</div>
+        <div class="muPresetLine">${O.preset ? MUSTER.PRESETS[O.preset].line : 'hand-set — the Order\'s presets are a starting point, not a leash'}</div>`;
+    } else {
+      /* v3.37: the working orders — the job's rows from the registry, on the same store */
+      const where = W2.kind === 'road' ? `${DATA.stations[n.route.a].name} ⇄ ${DATA.stations[n.route.b].name}` : `out of ${DATA.stations[n.route.a].name}${n.route.b ? ` to ${DATA.stations[n.route.b].name}` : ''}`;
+      htm = `<div class="muOrdHead"><span class="muName">${n.name}</span><span class="muSub">working orders — ${W2.name.toLowerCase()} ${where}</span></div>
+        <div class="muPresetLine">${W2.kind === 'road' ? 'a charter runs on its own clock; these orders set what it carries and how hard it runs' : `${(CHAR.FIELD_JOBS[n.job] || {}).note || ''}`}</div>`;
+    }
+    for (const [key, rowD] of Object.entries(W2.rows)) {
       htm += `<div class="muOrder"><span class="muOrdName">${rowD.name}<i>${rowD.line}</i></span><span class="muChoices">${Object.entries(rowD.choices).map(([c, d]) => `<button class="miniBtn ${O[key] === c ? 'on' : ''}" data-order="${key}" data-choice="${c}">${d.name}</button>`).join('')}</span>
         <div class="muOrdLine">${rowD.choices[O[key]].line}</div></div>`;
     }
-    for (const [verb, T2] of Object.entries(MUSTER.TREES)) {
-      htm += `<div class="fmGroup">${T2.name}<i class="muTreeHint">${T2.line}${verb === 'hand' ? ' · mission cargo, tools and the lost never move' : ''}</i></div>${treeRows(n, verb)}`;
+    if (W2.kind === 'field' && n.job === 'presser') htm += marksPane(n);
+    for (const verb of W2.trees) {
+      const T2 = MUSTER.TREES[verb];
+      htm += `<div class="fmGroup">${T2.name}<i class="muTreeHint">${T2.line}${verb === 'hand' ? ' · mission cargo, tools and the lost never move' : verb === 'haul' ? ' · a town takes only what it NEEDS, from this list' : ''}</i></div>${treeRows(n, verb)}`;
     }
     return htm;
   }
@@ -15658,16 +16151,19 @@ const MusterUI = (() => {
     ov.addEventListener('click', e => {
       if (e.target === ov) { close(); return; }
       const pl = e.target.closest('[data-mu]');
-      const t = e.target.closest('[data-preset],[data-order],[data-tree]');
+      const t = e.target.closest('[data-preset],[data-order],[data-tree],[data-addmark],[data-strikemark]');
       if (pl && !t) { const row = rows.find(r => String(r.n.id) === pl.dataset.mu); if (row) sel = row.n.id; render(); Snd.sfx.ui && Snd.sfx.ui(); return; }
       if (!t) return;
       const row = rows.find(r => r.n.id === sel); if (!row) return;
       if (t.dataset.preset) NPC.applyPreset(row.n, t.dataset.preset);
-      else if (t.dataset.order) NPC.setOrder(row.n, t.dataset.order, t.dataset.choice);
+      else if (t.dataset.order) { NPC.setOrder(row.n, t.dataset.order, t.dataset.choice); Systems.tut && Systems.tut('firstWorking'); }
       else if (t.dataset.tree) {
-        const st = Ledger.markStateIn(NPC.ordersOf(row.n).policy, t.dataset.node, t.dataset.tree, { loot: MUSTER.TREE_DEFAULT, hand: MUSTER.TREE_DEFAULT });
-        NPC.setTreeMark(row.n, t.dataset.tree, t.dataset.node, st !== 'on');
+        const P = NPC.ordersOf(row.n).policy, dflt = treeDflt();
+        if (t.dataset.item) NPC.setTreeMark(row.n, t.dataset.tree, t.dataset.node, !Ledger.effectiveIn(P, t.dataset.node, t.dataset.tree, dflt), true);
+        else { const st = Ledger.markStateIn(P, t.dataset.node, t.dataset.tree, dflt); NPC.setTreeMark(row.n, t.dataset.tree, t.dataset.node, st !== 'on'); }
       }
+      else if (t.dataset.addmark) { close(); NPC.armPress(row.n.id, row.n.route.a, true); Snd.sfx.ui && Snd.sfx.ui(); return; }   // v3.37: the next click on the ground is the next mark
+      else if (t.dataset.strikemark) NPC.strikeMark(row.n);
       Snd.sfx.ui && Snd.sfx.ui();
       render();
     });
@@ -16176,6 +16672,16 @@ const Render = (() => {
     'OGGGGOGGGO',
     'OOOOOOOOOO'];
   const CRATES_PAL = { O: '#12161c', G: '#6e747c', w: '#b8c2c8' };
+  /* v3.37 — a presser's MARK: the Order's own small gold flag on a pole, one per clicked point */
+  const MARK = [
+    'OY......',
+    'OYOOOOO.',
+    'OYGgGGO.',
+    'OYGGgGGO',
+    'OYGGGGO.',
+    'OYOOOO..',
+    'OY......', 'OY......', 'OY......', 'OY......', 'OY......', 'OY......'];
+  const MARK_PAL = { O: '#12161c', Y: '#4a3320', G: '#c9a05a', g: '#ffd98f' };
   const HUT = [
     '.rrrrrrrrrrrrrr.',
     'RRRRRRRRRRRRRRRR',
@@ -18526,6 +19032,29 @@ const Render = (() => {
       if (cam.z > 0.7) plabel((cv.frozen ? 'FROZEN — ' : cv.waiting ? 'WAITING — ' : 'CONVOY — ') + cv.n.name.split(' ')[0], cv.x, cv.y + 13, 3, cv.frozen || cv.waiting ? '#e0654a' : '#ffd98f');
     }
     // v3.20 THE WORKING WORLD: field crews, visibly at it — the valley works whether you watch or not
+    /* v3.37 THE MARKS: a presser's chain stands on the ground as flags, numbered in order from the
+       town, and the line they walk is dotted between them while a presser is near enough to be seen */
+    for (const fn2 of NPC.fieldAll ? NPC.fieldAll() : []) {
+      if (fn2.job !== 'presser' || !fn2.route || !NPC.marksOf) continue;
+      const marks = NPC.marksOf(fn2);
+      if (!marks.length) continue;
+      const near = fn2.fx !== undefined && U.dist(S.px, S.py, fn2.fx, fn2.fy) < 900;
+      if (near && fn2.fpath && fn2.fpath.pts && cam.z > 0.45) {
+        cx.fillStyle = 'rgba(201,160,90,0.85)';
+        const pts = fn2.fpath.pts;   // three world units — a texel at the world zoom, never a sub-texel speck
+        for (let k = 0; k + 1 < pts.length; k++) {
+          const [x1, y1] = pts[k], [x2, y2] = pts[k + 1];
+          const L = Math.hypot(x2 - x1, y2 - y1);
+          for (let d2 = 0; d2 < L; d2 += 18) { const t2 = d2 / L, x = x1 + (x2 - x1) * t2, y = y1 + (y2 - y1) * t2; if (inView(x, y, 8)) cx.fillRect(Math.round(x) - 1, Math.round(y) - 1, 3, 3); }
+        }
+      }
+      marks.forEach((m, i) => {
+        if (!inView(m.x, m.y, 40)) return;
+        pixShadow(m.x, m.y + 2, 8);
+        blit(MARK, m.x - 4, m.y - 30, 2.5, MARK_PAL, ((S.time * 2 + i) | 0) % 2 === 1);
+        if (cam.z > 0.7 && U.dist(S.px, S.py, m.x, m.y) < 520) plabel(`MARK ${i + 1}`, m.x, m.y + 10, 3, '#c9a05a');
+      });
+    }
     for (const fn2 of NPC.fieldAll ? NPC.fieldAll() : []) {
       if (fn2.fx === undefined || !inView(fn2.fx, fn2.fy, 90)) continue;
       const caravan = fn2.job === 'hauler' && (fn2.skills.haul || 0) >= T.haulLvCaravan;

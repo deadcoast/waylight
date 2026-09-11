@@ -43,6 +43,7 @@ const ManualUI = (() => {
     const r = KEYS.rebind(listening, e.code);
     verdict = r.ok ? `${KEYS.ACTIONS[listening].name} answers ${KEYS.label(e.code)} now.` : `Refused — ${r.why}.`;
     if (r.ok) Snd.sfx.accept && Snd.sfx.accept(); else Snd.sfx.denied && Snd.sfx.denied();
+    if (r.ok && typeof UI2 !== 'undefined' && UI2.renderHint) UI2.renderHint();   // v3.37: the rail's hint strip reads the new cap at once
     listening = null;
     render();
   }
@@ -169,7 +170,7 @@ const ManualUI = (() => {
       const t = e.target.closest('[data-act],[data-fmreset],[data-fmopen],[data-fmuse],[data-fmimport]');
       if (!t) return;
       if (t.dataset.act !== undefined) { if (!t.classList.contains('fixed')) startListen(t.dataset.act); }
-      else if (t.dataset.fmreset) { KEYS.reset(t.dataset.fmreset === 'all' ? null : t.dataset.fmreset); verdict = t.dataset.fmreset === 'all' ? 'Every key stands as the Order printed it.' : `${KEYS.ACTIONS[t.dataset.fmreset].name} answers its printed key again.`; render(); }
+      else if (t.dataset.fmreset) { KEYS.reset(t.dataset.fmreset === 'all' ? null : t.dataset.fmreset); verdict = t.dataset.fmreset === 'all' ? 'Every key stands as the Order printed it.' : `${KEYS.ACTIONS[t.dataset.fmreset].name} answers its printed key again.`; if (typeof UI2 !== 'undefined' && UI2.renderHint) UI2.renderHint(); render(); }
       else if (t.dataset.fmopen) openPaper(t.dataset.fmopen);
       else if (t.dataset.fmuse) { ctx.useSlot(+t.dataset.fmuse); render(); }
       else if (t.dataset.fmimport) { importTarget = +t.dataset.fmimport; render(); const box = $('fmImportBox'); if (box) box.focus(); }

@@ -14,12 +14,9 @@ Doctrine applied (research-pixel-art-audited.md):
   · integer downscale only (--scale N): majority vote per N×N block, alpha-gated — never a resample
   · transparent → '.' ; the outline letter is whatever the palette maps black to
 """
-import argparse
-import json
+import sys, json, argparse
 from collections import Counter
-
 from PIL import Image
-
 
 def hex2rgb(h):
     h = h.lstrip('#'); return tuple(int(h[i:i + 2], 16) for i in (0, 2, 4))
@@ -47,10 +44,8 @@ def load_grid(path, alpha_min):
     im = Image.open(path).convert('RGBA')
     w, h = im.size
     px = im.load()
-    return [
-        [(px[x, y] if px[x, y][3] >= alpha_min else None) for x in range(w)]
-        for y in range(h)
-    ]
+    grid = [[(px[x, y] if px[x, y][3] >= alpha_min else None) for x in range(w)] for y in range(h)]
+    return grid
 
 def trim(grid):
     rows = [y for y, row in enumerate(grid) if any(p is not None for p in row)]

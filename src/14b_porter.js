@@ -125,7 +125,7 @@ const Porter = (() => {
     return c.skills[id] >= 2 ? 2 : 1.5;
   }
   function manualMult(id) {
-    const {lv} = S.skills[id];
+    const lv = S.skills[id].lv;
     for (let vi = 0; vi < 3; vi++) {
       if (S.manuals[`${id}${vi + 1}`] && lv >= MANUAL_VOLS[vi].band[0] && lv <= MANUAL_VOLS[vi].band[1]) return MANUAL_VOLS[vi].mul;
     }

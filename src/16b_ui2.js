@@ -281,18 +281,84 @@ const UI2 = (() => {
     if (showWarm) $('warmFill').style.width = S.warmth + '%';
     updateCompChip();
   }
-  function updateCompChip() {
-    const n = NPC.companion();
-    const chip = $('compChip');
-    if (!n) { chip.classList.add('hidden'); return; }
-    chip.classList.remove('hidden');
-    const kg = n.carry.reduce((a, c) => a + c.kg, 0);
-    const htm = `<img src="${Porter.portrait(n.seed, 36)}" width="36" height="36">
-      <div><div class="nm">${n.name}</div>
-      <div class="st">${CLASSES[n.cls].name} · carrying <b>${U.fmtKg(kg)}/${NPC.capOf(n)} kg</b> · ${n.hungry ? '<span class="hungry">HUNGRY</span>' : 'fed'} · <span style="color:var(--bone-faint)">click to hand over</span></div></div>`;
-    if (chip._last !== htm) { chip._last = htm; chip.innerHTML = htm; }
+  /* ---------- v3.37 THE WEDGE CARD: the companion chip, grown into the party's own HUD card ----------
+     every back walking with you on one glass: their own figure, first name, MOOD in its band colour,
+     what they carry, and beside it a LIVE formation glyph — the slots the orders describe and where
+     each back actually stands right now, in your frame. Click the card to hand over; the cap opens
+     the muster. The card can be put away and comes back from the tab or the rail; the choice keeps. */
+  const HUD_KEY = 'waylight.hud';
+  function hudPref() { try { return JSON.parse(localStorage.getItem(HUD_KEY) || '{}') || {}; } catch (e) { return {}; } }
+  function setHudPref(k, v) { const p = hudPref(); p[k] = v; try { localStorage.setItem(HUD_KEY, JSON.stringify(p)); } catch (e) {} }
+  const wedgeShown = () => hudPref().wedge !== false;
+  function toggleWedge(on) {
+    setHudPref('wedge', on === undefined ? !wedgeShown() : !!on);
+    updateCompChip();
+    const rb = $('railWedgeBtn'); if (rb) rb.innerHTML = `THE WEDGE CARD · ${wedgeShown() ? 'SHOWN' : 'PUT AWAY'}`;
   }
-  $('compChip') && $('compChip').addEventListener('click', () => { Snd.sfx.ui(); openTransfer(); });
+  function updateCompChip() {
+    const pt = NPC.party();
+    const chip = $('compChip'), tab = $('wcTab');
+    if (!pt.length) { chip.classList.add('hidden'); if (tab) tab.classList.add('hidden'); return; }
+    if (!wedgeShown()) { chip.classList.add('hidden'); if (tab) tab.classList.remove('hidden'); return; }
+    if (tab) tab.classList.add('hidden');
+    chip.classList.remove('hidden');
+    const rows = pt.map(n => {
+      const kg = n.carry.reduce((a, c) => a + c.kg, 0), m = NPC.mood(n);
+      const why = m.causes.length ? m.causes.map(c => `${c.line} ${c.v > 0 ? '+' : ''}${c.v}`).join(' · ') : 'nothing weighs on them';
+      const kit = n.fk && typeof SPRITES !== 'undefined' && SPRITES.KIT[n.fkCls];
+      return `<div class="wcRow"><img src="${Render.npcRigURL(n, 2)}" width="${kit ? 28 : 24}" height="${kit ? 44 : 36}" alt="">
+        <div><div class="nm">${n.name.split(' ')[0]} <i class="wcMood" style="color:${m.col}" title="${why}">${m.band}</i></div>
+        <div class="st">${n.fk ? ((FACT.FK_CLASSES[n.fkCls] || {}).name || 'Farkeeper') : CLASSES[n.cls].name} · carrying <b>${U.fmtKg(kg)}/${NPC.capOf(n)} kg</b> · ${n.hungry ? '<span class="hungry">HUNGRY</span>' : 'fed'}</div></div></div>`;
+    }).join('');
+    const htm = `<canvas id="wcGlyph" width="64" height="72" class="wcGlyph" title="the wedge — where each back stands, live"></canvas>
+      <div class="wcRows">${rows}<div class="wcFoot"><span>click to hand over</span><button class="wcBtn" id="wcMuster" title="the muster roll">THE MUSTER</button><button class="wcBtn dim" id="wcHide" title="put the wedge card away">&minus;</button></div></div>`;
+    if (chip._last !== htm) { chip._last = htm; chip.innerHTML = htm; chip._gt = 0; }
+    drawWedgeGlyph(true);
+  }
+  let wedgeT = 0;
+  function drawWedgeGlyph(force) {
+    const cv = $('wcGlyph'); if (!cv || !S) return;
+    const now = performance.now();
+    if (!force && now - wedgeT < 100) return;
+    wedgeT = now;
+    const g = cv.getContext('2d'), W = cv.width, H = cv.height;
+    g.imageSmoothingEnabled = false;
+    g.fillStyle = '#0b1017'; g.fillRect(0, 0, W, H);
+    g.fillStyle = '#131a23'; for (let y = 3; y < H; y += 6) for (let x = (y % 12) ? 3 : 6; x < W; x += 6) g.fillRect(x, y, 1, 1);
+    const cxp = W / 2, cyp = H * 0.6, k = 0.26;
+    /* the way you walk: north */
+    g.fillStyle = '#3a4048'; g.fillRect(cxp - 1, 3, 2, 6); g.fillRect(cxp - 3, 3, 6, 1);
+    const pt = NPC.party(), idx = {};
+    const ca = Math.cos(S.dir), sa = Math.sin(S.dir), pa = Math.cos(S.dir + Math.PI / 2), ps = Math.sin(S.dir + Math.PI / 2);
+    let hold = false;
+    for (const n of pt) {
+      const O = NPC.ordersOf(n); if (O.stand === 'hold') hold = true;
+      const slots = MUSTER.STATIONS[O.station] || MUSTER.STATIONS.wedge;
+      const i = idx[O.station] = (idx[O.station] || 0); idx[O.station]++;
+      const [back, side] = slots[i % slots.length];
+      const sx = Math.round(cxp + side * k), sy = Math.round(cyp - back * k);
+      g.strokeStyle = 'rgba(184,178,157,0.35)'; g.strokeRect(sx - 3.5, sy - 1.5, 7, 3);   // the slot
+      if (n.cx !== undefined) {
+        const dx = n.cx - S.px, dy = n.cy - S.py;
+        const b2 = dx * ca + dy * sa, s2 = dx * pa + dy * ps;
+        const lx = Math.round(cxp + s2 * k), ly = Math.round(cyp - b2 * k);
+        const m = NPC.moodCached(n);
+        g.fillStyle = m.col; g.fillRect(U.clamp(lx, 1, W - 3) - 1, U.clamp(ly, 1, H - 3) - 1, 3, 3);   // where they ARE, in their mood's colour
+      }
+    }
+    if (hold) { g.strokeStyle = 'rgba(255,181,79,0.4)'; g.setLineDash([2, 2]); g.beginPath(); g.arc(cxp, cyp, MUSTER.HOLD_SCREEN * k * 0.55, 0, 7); g.stroke(); g.setLineDash([]); }
+    g.fillStyle = '#ffd98f'; g.fillRect(cxp - 1, cyp - 2, 3, 4);   // you
+    g.fillStyle = '#7a7666'; g.font = '800 6px ui-monospace, Menlo, monospace'; g.textAlign = 'center'; g.fillText('THE WEDGE', cxp, H - 3);
+  }
+  function tickWedge() { if ($('compChip').classList.contains('hidden')) return; drawWedgeGlyph(false); }
+  $('compChip') && $('compChip').addEventListener('click', e => {
+    const b = e.target.closest('.wcBtn');
+    if (b && b.id === 'wcHide') { Snd.sfx.ui(); toggleWedge(false); return; }
+    if (b && b.id === 'wcMuster') { Snd.sfx.ui(); MusterUI.open(); return; }
+    Snd.sfx.ui(); openTransfer();
+  });
+  $('wcTab') && $('wcTab').addEventListener('click', () => { Snd.sfx.ui(); toggleWedge(true); });
+  { const rb = $('railWedgeBtn'); if (rb) { rb.innerHTML = `THE WEDGE CARD · ${wedgeShown() ? 'SHOWN' : 'PUT AWAY'}`; rb.addEventListener('click', () => { Snd.sfx.ui(); toggleWedge(); }); } }
 
   /* ---------- the hand-over: your pack and theirs, side by side ---------- */
   function openTransfer() {
@@ -321,9 +387,7 @@ const UI2 = (() => {
   $('packOv') && $('packOv').addEventListener('click', e => {
     const g = e.target.closest('[data-txgive]'), t = e.target.closest('[data-txtake]');
     if (g && !g.classList.contains('stuck')) { const c = S.cargo.find(x => x.id === +g.getAttribute('data-txgive')); if (c && NPC.give(c)) { Snd.sfx.pickup(); renderTransfer(); UI.updateHUD(); } }
-    else if (t && NPC.take(+t.getAttribute('data-txtake'))) {
-               Snd.sfx.pickup(); renderTransfer(); UI.updateHUD();
-         }
+    else if (t) { if (NPC.take(+t.getAttribute('data-txtake'))) { Snd.sfx.pickup(); renderTransfer(); UI.updateHUD(); } }
   });
   $('txClose') && $('txClose').addEventListener('click', () => { Snd.sfx.ui(); $('packOv').classList.add('hidden'); });
 
@@ -493,8 +557,15 @@ const UI2 = (() => {
     const btn = $('briefGo');
     btn.onclick = () => { ov.classList.add('hidden'); Snd.sfx.accept(); if (onDone) onDone(); };
   }
+  /* v3.37 (the v3.35 note kept): the hint strip prints the caps KEYS holds NOW — a rebound key reads here too */
+  function renderHint() {
+    const h = $('hintStrip'); if (!h) return;
+    const cap = a => (typeof KEYS !== 'undefined' ? KEYS.capFor(a) : '');
+    h.innerHTML = `<span class="k">M1</span>walk there <span class="k">M1+M2</span>sprint <span class="k">${cap('cargo') || 'I'}</span>pack <span class="k">${cap('skills') || 'K'}</span>skills <span class="k">${cap('eat') || 'H'}</span>eat <span class="k">${cap('map') || 'M'}</span>map <span class="k">${cap('interact') || 'E'}</span>interact <span class="k">${cap('build') || 'B'}</span>build`;
+  }
   function showHint(seconds) {
     const h = $('hintStrip');
+    renderHint();
     h.classList.remove('hidden');
     clearTimeout(h._t);
     h._t = setTimeout(() => h.classList.add('hidden'), seconds * 1000);
@@ -502,5 +573,6 @@ const UI2 = (() => {
 
   return {
     openTailor,
- openCharGen, showDeath, toggleSkills, updateMoodles, openLoot, openTrader, renderWaylighters, showBriefing, showHint, openTransfer };
+ openCharGen, showDeath, toggleSkills, updateMoodles, openLoot, openTrader, renderWaylighters, showBriefing, showHint, openTransfer,
+    tickWedge, toggleWedge, wedgeShown, renderHint };   // v3.37: the wedge card, the hint strip in YOUR keys
 })();

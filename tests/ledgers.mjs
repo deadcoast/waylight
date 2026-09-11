@@ -92,7 +92,7 @@ r = await ev(() => {
   Ledger.setMark('freight', 'pickup', true);                          // allow freight pickup
   const before = S.orders.active.length;
   const slip = Ledger.runDossier('haven');                            // second pass: pickup fills from the board
-  const {active} = S.orders;
+  const active = S.orders.active;
   const letters = active.filter(o => o.service).length;
   return { slip: slip.summary, took: active.length - before, letters, wOk: State.weight() <= State.cap() };
 });

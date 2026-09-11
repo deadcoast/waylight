@@ -34,7 +34,7 @@ let r = await ev(() => {
     papers: PAPERS.length, papersWhole: PAPERS.every(p => p.name && p.line && (p.key || p.via)), lessons: tut.length, titled: tut.every(k => titles[k]),
     label: [KEYS.label('KeyW'), KEYS.label('ShiftLeft'), KEYS.label('ArrowUp'), KEYS.label('F1'), KEYS.label('Digit3')].join(' ') };
 });
-ok('THE REGISTRIES: eighteen actions each named with unique codes and readable caps, eleven papers each with a way in, thirty-five lessons each titled', r.actions === 18 && r.allNamed && r.unique && r.papers === 11 && r.papersWhole && r.lessons === 35 && r.titled && r.label === 'W Shift ↑ F1 3', JSON.stringify(r));
+ok('THE REGISTRIES: eighteen actions each named with unique codes and readable caps, eleven papers each with a way in, thirty-eight lessons each titled', r.actions === 18 && r.allNamed && r.unique && r.papers === 11 && r.papersWhole && r.lessons === 38 && r.titled && r.label === 'W Shift ↑ F1 3', JSON.stringify(r));
 
 /* ================= 2 · REBINDING, BY LAW ================= */
 r = await ev(() => {
@@ -83,7 +83,7 @@ r = await ev(() => {
   const note = document.querySelector('#fmBody .fmNote').textContent;
   return { all, sealed, full: !!full, sealedText, note };
 });
-ok('LESSONS: thirty-five pages — the five walked stand in FULL, thirty stay SEALED without leaking their text, and the count is printed', r.all === 35 && r.sealed === 30 && r.full && r.sealedText && /5.*of.*35/.test(r.note.replace(/\s+/g, ' ')), JSON.stringify(r).slice(0, 300));
+ok('LESSONS: thirty-eight pages — the five walked stand in FULL, thirty-three stay SEALED without leaking their text, and the count is printed', r.all === 38 && r.sealed === 33 && r.full && r.sealedText && /5.*of.*38/.test(r.note.replace(/\s+/g, ' ')), JSON.stringify(r).slice(0, 300));
 await page.fill('#fmSearch', 'wobble'); await page.waitForTimeout(200);
 r = await ev(() => ({ shown: document.querySelectorAll('#fmBody .fmLesson').length, first: (document.querySelector('#fmBody .fmLesson .fmTitle') || {}).textContent || '' }));
 await page.fill('#fmSearch', 'Timberwolf'); await page.waitForTimeout(200);

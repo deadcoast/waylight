@@ -39,8 +39,8 @@ let r = await ev(() => {
   const stSame = ['resources', 'curios', 'cargo'].every(n => Ledger.VERBS.every(v => Ledger.markState(n, v) === Ledger.markStateIn(Ledger.led().policy, n, v)));
   return { orders: Object.keys(O).length, ordersWhole, presets: Object.keys(P).length, presetsWhole, trees: Object.keys(T2).length, stations: stations.join(), slots, call, same, stSame };
 });
-ok('THE REGISTRIES: four scalar orders with defaults and lines, two trees, five whole presets on the taxonomy, four stations of three slots, a roll-call word for every choice — and the pack\'s ledger reads IDENTICALLY through the store-parameterized engine',
-  r.orders === 4 && r.ordersWhole && r.presets === 5 && r.presetsWhole && r.trees === 2 && r.stations === 'wedge,close,loose,point' && r.slots && r.call && r.same && r.stSame, JSON.stringify(r));
+ok('THE REGISTRIES: four scalar orders with defaults and lines, three trees (the freight list joined them in v3.37), five whole presets on the taxonomy, four stations of three slots, a roll-call word for every choice — and the pack\'s ledger reads IDENTICALLY through the store-parameterized engine',
+  r.orders === 4 && r.ordersWhole && r.presets === 5 && r.presetsWhole && r.trees === 3 && r.stations === 'wedge,close,loose,point' && r.slots && r.call && r.same && r.stSame, JSON.stringify(r));
 
 /* ================= 2 · DEFAULT ORDERS, AND A WALKER'S STORE APART FROM THE PACK'S ================= */
 r = await ev(() => {
@@ -219,7 +219,7 @@ ok('the muster is in the papers, on the keys, and in the manual\'s lessons', r.p
 r = await ev(() => {
   const a = NPC.party().find(n => !n.fk), k = NPC.party().find(n => n.fk);
   NPC.setOrder(a, 'mess', 'own'); NPC.setTreeMark(a, 'hand', 'curios', true);
-  const {km} = NPC.svc(a);
+  const km = NPC.svc(a).km;
   State.save(); const loaded = State.load();
   const a2 = S.npcs.find(n => n.name === a.name), k2 = S.npcs.find(n => n.name === k.name);
   return { loaded, mess: NPC.ordersOf(a2).mess, curios: NPC.allows(a2, 'hand', 'relic_coin') || NPC.allows(a2, 'hand', Object.keys(DATA.items).find(id => DATA.items[id].cat === 'relic')), km: NPC.svc(a2).km === km, kStation: NPC.ordersOf(k2).station };

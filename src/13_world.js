@@ -479,18 +479,40 @@ const World = (() => {
   }
   function packFell() { return [...felled]; }
   function loadFell(list) { if (!list) return; for (const i of list) { if (cls[i] === FOREST) { cls[i] = MEADOW; felled.add(i); paintFellCell(i); } } if (list.length) pcost = null; }
-  /* nearest standing forest cell to a point, within reach — the forrester's next tree */
-  function nearestForest(x, y, r) {
+  /* nearest standing forest cell to a point, within reach — the forrester's next tree.
+     v3.37: the result carries its cell index, and a `skip` set of indices is the stand a THIN
+     forrester leaves — every other tree, kept on the map for good. */
+  function nearestForest(x, y, r, skip) {
     let best = null, bd = r;
     const c0x = Math.max(0, ((x - r) / CS) | 0), c1x = Math.min(CW - 1, ((x + r) / CS) | 0);
     const c0y = Math.max(0, ((y - r) / CS) | 0), c1y = Math.min(CH - 1, ((y + r) / CS) | 0);
     for (let cy = c0y; cy <= c1y; cy++) for (let cx = c0x; cx <= c1x; cx++) {
-      if (cls[cy * CW + cx] !== FOREST) continue;
+      const i = cy * CW + cx;
+      if (cls[i] !== FOREST || (skip && skip.has(i))) continue;
       const wx = cx * CS + CS / 2, wy = cy * CS + CS / 2;
       const d = Math.hypot(wx - x, wy - y);
-      if (d < bd) { bd = d; best = { x: wx, y: wy }; }
+      if (d < bd) { bd = d; best = { x: wx, y: wy, i }; }
     }
     return best;
+  }
+  /* v3.37 — the state of a trail: sampled along a polyline, how much of the ground that CAN wear
+     is bare (or already laid). A presser's work is measured here, never guessed. */
+  function trailState(pts) {
+    let bare = 0, total = 0;
+    if (!pts || pts.length < 2) return { bare, total, frac: 0 };
+    for (let k = 0; k + 1 < pts.length; k++) {
+      const [x1, y1] = pts[k], [x2, y2] = pts[k + 1];
+      const len = Math.hypot(x2 - x1, y2 - y1), steps = Math.max(1, Math.round(len / WSC));
+      for (let s = 0; s < steps; s++) {
+        const t = s / steps, x = x1 + (x2 - x1) * t, y = y1 + (y2 - y1) * t;
+        const c = classAt(x, y);
+        if (c !== MEADOW && c !== MARSH) continue;
+        const i = wearIdx(x, y); if (i < 0) continue;
+        total++;
+        if (pave[i] || wear[i] >= W_BARE) bare++;
+      }
+    }
+    return { bare, total, frac: total ? bare / total : 1 };
   }
 
   function coverage() {
@@ -758,6 +780,6 @@ const World = (() => {
     W, H, MEADOW, FOREST, SCREE, ROCK, SNOW, MARSH, SHALLOW, DEEP, CLIFF, bake, hgtAt, classAt, terrainAt, riverAt,
     setSources, lightAt, mistAt, mistBase, rebuildLight, coverage, tc, TS, overlayC, lightOv, lightOvN, lightWarm, lightDim, repaintRoads,
     addWear, wearAt, flushWear, packWear, loadWear, clearWear, W_TRAMPLE, W_BARE,
-    paveAt, layPave, packPave, loadPave, fellAt, packFell, loadFell, nearestForest, paintRoadSegment, paverPos, pathTime, buildPathGrid, pathCell, PS,
+    paveAt, layPave, packPave, loadPave, fellAt, packFell, loadFell, nearestForest, trailState, paintRoadSegment, paverPos, pathTime, buildPathGrid, pathCell, PS,
   };
 })();

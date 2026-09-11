@@ -650,14 +650,24 @@ input[type=range]::-moz-range-thumb { width:12px; height:14px; border:none; bord
 .moodle.good { color:var(--ok); }
 @keyframes moodlePulse { 50% { filter:brightness(1.6); } }
 
-/* ---------- companion chip ---------- */
-#compChip { position:absolute; left:18px; bottom:150px; display:flex; gap:9px; align-items:center; padding:7px 11px; pointer-events:auto; cursor:pointer; transition:border-color .15s, background .15s; }
+/* ---------- companion chip → v3.37 THE WEDGE CARD ---------- */
+#compChip { position:absolute; left:18px; bottom:150px; display:flex; gap:10px; align-items:stretch; padding:7px 9px 6px 7px; pointer-events:auto; cursor:pointer; transition:border-color .15s, background .15s; max-width:330px; }
 #compChip:hover { border-color:var(--gold); background:rgba(255,201,120,.08); }
 #compChip .st b { color:var(--gold); }
-#compChip img { border:1px solid var(--line2); }
-#compChip .nm { font:600 13px var(--disp); color:var(--bone); }
+#compChip .nm { font:600 13px var(--disp); color:var(--bone); line-height:1.1; }
 #compChip .st { font:11px var(--ui); color:var(--bone-dim); }
 #compChip .st .hungry { color:var(--rust); font-weight:700; }
+#compChip .wcGlyph { flex:none; width:64px; height:72px; image-rendering:pixelated; border:2px solid var(--line2); box-shadow:var(--chunk); background:#0b1017; align-self:center; }
+#compChip .wcRows { display:flex; flex-direction:column; gap:3px; min-width:0; }
+#compChip .wcRow { display:flex; gap:7px; align-items:center; }
+#compChip .wcRow img { image-rendering:pixelated; flex:none; border:1px solid var(--line2); background:#10161f; }
+#compChip .wcMood { font:800 8px var(--mono); letter-spacing:.14em; font-style:normal; margin-left:4px; vertical-align:1px; }
+#compChip .wcFoot { display:flex; align-items:center; gap:6px; margin-top:2px; font:10px var(--ui); color:var(--bone-faint); }
+#compChip .wcBtn { font:800 8px var(--mono); letter-spacing:.12em; color:var(--gold); background:rgba(0,0,0,.25); border:1px solid var(--line); padding:2px 5px; cursor:pointer; margin-left:auto; }
+#compChip .wcBtn.dim { color:var(--bone-faint); margin-left:0; padding:2px 6px; }
+#compChip .wcBtn:hover { border-color:var(--gold); color:var(--gold-hot); }
+#wcTab { position:absolute; left:18px; bottom:150px; pointer-events:auto; cursor:pointer; font:800 8.5px var(--mono); letter-spacing:.14em; color:var(--bone-dim); padding:4px 8px; border:1px solid var(--line2); }
+#wcTab:hover { color:var(--gold); border-color:var(--gold); }
 
 /* ---------- char-gen ---------- */
 #cgTop { display:flex; gap:16px; align-items:flex-start; }
@@ -851,6 +861,15 @@ input[type=range]::-moz-range-thumb { width:12px; height:14px; border:none; bord
 .muLast { font:italic 11px var(--disp); color:var(--bone-faint); margin-top:4px; line-height:1.4; }
 .muOrd { font:800 8px var(--mono); letter-spacing:.14em; font-style:normal; color:var(--gold); border:1px solid var(--line); padding:0 4px; margin-right:2px; }
 .muOrd.own { color:var(--bone-dim); border-color:var(--line2); }
+.muOrd.work { color:#8fb08a; border-color:rgba(143,176,138,.5); }
+/* v3.37 — the mood on the plate, the marks pane */
+.muMood { display:flex; align-items:baseline; gap:7px; margin-top:4px; font:11px var(--ui); color:var(--bone-dim); flex-wrap:wrap; }
+.muBand { font:800 8px var(--mono); letter-spacing:.14em; padding:0 4px; border:1px solid; flex:none; }
+.muWhy b { font-weight:700; }
+.muMarkRow { display:flex; gap:8px; align-items:baseline; padding:4px 2px; border-bottom:1px solid rgba(233,226,208,.05); font:12px var(--ui); color:var(--bone-dim); }
+.muMarkRow.trail { color:var(--bone); }
+.muMarkNo { flex:none; width:16px; height:16px; display:inline-flex; align-items:center; justify-content:center; font:800 9px var(--mono); color:var(--gold); border:1px solid var(--line); }
+.muMarkBtns { display:flex; gap:6px; padding:6px 0 2px; }
 .muWedge { width:100%; height:auto; image-rendering:pixelated; border:2px solid var(--line); box-shadow:var(--chunk); background:#0b1017; display:block; }
 .muOrdHead { display:flex; align-items:baseline; gap:10px; margin:2px 0 8px; }
 .muPresets { display:flex; flex-wrap:wrap; gap:4px; }

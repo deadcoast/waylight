@@ -5,7 +5,9 @@
    into their own pack, what they TAKE off your back when you are overloaded), four scalar orders
    (where they STAND in the wedge, how they eat at the MESS, how they STAND to trouble, whether
    they have a VOICE), five named presets the Order hands out, and the slot geometry the wedge
-   walks. A new order is a row; a new preset is a row; the engine and the sheet read both. */
+   walks. A new order is a row; a new preset is a row; the engine and the sheet read both.
+   v3.37 THE WORKING ORDERS adds, on the same law: the FREIGHT LIST tree, seven working-order rows
+   the field jobs and the road walk under, and the MOOD — causes, bands, effects, the lines. */
 
 const MUSTER = (() => {
   /* ---------- the scalar orders: each a row with its choices, a default, and a line per choice ---------- */
@@ -91,5 +93,113 @@ const MUSTER = (() => {
     stand: { meet: 'meeting what comes', hold: 'holding your back', quiet: 'hands down' },
   };
 
-  return { ORDERS, TREES, TREE_DEFAULT, PRESETS, STATIONS, STATION_FX, HOLD_SCREEN, CALL };
+  /* ================= v3.37 THE WORKING ORDERS: the field and the roads, on the same stores =================
+     A hauler, a presser, a mason, a forrester, a charter runner — each keeps its orders in the SAME
+     n.orders store a companion keeps, read by the same engine: scalar rows here, and the FREIGHT
+     LIST as a third policy tree (verb 'haul') over the freight branch of the cargo taxonomy — the
+     station goods ARE item defs, so a hauler's list and a charter's list are marks on the ledger's
+     own tree. A job's orders are the rows its registry entry names; a new field job is an entry. */
+  TREES.haul = { name: 'THE FREIGHT LIST', line: 'what a hauler or a charter carries between the ends', def: { freight: true, post: false }, root: 'freight' };
+  const WORK_ORDERS = {
+    load: {
+      name: 'THE LOAD', line: 'how a hauler fills the pack',
+      choices: {
+        full: { name: 'Full', line: 'one good to the cap — the emptiest shelf on the freight list, filled hard' },
+        split: { name: 'Split', line: 'two goods, half each — two shelves climb at once, neither as far' },
+      }, def: 'full',
+    },
+    marks: {
+      name: 'THE MARKS', line: 'what a presser does when the trail is bare end to end',
+      choices: {
+        home: { name: 'Come in', line: 'the trail bare, they walk in to the fire — the wage stops with the work' },
+        keep: { name: 'Keep the beat', line: 'they walk the marks for as long as you pay — a presence on the line' },
+      }, def: 'home',
+    },
+    reserve: {
+      name: 'THE RESERVE', line: 'the ceramic a mason will not touch',
+      choices: {
+        none: { name: 'None', line: 'every slab in the bank is theirs to lay' },
+        twenty: { name: 'Keep 20', line: 'the laying stops at twenty slabs — your own builds keep a floor' },
+        sixty: { name: 'Keep 60', line: 'the laying stops at sixty — cobbles only from what you can spare' },
+      }, def: 'none', floor: { none: 0, twenty: 20, sixty: 60 },
+    },
+    reach: {
+      name: 'THE REACH', line: 'how far a forrester walks for wood',
+      choices: {
+        near: { name: 'Near', line: 'the near woods — short trips, planking by the round' },
+        far: { name: 'Far', line: 'twice the ground — the deep stands, slower to the bank' },
+      }, def: 'near', mul: { near: 1, far: 1.9 },
+    },
+    woods: {
+      name: 'THE WOODS', line: 'what a forrester leaves standing',
+      choices: {
+        clear: { name: 'Clear', line: 'every tree in reach — the land itself changes' },
+        thin: { name: 'Thin', line: 'every other tree — the wood stands, thinner; half the planking' },
+      }, def: 'clear',
+    },
+    run: {
+      name: 'THE RUN', line: 'what a charter carries',
+      choices: {
+        post: { name: 'The post', line: 'letters both ways — appreciation at both ends, the Order\'s own service' },
+        freight: { name: 'Freight', line: 'a crate each run onto the far end\'s emptiest shelf, from the freight list — half the thanks, real stock' },
+      }, def: 'post', likesMul: { post: 1, freight: 0.5 },
+    },
+    pace: {
+      name: 'THE PACE', line: 'how hard a charter runs',
+      choices: {
+        steady: { name: 'Steady', line: 'the run as the road allows' },
+        hard: { name: 'Hard', line: 'the run pushed — runs come faster, and eat twice for it' },
+      }, def: 'steady', mul: { steady: 1, hard: 0.7 }, eat: { steady: 1, hard: 2 },
+    },
+  };
+  /* which rows a job walks under — the registry entry IS the job's orders sheet */
+  const FIELD = {
+    hauler: { rows: ['load'], tree: 'haul' },
+    presser: { rows: ['marks'] },
+    mason: { rows: ['reserve'] },
+    forrester: { rows: ['reach', 'woods'] },
+  };
+  const ROAD = { rows: ['run', 'pace'], tree: 'haul' };
+  const TRAIL_DONE = 0.9;   // the fraction of a trail's wearable ground that must be bare before a presser's work is DONE
+
+  /* ---------- the mood: what a walker feels, summed from causes the game already tracks ----------
+     bands are [minimum, name, colour], lowest first; fx per band are what a mood DOES; causes carry
+     their own line so the plate can say WHY without a second table. */
+  const MOOD = {
+    bands: [[-99, 'DONE', '#e0654a'], [-7, 'LOW', '#d9a06b'], [-4, 'WORN', '#b8b29d'], [-1, 'STEADY', '#c9c3a8'], [4, 'BRIGHT', '#ffd98f']],
+    fx: {
+      DONE: { steadyMul: 0.5, reachMul: 0.7, quits: true },
+      LOW: { steadyMul: 0.7, reachMul: 0.85 },
+      WORN: { steadyMul: 1, reachMul: 1 },
+      STEADY: { steadyMul: 1, reachMul: 1 },
+      BRIGHT: { steadyMul: 1.3, reachMul: 1.15 },
+    },
+    causes: {
+      hungry: { v: -6, line: 'hungry' },
+      unpaid: { v: -3, line: 'unpaid' },
+      fasting: { v: -2, line: 'fasting by orders' },
+      fed: { v: 1, line: 'a meal in them', within: 400 },
+      bond: { v: 2, line: 'owes you their walk' },
+      grey: { v: -2, line: 'walking the Grey', mist: 0.55 },
+      night: { v: -1, line: 'walking nights' },
+      loaded: { v: -1, line: 'loaded near the cap', at: 0.85 },
+      point: { v: -1, line: 'walking point' },
+      mounted: { v: 1, line: 'in the saddle' },
+      downed: { v: -1, line: 'went down for you lately', within: 1800 },
+      mending: { v: -2, line: 'mending' },
+      fire: { v: 1, line: 'by a fire' },
+      company: { v: 1, line: 'walking in company', party: 2 },
+      seasoned: { v: 1, line: 'seasoned beside you', km: 10 },
+      longOut: { v: -1, line: 'long out of a fire', after: 900 },
+    },
+    quitAfter: 60,   // seconds DONE before a companion sits down at the next fire
+    fireR: 120,      // how near a lit town counts as a fire
+    lines: {
+      LOW: ['I need a fire, Walker.', 'How much further.', 'My feet have opinions.'],
+      DONE: ['That is enough. Next fire, I sit.', 'I am done. I mean it.'],
+      BRIGHT: ['Good ground. Good company.', 'I could walk this all year.'],
+    },
+  };
+
+  return { ORDERS, TREES, TREE_DEFAULT, PRESETS, STATIONS, STATION_FX, HOLD_SCREEN, CALL, WORK_ORDERS, FIELD, ROAD, TRAIL_DONE, MOOD };
 })();

@@ -582,3 +582,23 @@ positions, figures painted nearest-last); the orders pane on the ledgers' presse
 tri-state marks; the service stripe in the register's mono. Every figure at 2× or 3× a texel —
 no scaling that breaks the grid.
 Verified: tests/muster.mjs 13; battery 634 green across forty suites; shop audit CLEAN.
+
+v3.37 — THE WORKING ORDERS (the field on the roll, the wedge on the HUD · 2026-09-10)
+===================================================================
+REVIEW: a presser's clicked mark was never drawn — the player sent a walker to a point and saw
+nothing on the ground; the companion chip showed the lead only, a face portrait, no formation;
+the roll's plates said nothing of what a field hand had done.
+PLAN → SHIPPED: THE MARK glyph — the Order's own gold flag on a pole (8×12 texel rows, MARK_PAL:
+pole '#4a3320', flag '#c9a05a' with a '#ffd98f' lit row), blitted at 2.5 like Farkeep's pennant
+and turning in the wind on the same beat, a pixShadow under it, the MARK n label in the field
+label register; the walked chain dotted between the marks as 3-world-unit squares (one texel at
+the world zoom, never a sub-texel speck) at 0.85 gold while the presser is within 900. THE WEDGE
+CARD: the chip grown on the same glass — each back's own rig at 2× (the kit's class at its own
+size), the mood band in the register's mono at 8px in the band's colour, a 64×72 glyph in the
+sheet's ink (dotted ground, facing mark, slot rects at 0.26 scale, the hold ring, a 3×3 mood-
+coloured dot per back where it stands, you in gold), the caps in mono; a slim tab in the same
+corner when the card is put away. The muster roll's plates: the mood row (band plate + causes
+with signed values in ok/rust), the work stripe per job, WORKING ORDERS in the field green; the
+marks pane with numbered mark plates and the trail line; the freight list as a named row of
+goods. Every figure at whole texels; no scaling that breaks the grid.
+Verified: tests/workorders.mjs 16; battery 650 green across forty-one suites; shop audit CLEAN.

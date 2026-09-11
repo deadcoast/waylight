@@ -494,6 +494,16 @@ const Render = (() => {
     'OGGGGOGGGO',
     'OOOOOOOOOO'];
   const CRATES_PAL = { O: '#12161c', G: '#6e747c', w: '#b8c2c8' };
+  /* v3.37 — a presser's MARK: the Order's own small gold flag on a pole, one per clicked point */
+  const MARK = [
+    'OY......',
+    'OYOOOOO.',
+    'OYGgGGO.',
+    'OYGGgGGO',
+    'OYGGGGO.',
+    'OYOOOO..',
+    'OY......', 'OY......', 'OY......', 'OY......', 'OY......', 'OY......'];
+  const MARK_PAL = { O: '#12161c', Y: '#4a3320', G: '#c9a05a', g: '#ffd98f' };
   const HUT = [
     '.rrrrrrrrrrrrrr.',
     'RRRRRRRRRRRRRRRR',
@@ -2196,7 +2206,7 @@ const Render = (() => {
     else if (c.defId === 'filters' || c.defId === 'coolant') { key = 'drum'; pal.B = c.defId === 'coolant' ? '#4a8ad0' : '#7aa2a0'; }
     else if (c.defId === 'lumenCell') { key = 'cell'; glow = 'rgba(140,240,225,0.4)'; }
     if (c.cat === 'mat' && c.mat === 'lumen') glow = 'rgba(140,240,225,0.35)';
-    let {rows} = CG[key];
+    let rows = CG[key].rows;
     if (gold && key !== 'core') {
       pal.B = '#ffd98f'; pal.O = '#241708';
       if (key === 'mail') pal.W = '#ffd98f';
@@ -2844,6 +2854,29 @@ const Render = (() => {
       if (cam.z > 0.7) plabel((cv.frozen ? 'FROZEN — ' : cv.waiting ? 'WAITING — ' : 'CONVOY — ') + cv.n.name.split(' ')[0], cv.x, cv.y + 13, 3, cv.frozen || cv.waiting ? '#e0654a' : '#ffd98f');
     }
     // v3.20 THE WORKING WORLD: field crews, visibly at it — the valley works whether you watch or not
+    /* v3.37 THE MARKS: a presser's chain stands on the ground as flags, numbered in order from the
+       town, and the line they walk is dotted between them while a presser is near enough to be seen */
+    for (const fn2 of NPC.fieldAll ? NPC.fieldAll() : []) {
+      if (fn2.job !== 'presser' || !fn2.route || !NPC.marksOf) continue;
+      const marks = NPC.marksOf(fn2);
+      if (!marks.length) continue;
+      const near = fn2.fx !== undefined && U.dist(S.px, S.py, fn2.fx, fn2.fy) < 900;
+      if (near && fn2.fpath && fn2.fpath.pts && cam.z > 0.45) {
+        cx.fillStyle = 'rgba(201,160,90,0.85)';
+        const pts = fn2.fpath.pts;   // three world units — a texel at the world zoom, never a sub-texel speck
+        for (let k = 0; k + 1 < pts.length; k++) {
+          const [x1, y1] = pts[k], [x2, y2] = pts[k + 1];
+          const L = Math.hypot(x2 - x1, y2 - y1);
+          for (let d2 = 0; d2 < L; d2 += 18) { const t2 = d2 / L, x = x1 + (x2 - x1) * t2, y = y1 + (y2 - y1) * t2; if (inView(x, y, 8)) cx.fillRect(Math.round(x) - 1, Math.round(y) - 1, 3, 3); }
+        }
+      }
+      marks.forEach((m, i) => {
+        if (!inView(m.x, m.y, 40)) return;
+        pixShadow(m.x, m.y + 2, 8);
+        blit(MARK, m.x - 4, m.y - 30, 2.5, MARK_PAL, ((S.time * 2 + i) | 0) % 2 === 1);
+        if (cam.z > 0.7 && U.dist(S.px, S.py, m.x, m.y) < 520) plabel(`MARK ${i + 1}`, m.x, m.y + 10, 3, '#c9a05a');
+      });
+    }
     for (const fn2 of NPC.fieldAll ? NPC.fieldAll() : []) {
       if (fn2.fx === undefined || !inView(fn2.fx, fn2.fy, 90)) continue;
       const caravan = fn2.job === 'hauler' && (fn2.skills.haul || 0) >= T.haulLvCaravan;

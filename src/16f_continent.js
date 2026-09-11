@@ -30,7 +30,7 @@ const Continent = (() => {
     win = { lonW: 0.96, latW: 0.7, lon0: gm.lon - 0.96 * 0.55, lat0: gm.lat - 0.7 * 0.44 };
     H = new Float32Array(NX * NY);
     seaMask = new Uint8Array(NX * NY);
-    const {SEA} = Globe;
+    const SEA = Globe.SEA;
     maxH = 0;
     for (let j = 0; j < NY; j++) for (let i = 0; i < NX; i++) {
       const lon = win.lon0 + (i / (NX - 1)) * win.lonW;

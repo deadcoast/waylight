@@ -1,4 +1,4 @@
-# WAYLIGHT — Shipped Design Doc (v3.36 · LEDGERLIGHT · The Muster)
+# WAYLIGHT — Shipped Design Doc (v3.37 · LEDGERLIGHT · The Working Orders)
 
 Playable build: **https://claude.ai/code/artifact/9ed799db-2103-4667-b424-0de78dce88c5** (single-file HTML5, canvas, ~19,000 lines, no libraries; three save slots in localStorage per browser, carried anywhere as passage codes; v1/v2 saves migrate and are seeded with stock). Future sessions: republish to this URL via the Artifact tool's `url` parameter (read the live version first — the tool requires it). Source parts live in the session workspace at `waylight/src/*` assembled by `build.py`; that workspace is ephemeral — the artifact is the durable copy. Companion docs: `research-death-stranding-delivery-mechanics.md`, `research-loop-psychology.md`, `research-zomboid-permadeath.md`, `game-approaches.md`, `waylight-expansion-design.md`.
 
@@ -1515,3 +1515,87 @@ under the modal law — plates with figures drawn, the stripe, five presets, twe
 marks, a wedge plate with pixels on it; the parent law on one back's store (Resources OFF clears
 the children, Wood ON alone reads MIXED); the papers, the keys, the lessons; the save. Full
 battery **634 tallied checks across forty suites, zero fails**; shop audit CLEAN.
+
+## The working orders (v3.37 — the field and the roads, on the same stores)
+
+v3.36 left three things on the record as REMAINING: orders for the field and the roads on the
+same stores, a walker's mood on the plate, and the wedge plate as a HUD card. v3.37 is those
+three, whole, plus the v3.35 note about the rail's caps.
+
+**The same stores, in fact.** A hauler, a presser, a mason, a forrester and a charter runner keep
+their orders in the SAME `n.orders` store a companion keeps, read by the same engine. The station
+goods were already item defs (`cat: 'goods'`), classified under the taxonomy's freight branch —
+so THE FREIGHT LIST is a third policy tree (verb `haul`, rooted on `freight`, default: every
+trade good ON, the post OFF) and a hauler's list and a charter's list are marks on the ledger's
+own tree, per crate kind. The registry (12g_muster.js) adds seven WORK_ORDERS rows and names,
+per job, which rows it walks under: FIELD.hauler → THE LOAD + the freight list; FIELD.presser →
+THE MARKS; FIELD.mason → THE RESERVE; FIELD.forrester → THE REACH + THE WOODS; ROAD → THE RUN +
+THE PACE + the freight list. `NPC.workOf(n)` returns the sheet a walker answers to — the walk's
+rows for a companion, the job's rows for a field hand, the road's for a charter — and the muster
+roll renders whatever it is handed. A new field job is one registry entry.
+
+**Repaired, never purged.** A v3.36 save holds stores with loot and hand marks and no haul mark
+anywhere. `ordersOf` seeds a tree's registry default into a store only when that tree has NO mark
+at all in it — every mark the store already holds stands, the working rows take their defaults,
+and the pack's ledger is untouched. Proven on a hand-built v3.36-shaped store.
+
+**The orders work the land (15b_npc.js, 13_world.js).** THE FREIGHT LIST gates a hauler's
+arrival: of what THIS town needs, only what is on the list; the emptiest allowed shelf first,
+what the other end makes preferred. Nothing on the list that the town wants → the pack arrives
+EMPTY, the roll says so in the walker's words and a toast says it once — an honest empty pack, not
+a silent one. THE LOAD: full is one good to the cap; split is two goods, half each, so two shelves
+climb at once. THE MARKS: a presser's clicked point is the first of a CHAIN — ADD A MARK on the
+roll arms the ground and the next click appends; the walked line is the valley's own path from
+the town through every mark in order and back; STRIKE takes the last mark, never the first. At
+every end the presser MEASURES the trail — `World.trailState` samples the polyline at wear-cell
+pitch and counts, of the ground that can wear at all, how much is bare or laid — and under COME
+IN (the default) a trail bare end to end walks them to the fire with a mail, and the wage stops
+with the work; KEEP THE BEAT keeps them walking for as long as you pay. The marks stand on the
+ground as gold flags on poles, numbered in order from the town, with the walked line dotted at
+texel pitch between them while the presser is near. THE RESERVE: a mason lays only down to the
+floor you name (none · keep 20 · keep 60) and says on the roll that it is holding the reserve.
+THE REACH: far searches nearly twice the radius for standing wood. THE WOODS: thin keeps every
+other tree — after a fell, the next tree the axe would take is KEPT by cell index, for good, and
+the one past it falls; the wood stands, thinner. THE RUN on a charter: the post pays appreciation
+at both ends as before; freight walks a crate from the freight list onto the emptiest shelf of
+the ends in turn for half the thanks. THE PACE: hard comes round in seven tenths of the time and
+eats twice for it. The service stripe counts the WORK now — kilometres walked, runs, crates
+walked in (and empty runs, in rust), stretches cobbled and the reserve, trees felled and left
+standing, the trail's bare fraction and the marks — each job in its own words.
+
+**The mood (MUSTER.MOOD).** Summed live from causes the game already tracks, never stored:
+hungry (−6), unpaid (−3), fasting by orders (−2), a meal in them (+1, within the last cycle),
+owes you their walk (+2), walking the Grey (−2), walking nights (−1), loaded near the cap (−1),
+walking point (−1), in the saddle (+1), went down for you lately (−1), mending (−2), by a fire
+(+1), walking in company (+1), seasoned beside you (+1 past ten kilometres), long out of a fire
+(−1). Five bands, lowest first: DONE · LOW · WORN · STEADY · BRIGHT, a fresh hire reading STEADY
+at nought. The band DOES something: BRIGHT steadies your pack × 1.3 and reaches × 1.15; LOW
+× 0.7 and × 0.85; DONE × 0.5 and × 0.7. A band change is said on the ground in the walker's own
+lines ("I need a fire, Walker." / "That is enough. Next fire, I sit."), and a companion DONE for
+a minute beside a lit town SITS DOWN: off the party, into the pool at that fire, the cargo racked
+in the lockers, a mail naming every cause, re-hirable when it lifts. The plate carries the band in
+its colour and the causes with their signs — the plate says why.
+
+**THE WEDGE CARD (16b_ui2.js).** The companion chip, grown: every back walking with you on one
+glass — their own figure, first name, mood band in its colour with the causes on hover, class,
+what they carry, HUNGRY where true — and beside them a LIVE formation glyph at 10 Hz: the slots
+the orders describe, the hold ring, you in gold, and a dot in each back's mood colour where it
+actually stands in your frame. Click the card to hand over (as before); THE MUSTER cap opens the
+roll; the − cap puts the card away and a slim tab stands in for it; the survey rail says SHOWN or
+PUT AWAY and toggles it. The choice keeps in the HUD paper (`waylight.hud`).
+
+**The v3.35 note, kept.** The hint strip prints the caps KEYS holds now — rebind map to N in the
+manual and the strip reads N beside map at once; reset and it reads M.
+
+**Proof.** workorders.mjs, 16 checks: the registries whole and every station good an item under
+freight; a v3.36 store repaired, not purged; THE FREIGHT LIST walking medicine alone then an
+honest empty pack; THE LOAD split landing two goods in one arrival; THE MARKS as a chain walked in
+order, struck, measured near-nothing fresh; KEEP THE BEAT walking on at 100% and COME IN walking
+them to the fire with the mail; THE RESERVE holding at twenty and resuming; THE WOODS thin felling
+three and keeping two by cell with the nearest standing tree a kept one, THE REACH re-reading the
+ground; THE RUN and THE PACE measured to the provision and the second; the mood's sums, bands and
+effects; a DONE walker sitting down after the minute with the mail; the sheet (the hauler's pane,
+the freight list by name, a good's box, the charter's pane, the presser's chain with STRIKE and
+ADD landing a click as mark two); the wedge card with both moods, a painted glyph, put away and
+kept, the tab, the rail, the cap; the hint strip in your keys; the lessons; the save. Full battery
+**650 tallied checks across forty-one suites, zero fails**; shop audit CLEAN.

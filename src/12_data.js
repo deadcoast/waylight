@@ -547,6 +547,9 @@ const DATA = (() => {
     firstUpgrade: 'Your builds can be RAISED: stand by one and press <b>U</b>. First upgrades are cheap and useful; the last one asks for real work — and earns it.',
     firstPobox: 'The PO Box holds what you stash — <b>E</b> stashes your non-mission load, <b>G</b> takes it back, <b>L</b> leaves it for the walkers as a donation. Hand tools left this way ARM a walker.',
     firstArmed: 'A donated crate of hand tools ARMS a waylighter. Ten armed, and the roads around that town are measurably safer — and everyone will know it was you.',
+    firstWorking: 'WORKING ORDERS: a field hand or a charter runner keeps its orders on the muster roll, like a walker keeps its wedge. A hauler and a charter carry only what is on THE FREIGHT LIST; THE LOAD splits a hauler\'s pack across two shelves; a mason holds THE RESERVE of ceramic you name; a forrester walks THE REACH and leaves THE WOODS standing or not; a charter runs the post or freight, steady or hard.',
+    firstMarks: 'THE MARKS: a presser walks a CHAIN of points in order from the town and back — add a mark from the muster roll, then click the ground. The trail is measured every time they reach an end; bare end to end, a presser under COME IN walks to the fire and the wage stops with the work.',
+    firstMood: 'A walker\'s MOOD is on the muster roll — summed from what the walk is doing to them: hunger, the Grey, nights, a load near the cap, a meal, a bond, company. A BRIGHT walker steadies your pack more and reaches further; a LOW one less. One who says they are DONE sits down at the next fire they pass. The plate says why.',
   };
   /* v3.35 THE FIELD MANUAL — every lesson above has a page title; the manual indexes the pages a
      walker has walked (S.flags.tut) in full and seals the rest. A new lesson wants a title here. */
@@ -559,6 +562,7 @@ const DATA = (() => {
     firstOutpost: 'An outpost stands', firstBurn: 'The light\'s edge', firstWraith: 'A wraith', firstCircuit: 'The circuit',
     firstConvoy: 'The convoy', firstSalvage: 'Salvage', firstSnag: 'A snag', firstPaver: 'The road paver', firstZip: 'Ziplines',
     firstPave: 'Paving a path', firstField: 'Field work', firstUpgrade: 'Raising a build', firstPobox: 'The PO Box', firstArmed: 'Walkers armed',
+    firstWorking: 'Working orders', firstMarks: 'The marks', firstMood: 'A walker\'s mood',
   };
 
   return { W, H, features, rivers, stations, stationOrder, goodsInfo, letterLines, starRewards, roads, camps, echoNames, echoSpots, structures, MIGRATE_TYPES, items, priority, fabItems, T, titles, tutorials, tutorialTitles, keepers, barks, gradeLines, epitaphs, scrapShouts, dispatch, rollSeed, taglines, cheats };

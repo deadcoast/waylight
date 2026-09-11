@@ -44,7 +44,7 @@ const NPC = (() => {
     const n = p[p.length - 1];                          // the newest hire falls first; the oldest bond holds longest
     const stId = nearestConnected(S.px, S.py);
     if (n.carry.length) { for (const it of n.carry) S.stations[stId].storage.push(it); n.carry = []; }
-    n.state = 'recover'; n.at = stId; n.recoverT = DATA.T.koRecover; n.koCount = (n.koCount || 0) + 1; n.koFromParty = true;
+    n.state = 'recover'; n.at = stId; n.recoverT = DATA.T.koRecover; n.koCount = (n.koCount || 0) + 1; n.koFromParty = true; n.koT = S.time;   // v3.37: the mood remembers the fall for a while
     if (n.horse && !n.horse.owned) n.horse = null;      // the loaner bolts home
     Render.say(S.px + 20, S.py - 14, U.pick(rand, ['NOT TODAY. Get UP.', 'I have you. GO.', 'Walk. WALK!']), '224,101,74');
     Render.burst(S.px, S.py);
@@ -212,10 +212,12 @@ const NPC = (() => {
     if (def.dest && !custom && (!dest || !S.stations[dest] || !S.stations[dest].connected)) { UI.toast('Field work wants a CONNECTED far end for its route', 'rust'); return false; }
     if (fieldStaff(stId).length >= 3 && !(n.state === 'field' && n.at === stId)) { UI.toast(`${DATA.stations[stId].name} can feed three field hands, no more`, 'rust'); return false; }
     n.state = 'field'; n.at = stId; n.job = job;
-    n.route = { a: stId, b: def.dest && !custom ? dest : null, custom: custom ? { x: Math.round(dest.x), y: Math.round(dest.y) } : null };
+    /* v3.37: a presser's clicked mark is the first of its MARKS — a chain the orders pane extends */
+    n.route = { a: stId, b: def.dest && !custom ? dest : null, custom: custom ? { x: Math.round(dest.x), y: Math.round(dest.y) } : null, marks: custom ? [{ x: Math.round(dest.x), y: Math.round(dest.y) }] : [] };
     n.fx = DATA.stations[stId].x + 30 + rand() * 30; n.fy = DATA.stations[stId].y + 40 + rand() * 24;
-    n.fpath = null; n.fseg = 0; n.fdirn = 1; n.fwork = 0; n.facc = 0; n.ftarget = null; n.fstall = false;
+    n.fpath = null; n.fseg = 0; n.fdirn = 1; n.fwork = 0; n.facc = 0; n.ftarget = null; n.fstall = false; n.ftrail = null; n.fkept = [];
     n.shiftT = DATA.T.fieldShift;
+    svcNote(n, `took the field as a ${def.name.toLowerCase()}`);
     const far = custom ? ` — ${DATA.stations[stId].name} out to your pressed mark` : def.dest ? ` — ${DATA.stations[stId].name} to ${DATA.stations[dest].name}` : ` around ${DATA.stations[stId].name}`;
     UI.toast(`<b>${n.name}</b> takes the field as a <b>${def.name}</b>${far}. ${def.line}.`, 'gold', 6000);
     Snd.sfx.accept();
@@ -223,24 +225,62 @@ const NPC = (() => {
     return true;
   }
   /* v3.28 — the click lands here: the pending presser takes the mark as their far end */
-  let pendingPress = null;   // { nid, stId }
-  function armPress(nid, stId) { pendingPress = { nid, stId }; UI.toast('Click the GROUND — the presser wears a trail from town to your mark. Right-click or ESC to think better of it.', 'gold', 7000); }
+  let pendingPress = null;   // { nid, stId, append }
+  function armPress(nid, stId, append) {
+    pendingPress = { nid, stId, append: !!append };
+    UI.toast(append ? 'Click the GROUND — the presser walks this mark after the last one. Right-click or ESC to think better of it.'
+      : 'Click the GROUND — the presser wears a trail from town to your mark. Right-click or ESC to think better of it.', 'gold', 7000);
+  }
   function pressArmed() { return !!pendingPress; }
   function disarmPress() { pendingPress = null; }
   function pressAt(x, y) {
     if (!pendingPress) return false;
-    const { nid, stId } = pendingPress;
+    const { nid, stId, append } = pendingPress;
     pendingPress = null;
     const n = S.npcs.find(q => q.id === +nid);
     if (!n) return false;
+    if (append) {
+      if (n.state !== 'field' || n.job !== 'presser') return false;
+      addMark(n, x, y);
+      if (typeof MusterUI !== 'undefined') MusterUI.open(n.id);
+      return true;
+    }
     if (n.state === 'pool' && !hire(n, 'field')) return false;
     return assignField(n, stId, 'presser', { x, y });
   }
+  /* v3.37 THE MARKS — a presser's chain of clicked points, walked in order from the town and back */
+  function marksOf(n) { if (n.route && !n.route.marks) n.route.marks = n.route.custom ? [{ x: n.route.custom.x, y: n.route.custom.y }] : []; return n.route ? n.route.marks : []; }
+  function addMark(n, x, y) {
+    if (!n.route || n.job !== 'presser') return false;
+    const m = marksOf(n);
+    m.push({ x: Math.round(x), y: Math.round(y) });
+    n.route.custom = m[0]; n.fpath = null; n.ftrail = null;
+    const ord = k => k + (k % 10 === 1 && k !== 11 ? 'st' : k % 10 === 2 && k !== 12 ? 'nd' : k % 10 === 3 && k !== 13 ? 'rd' : 'th');
+    svcNote(n, `took a ${ord(m.length)} mark`);
+    UI.toast(`<b>${n.name.split(' ')[0]}</b> takes the mark — ${m.length} on the chain, walked in order from ${DATA.stations[n.route.a].name}`, 'gold', 5000);
+    Systems.tut && Systems.tut('firstMarks');
+    return true;
+  }
+  function strikeMark(n) {
+    const m = marksOf(n);
+    if (m.length <= 1) return false;   // the first mark is the route itself — a presser with no far end is a presser with no job
+    m.pop(); n.fpath = null; n.ftrail = null;
+    svcNote(n, 'struck the last mark');
+    return true;
+  }
   function fieldPathFor(n) {
     if (n.fpath && S.time - n.fpath.t < 240) return n.fpath;
-    const A = DATA.stations[n.route.a], B = n.route.custom || DATA.stations[n.route.b];
-    const r = World.pathTime(A.x, A.y, B.x, B.y, true, Systems.walkOpts ? Systems.walkOpts(true) : { walk: true });
-    const pts0 = r.found && r.path && r.path.length > 1 ? r.path : [[A.x, A.y], [B.x, B.y]];
+    const A = DATA.stations[n.route.a];
+    const legs = n.route.custom ? marksOf(n) : [DATA.stations[n.route.b]];
+    const opts = Systems.walkOpts ? Systems.walkOpts(true) : { walk: true };
+    /* the chain: town → mark → mark …, each leg the valley's own walk, joined into one line */
+    let pts0 = [[A.x, A.y]], from = A;
+    for (const B of legs) {
+      const r = World.pathTime(from.x, from.y, B.x, B.y, true, opts);
+      const leg = r.found && r.path && r.path.length > 1 ? r.path : [[from.x, from.y], [B.x, B.y]];
+      pts0 = pts0.concat(leg.slice(1));
+      from = B;
+    }
     n.fpath = { t: S.time, pts: Systems.snapCrossings ? Systems.snapCrossings(pts0) : pts0 };   // v3.31: field crews walk the rungs too
     n.fseg = nearestSeg(n.fpath.pts, n.fx, n.fy);
     return n.fpath;
@@ -260,6 +300,7 @@ const NPC = (() => {
         } else { S.banked.provisions -= DATA.T.shiftWage; if (n.hungry) n.hungry = false; trainNpc(n, def.skill, DATA.T.shiftXp, `grew into the ${def.name.toLowerCase()}'s work`); }
       }
       if (n.hungry) continue;
+      const O = ordersOf(n), WO = MUSTER.WORK_ORDERS;   // v3.37: the job's working orders, from the same store
       const caravan = n.job === 'hauler' && (n.skills.haul || 0) >= DATA.T.haulLvCaravan;
       const spMul = n.job === 'hauler' ? (caravan ? 0.5 : 0.6) : n.job === 'mason' ? 0.45 : 0.9;
       const sp = speedOf(n) * spMul;
@@ -267,22 +308,33 @@ const NPC = (() => {
         // the axe: walk to the nearest standing wood, work it, fell it, bank the timber
         const home = DATA.stations[n.route.a];
         if (!n.ftarget) {
-          n.ftarget = World.nearestForest(home.x, home.y, DATA.T.fellRadius);
+          /* THE REACH stretches the search; THE WOODS: thin keeps every other tree as a stand —
+             after a fell, the next tree the axe would take is KEPT (by cell, for good) and the one past it falls */
+          const kept = new Set(n.fkept || []), reachR = DATA.T.fellRadius * (WO.reach.mul[O.reach] || 1);
+          n.ftarget = World.nearestForest(home.x, home.y, reachR, kept);
+          if (n.ftarget && O.woods === 'thin' && n.fthinNext) {
+            kept.add(n.ftarget.i); n.fkept = [...kept]; n.fthinNext = false;
+            n.ftarget = World.nearestForest(home.x, home.y, reachR, kept);
+          }
           if (!n.ftarget) {
-            if (!n.fcleared) { n.fcleared = true; UI.toast(`<b>${n.name}</b>: the near woods at ${home.name} are CLEARED — the land remembers the axe`, 'gold', 6000); Systems.addMail(`${n.name} leans on the axe`, `Every tree within reach of ${home.name} is planking now. Reassign them, or let them rest.`); }
+            if (!n.fcleared) { n.fcleared = true; UI.toast(`<b>${n.name}</b>: the ${O.reach === 'far' ? 'far' : 'near'} woods at ${home.name} are ${O.woods === 'thin' ? 'THINNED' : 'CLEARED'} — the land remembers the axe`, 'gold', 6000); Systems.addMail(`${n.name} leans on the axe`, O.woods === 'thin' ? `Every other tree within reach of ${home.name} is planking now; the rest stand. Reassign them, widen the reach, or let them rest.` : `Every tree within reach of ${home.name} is planking now. Reassign them, or let them rest.`); }
             continue;
           }
           n.fcleared = false;
         }
         const d = U.dist(n.fx, n.fy, n.ftarget.x, n.ftarget.y);
-        if (d > 16) { n.fx += (n.ftarget.x - n.fx) / d * Math.min(sp * dt, d); n.fy += (n.ftarget.y - n.fy) / d * Math.min(sp * dt, d); n.fmoving = true; n.fwork = 0; }
+        if (d > 16) { n.fx += (n.ftarget.x - n.fx) / d * Math.min(sp * dt, d); n.fy += (n.ftarget.y - n.fy) / d * Math.min(sp * dt, d); n.fmoving = true; n.fwork = 0; svc(n).km += Math.min(sp * dt, d) / 1000; }
         else {
           n.fmoving = false;
           // v3.27: a sawcamp on the same stand sharpens the axe — and the camp saws faster for the company
           n.fwork += dt * (Systems.sawcampNear && Systems.sawcampNear(n.fx, n.fy) ? DATA.T.workSynergy : 1);
           if (n.fwork >= DATA.T.fellTime) {
             n.fwork = 0;
-            if (World.fellAt(n.ftarget.x, n.ftarget.y)) { State.bank('wood', DATA.T.fellWood); Render.buildFx(n.ftarget.x, n.ftarget.y); Snd.sfx.build(); }
+            if (World.fellAt(n.ftarget.x, n.ftarget.y)) {
+              State.bank('wood', DATA.T.fellWood); Render.buildFx(n.ftarget.x, n.ftarget.y); Snd.sfx.build();
+              svc(n).felled = (svc(n).felled || 0) + 1; svcNote(n, O.woods === 'thin' ? 'felled a tree, left the next' : 'felled a tree');
+              n.fthinNext = true;   // under THE WOODS: thin, the next tree stands
+            }
             n.ftarget = null;
           }
         }
@@ -290,7 +342,7 @@ const NPC = (() => {
       }
       // routed jobs walk the A↔B line the valley itself would take
       const path = fieldPathFor(n);
-      const {pts} = path;
+      const pts = path.pts;
       const tgt = pts[n.fseg];
       const d = U.dist(n.fx, n.fy, tgt[0], tgt[1]);
       /* v3.31 — no-ground is measured over a FULL window against position, never per-frame
@@ -308,37 +360,78 @@ const NPC = (() => {
         if (n.fseg >= pts.length || n.fseg < 0) {
           n.fdirn *= -1; n.fseg = U.clamp(n.fseg, 0, pts.length - 1);
           if (n.job === 'hauler') haulerArrive(n, n.fdirn === 1 ? n.route.a : n.route.b, caravan);
+          /* v3.37 THE MARKS — at every end the presser MEASURES the trail; bare end to end, the
+             'come in' order walks them to the fire and the wage stops with the work */
+          if (n.job === 'presser') {
+            n.ftrail = World.trailState(pts);
+            if (n.ftrail.frac >= MUSTER.TRAIL_DONE && O.marks === 'home') { trailDone(n); continue; }
+          }
         }
       } else {
         const step = Math.min(sp * dt, d);
         n.fx += (tgt[0] - n.fx) / d * step; n.fy += (tgt[1] - n.fy) / d * step;
         n.fmoving = true; n.fdir = Math.atan2(tgt[1] - n.fy, tgt[0] - n.fx);
         n.facc = (n.facc || 0) + step;
+        svc(n).km += step / 1000;
         if (n.job === 'presser' && n.facc >= 9) { n.facc = 0; World.addWear(n.fx, n.fy, DATA.T.trafficWear + 1); }
         if (n.job === 'hauler' && n.facc >= 14) { n.facc = 0; World.addWear(n.fx, n.fy, 1); }
         if (n.job === 'mason' && n.facc >= 26) {
           n.facc = 0;
-          if ((S.banked.ceramic || 0) >= 1) {
+          /* THE RESERVE: the slabs a mason will not touch — the laying stops at the floor, and says so */
+          const floor = WO.reserve.floor[O.reserve] || 0;
+          if ((S.banked.ceramic || 0) - floor >= 1) {
             const laid = World.layPave(n.fx, n.fy, 34, 2);
-            if (laid > 0) { S.banked.ceramic -= 1; n.flaid = (n.flaid || 0) + laid; if (!n.fsaid && n.flaid > 40) { n.fsaid = true; UI.toast(`<b>${n.name}</b>'s cobbles are taking — the ${DATA.stations[n.route.a].name} road firms underfoot`, 'gold', 5000); } }
-          } else if (!n.fstall) { n.fstall = true; UI.toast(`<b>${n.name}</b> is out of ceramic for cobbles — bank slabs and the laying resumes`, 'rust', 5000); }
-          if ((S.banked.ceramic || 0) >= 1) n.fstall = false;
+            if (laid > 0) { S.banked.ceramic -= 1; n.flaid = (n.flaid || 0) + laid; svc(n).laid = (svc(n).laid || 0) + laid; if (!n.fsaid && n.flaid > 40) { n.fsaid = true; svcNote(n, 'the cobbles are taking'); UI.toast(`<b>${n.name}</b>'s cobbles are taking — the ${DATA.stations[n.route.a].name} road firms underfoot`, 'gold', 5000); } }
+          } else if (!n.fstall) { n.fstall = true; svcNote(n, floor ? `holding the reserve of ${floor}` : 'out of ceramic'); UI.toast(floor ? `<b>${n.name}</b> holds at the reserve — ${floor} slabs stay banked by your orders; bank more and the laying resumes` : `<b>${n.name}</b> is out of ceramic for cobbles — bank slabs and the laying resumes`, 'rust', 5000); }
+          if ((S.banked.ceramic || 0) - floor >= 1) n.fstall = false;
         }
       }
     }
   }
+  /* the presser's work, done: the trail measured bare, they come in to the fire with a note */
+  function trailDone(n) {
+    const home = DATA.stations[n.route.a];
+    const m = marksOf(n).length;
+    n.state = 'pool'; n.at = n.route.a; n.job = null; n.fpath = null; n.ftarget = null;
+    svcNote(n, 'walked the trail bare and came in');
+    UI.toast(`<b>${n.name}</b>: the trail ${m ? `to the mark${m > 1 ? 's' : ''}` : `to ${DATA.stations[n.route.b] ? DATA.stations[n.route.b].name : 'the far end'}`} is BARE end to end — they come in to ${home.name}'s fire, and the wage stops.`, 'gold', 7000);
+    Systems.addMail(`${n.name} came in`, `The trail out of ${home.name} is packed earth the whole way now. They sat down by the fire and asked for nothing. A mason could lay cobbles on it; a presser could walk another mark.`);
+    return true;
+  }
+  /* the freight a walker may carry into a town: the town's needs, filtered by THE FREIGHT LIST —
+     the same marks-over-taxonomy read a companion's sweep uses, verb 'haul'. Emptiest shelf first;
+     what the other end MAKES is preferred when both ends are known. */
+  function freightFor(n, here, other) {
+    const st = S.stations[here], hereDef = DATA.stations[here], otherDef = other ? DATA.stations[other] : null;
+    const may = hereDef.needs.filter(g => allows(n, 'haul', g));
+    const byShelf = (a, b) => (st.stock[a] || 0) - (st.stock[b] || 0);
+    const made = otherDef ? may.filter(g => otherDef.makes.includes(g)).sort(byShelf) : [];
+    const rest = may.filter(g => !made.includes(g)).sort(byShelf);
+    return made.concat(rest);
+  }
+  const goodName = g => DATA.goodsInfo[g] ? DATA.goodsInfo[g].name.toLowerCase() : g;
   function haulerArrive(n, endId, caravan) {
     const here = endId, other = here === n.route.a ? n.route.b : n.route.a;
-    const st = S.stations[here], hereDef = DATA.stations[here], otherDef = DATA.stations[other];
-    // freight: what THIS end wants most, of what the other end makes — else mixed goods for the worst shelf
-    let good = hereDef.needs.filter(g => otherDef.makes.includes(g)).sort((a, b) => (st.stock[a] || 0) - (st.stock[b] || 0))[0];
-    if (!good) good = hereDef.needs.slice().sort((a, b) => (st.stock[a] || 0) - (st.stock[b] || 0))[0];
-    if (!good) return;
+    const st = S.stations[here], hereDef = DATA.stations[here];
     const cap2 = caravan ? DATA.T.caravanCap : DATA.T.haulCap;
-    st.stock[good] = Math.min(100, (st.stock[good] || 0) + cap2);
-    Economy.addAppr(here, 2);
+    const list = freightFor(n, here, other);
     n.fruns = (n.fruns || 0) + 1;
-    if (n.fruns % 3 === 1 && U.dist(S.px, S.py, hereDef.x, hereDef.y) < 900) UI.toast(`${caravan ? 'The caravan' : n.name.split(' ')[0]} walks ${cap2} of ${DATA.goodsInfo[good] ? DATA.goodsInfo[good].name.toLowerCase() : good} into <b>${hereDef.name}</b>`, '', 3500);
+    svc(n).runs = (svc(n).runs || 0) + 1;
+    if (!list.length) {
+      /* nothing on the freight list that this end wants: they walk in empty, and the roll says so */
+      n.fempty = (n.fempty || 0) + 1;
+      svcNote(n, `walked into ${hereDef.name} empty — nothing on the freight list`);
+      if (n.fempty === 1) UI.toast(`<b>${n.name.split(' ')[0]}</b> walks into ${hereDef.name} with an empty pack — nothing ${hereDef.name} wants is on their freight list. Open the muster roll and mark what they may carry.`, 'rust', 7000);
+      return;
+    }
+    /* THE LOAD: full is one good to the cap; split is two goods, half each — two shelves at once */
+    const O = ordersOf(n);
+    const picks = O.load === 'split' && list.length >= 2 ? [[list[0], Math.round(cap2 / 2)], [list[1], cap2 - Math.round(cap2 / 2)]] : [[list[0], cap2]];
+    for (const [good, amt] of picks) st.stock[good] = Math.min(100, (st.stock[good] || 0) + amt);
+    Economy.addAppr(here, 2);
+    svc(n).crates = (svc(n).crates || 0) + picks.length;
+    svcNote(n, `walked ${picks.map(([g, a]) => `${a} ${goodName(g)}`).join(' and ')} into ${hereDef.name}`);
+    if (n.fruns % 3 === 1 && U.dist(S.px, S.py, hereDef.x, hereDef.y) < 900) UI.toast(`${caravan ? 'The caravan' : n.name.split(' ')[0]} walks ${picks.map(([g, a]) => `${a} of ${goodName(g)}`).join(' and ')} into <b>${hereDef.name}</b>`, '', 3500);
   }
   function recallField(n) {
     if (n.state !== 'field') return false;
@@ -389,27 +482,132 @@ const NPC = (() => {
   function ordersOf(n) {
     if (!n.orders) applyPreset(n, n.fk ? 'shield' : 'own', true);
     for (const [k, row] of Object.entries(MUSTER.ORDERS)) if (!row.choices[n.orders[k]]) n.orders[k] = row.def;
+    for (const [k, row] of Object.entries(MUSTER.WORK_ORDERS)) if (!row.choices[n.orders[k]]) n.orders[k] = row.def;   // v3.37: the working orders ride the same store
     n.orders.policy = n.orders.policy || {};
+    /* a tree with no mark at all in the store (a save from before that tree existed) takes its
+       registry default — derived, never purged: every mark the store already holds stands */
+    for (const [verb, T2] of Object.entries(MUSTER.TREES)) {
+      if (!Object.values(n.orders.policy).some(m => m && m[verb] !== undefined)) Ledger.seedStore(n.orders.policy, verb, T2.def);
+    }
     return n.orders;
   }
   function applyPreset(n, id, silent) {
     const P = MUSTER.PRESETS[id]; if (!P) return false;
+    const old = n.orders || {};
     n.orders = { preset: id, station: P.station, mess: P.mess, stand: P.stand, voice: P.voice, policy: {} };
-    Ledger.seedStore(n.orders.policy, 'loot', P.loot);
-    Ledger.seedStore(n.orders.policy, 'hand', P.hand);
+    for (const k of Object.keys(MUSTER.WORK_ORDERS)) if (old[k] !== undefined) n.orders[k] = old[k];   // a preset is the WALK's orders; the working orders keep
+    for (const [verb, T2] of Object.entries(MUSTER.TREES)) Ledger.seedStore(n.orders.policy, verb, P[verb] || T2.def);
     if (!silent) svcNote(n, `took ${P.name.toLowerCase()} as standing orders`);
     return true;
   }
-  const allows = (n, verb, defId) => Ledger.effectiveIn(ordersOf(n).policy, defId, verb, { loot: MUSTER.TREE_DEFAULT, hand: MUSTER.TREE_DEFAULT });
+  const treeDefaults = () => { const d = {}; for (const v of Object.keys(MUSTER.TREES)) d[v] = MUSTER.TREE_DEFAULT; return d; };
+  const allows = (n, verb, defId) => Ledger.effectiveIn(ordersOf(n).policy, defId, verb, treeDefaults());
   function setOrder(n, key, val) {
-    const row = MUSTER.ORDERS[key]; if (!row || !row.choices[val]) return false;
-    ordersOf(n)[key] = val; n.orders.preset = null;   // a hand-set order is no longer the Order's preset
+    const row = MUSTER.ORDERS[key] || MUSTER.WORK_ORDERS[key]; if (!row || !row.choices[val]) return false;
+    ordersOf(n)[key] = val;
+    if (MUSTER.ORDERS[key]) n.orders.preset = null;   // a hand-set WALK order is no longer the Order's preset; a working order never was
     svcNote(n, `${row.name.toLowerCase()}: ${row.choices[val].name.toLowerCase()}`);
+    if (key === 'reach' || key === 'woods') n.ftarget = null;   // the axe re-reads the ground
     return true;
   }
-  function setTreeMark(n, verb, node, val, isItem) { Ledger.setMarkIn(ordersOf(n).policy, node, verb, val, isItem); n.orders.preset = null; }
+  function setTreeMark(n, verb, node, val, isItem) { Ledger.setMarkIn(ordersOf(n).policy, node, verb, val, isItem); if (verb !== 'haul') n.orders.preset = null; }
+  /* v3.37 — the sheet a walker's WORK answers to: the walk's rows for a companion, the job's rows for
+     a field hand, the road's rows for a charter. The kind names the sheet; the registry names the rows. */
+  function workOf(n) {
+    const rows = {};
+    if (n.state === 'field' && MUSTER.FIELD[n.job]) {
+      const F = MUSTER.FIELD[n.job];
+      for (const k of F.rows) rows[k] = MUSTER.WORK_ORDERS[k];
+      return { kind: 'field', job: n.job, rows, trees: F.tree ? [F.tree] : [], name: (CHAR.FIELD_JOBS[n.job] || {}).name || 'field hand' };
+    }
+    if (n.state === 'route') {
+      for (const k of MUSTER.ROAD.rows) rows[k] = MUSTER.WORK_ORDERS[k];
+      return { kind: 'road', job: 'route', rows, trees: [MUSTER.ROAD.tree], name: 'charter runner' };
+    }
+    return { kind: 'walk', job: null, rows: MUSTER.ORDERS, trees: ['loot', 'hand'], name: 'walker' };
+  }
   function svc(n) { n.svc = n.svc || { km: 0, crates: 0, met: 0, sweeps: 0, meals: 0, steadies: 0, last: '', lastT: 0 }; return n.svc; }
   function svcNote(n, line) { const v = svc(n); v.last = line; v.lastT = S.time; }
+
+  /* ---------- v3.37 THE MOOD: summed from causes the game already tracks, read live, never stored ----------
+     mood(n) → { v, band, col, causes:[{id, v, line}] }. moodFx(n) → what the band DOES. A companion
+     at DONE for long enough sits down at the next fire — after saying so on the ground. */
+  /* mood(n) reads LIVE — the sheet, the card's rows and the mails want the truth of this instant;
+     moodCached(n) is the half-second read the per-frame engine and the card's glyph use */
+  const moodCache = new Map();   // id → { t, m }
+  function moodCached(n) {
+    const hit = moodCache.get(n.id);
+    if (hit && Math.abs(S.time - hit.t) < 0.5) return hit.m;
+    const m = mood(n);
+    moodCache.set(n.id, { t: S.time, m });
+    return m;
+  }
+  function mood(n) {
+    const M = MUSTER.MOOD, C = M.causes, causes = [];
+    const add = id => causes.push({ id, v: C[id].v, line: C[id].line });
+    const v = svc(n), now = S.time;
+    const walking = n.state === 'companion';
+    const working = n.state === 'field' || n.state === 'route' || n.state === 'post';
+    if (walking && n.hungry) add('hungry');
+    if (working && n.hungry) add('unpaid');
+    if (walking && !n.hungry && ordersOf(n).mess === 'fast') add('fasting');
+    if (walking && v.lastMeal !== undefined && now - v.lastMeal < C.fed.within) add('fed');
+    if (n.bond) add('bond');
+    if (walking && World.mistAt(n.cx !== undefined ? n.cx : S.px, n.cy !== undefined ? n.cy : S.py) > C.grey.mist) add('grey');
+    if (walking && Economy.dayPhase().night && S.speed > 8) add('night');
+    if (walking && (n.carry || []).reduce((a, c) => a + c.kg, 0) >= capOf(n) * C.loaded.at) add('loaded');
+    if (walking && ordersOf(n).station === 'point') add('point');
+    if (walking && n.horse) add('mounted');
+    if (n.koT !== undefined && now - n.koT < C.downed.within) add('downed');
+    if (n.state === 'recover') add('mending');
+    if (n.state === 'pool' || n.state === 'post') add('fire');
+    if (walking && party().length >= C.company.party) add('company');
+    if (v.km >= C.seasoned.km) add('seasoned');
+    if (walking && n.fireT !== undefined && now - n.fireT > C.longOut.after) add('longOut');
+    const sum = causes.reduce((a, c) => a + c.v, 0);
+    let band = M.bands[0];
+    for (const b of M.bands) if (sum >= b[0]) band = b;
+    return { v: sum, band: band[1], col: band[2], causes };
+  }
+  const moodFx = n => MUSTER.MOOD.fx[moodCached(n).band] || MUSTER.MOOD.fx.STEADY;
+  let moodT = 0;
+  function tickMood(dt) {
+    moodT -= dt; if (moodT > 0) return;
+    moodT = 2;
+    const M = MUSTER.MOOD;
+    for (const n of party()) {
+      if (n.fireT === undefined) n.fireT = S.time;
+      for (const id of DATA.stationOrder) { const d = DATA.stations[id]; if (S.stations[id].connected && U.dist(n.cx !== undefined ? n.cx : S.px, n.cy !== undefined ? n.cy : S.py, d.x, d.y) < M.fireR) { n.fireT = S.time; break; } }
+      const m = mood(n), was = n.moodBand;
+      if (was !== m.band) {
+        n.moodBand = m.band;
+        if (was !== undefined && M.lines[m.band] && (m.band === 'LOW' || m.band === 'DONE' || (m.band === 'BRIGHT' && was !== 'BRIGHT'))) {
+          Render.say(n.cx !== undefined ? n.cx : S.px, (n.cy !== undefined ? n.cy : S.py) - 8, U.pick(rand, M.lines[m.band]), m.band === 'DONE' ? '224,101,74' : '198,206,186');
+          if (m.band === 'LOW' || m.band === 'DONE') { svcNote(n, m.band === 'DONE' ? 'said they were done' : 'asked for a fire'); Systems.tut && Systems.tut('firstMood'); }
+        }
+        n.doneT = 0;
+      }
+      if (m.band === 'DONE' && moodFx(n).quits) {
+        n.doneT = (n.doneT || 0) + 2;
+        if (n.doneT >= M.quitAfter && S.time - n.fireT < 1) sitDown(n, m);   // at a fire, after saying so: they sit
+      }
+    }
+  }
+  /* a walker at the end of their patience sits down at the fire they are standing beside — the
+     cargo racked in the lockers, a mail that says why, and the hire open again once the causes lift */
+  function sitDown(n, m) {
+    let stId = n.at || 'haven', bd = 1e9;
+    for (const id of DATA.stationOrder) { if (!S.stations[id].connected) continue; const d = U.dist(n.cx, n.cy, DATA.stations[id].x, DATA.stations[id].y); if (d < bd) { bd = d; stId = id; } }
+    if (n.carry.length) { for (const it of n.carry) S.stations[stId].storage.push(it); n.carry = []; }
+    n.state = 'pool'; n.at = stId; n.age = 0; n.doneT = 0; n.moodBand = undefined;
+    if (n.horse && !n.horse.owned) n.horse = null;
+    svcNote(n, `sat down at ${DATA.stations[stId].name} — ${m.causes.filter(c => c.v < 0).map(c => c.line).join(', ') || 'done'}`);
+    const why = m.causes.filter(c => c.v < 0).map(c => c.line).join(', ');
+    UI.toast(`<b>${n.name}</b> sits down at ${DATA.stations[stId].name}'s fire — they were DONE: ${why}. Their cargo is racked in the lockers. They will walk again when it lifts.`, 'rust', 9000);
+    Systems.addMail(`${n.name} sat down`, `They walked as far as they had in them. The roll said why for a while: ${why}. Feed them, keep them out of the Grey, and they will follow you out of ${DATA.stations[stId].name} again — no fee, you paid it.`);
+    Snd.sfx.stumble && Snd.sfx.stumble();
+    return true;
+  }
   /* everyone under your command, wherever they stand — the roll's rows */
   function everyone() {
     const out = [];
@@ -419,7 +617,7 @@ const NPC = (() => {
       else if (n.state === 'pool') place = `at ${DATA.stations[n.at] ? DATA.stations[n.at].name : 'Haven'}'s fire`;
       else if (n.state === 'route' && n.route) place = `${DATA.stations[n.route.a].name} ⇄ ${DATA.stations[n.route.b].name}`;
       else if (n.state === 'post') place = `${(CHAR.JOBS[n.job] || {}).name || 'posted'} at ${DATA.stations[n.at] ? DATA.stations[n.at].name : '?'}`;
-      else if (n.state === 'field') place = `${(CHAR.FIELD_JOBS[n.job] || {}).name || 'field work'} in the field`;
+      else if (n.state === 'field') place = `${(CHAR.FIELD_JOBS[n.job] || {}).name || 'field work'} out of ${DATA.stations[n.route && n.route.a] ? DATA.stations[n.route.a].name : (DATA.stations[n.at] || {}).name || '?'}${n.job === 'presser' && marksOf(n).length ? ` · ${marksOf(n).length} mark${marksOf(n).length > 1 ? 's' : ''}` : n.route && n.route.b ? ` to ${DATA.stations[n.route.b].name}` : ''}`;
       else if (n.state === 'recover') place = `mending at ${DATA.stations[n.at] ? DATA.stations[n.at].name : '?'}`;
       else continue;
       out.push({ n, where, place });
@@ -450,7 +648,7 @@ const NPC = (() => {
   function assistWobble() {
     for (const n of party()) {
       if (n.hungry) continue;
-      if (rand() < (n.skills.bal || 0) * 0.03 + (n.bond ? 0.06 : 0.02) + (MUSTER.STATION_FX[ordersOf(n).station] || {}).steady) {
+      if (rand() < ((n.skills.bal || 0) * 0.03 + (n.bond ? 0.06 : 0.02) + ((MUSTER.STATION_FX[ordersOf(n).station] || {}).steady || 0)) * moodFx(n).steadyMul) {   // v3.37: a bright walker steadies more, a low one less
         svc(n).steadies++; svcNote(n, 'steadied your pack');
         UI.toast(`${n.name.split(' ')[0]} steadies your pack`, '', 1800);
         Snd.sfx.steady();
@@ -481,7 +679,7 @@ const NPC = (() => {
     for (const n of party()) {
       if (n.hungry || n.shoveCd > 0) continue;
       /* v3.36 STAND: quiet keeps the hands down; hold meets trouble only inside the ring around YOU */
-      const {stand} = ordersOf(n);
+      const stand = ordersOf(n).stand;
       if (stand === 'quiet') continue;
       if (stand === 'hold' && U.dist(r.x, r.y, S.px, S.py) > MUSTER.HOLD_SCREEN) continue;
       const cls = n.fk ? FACT.FK_CLASSES[n.fkCls || 'pugugly'] : null;
@@ -570,6 +768,7 @@ const NPC = (() => {
     let looted = false;
     tickRollCall(dt);
     tickOverflow(dt, pt);
+    tickMood(dt);
     const slotIdx = {};   // v3.36: slots are dealt per STATION, so two backs at close never share a spot
     pt.forEach((n, pi) => {
       if (n.cx === undefined) { n.cx = S.px + 26; n.cy = S.py + 26; }
@@ -618,7 +817,7 @@ const NPC = (() => {
       const [wb, wp] = slots[si % slots.length];
       const ca = Math.cos(S.dir), sa = Math.sin(S.dir), cp = Math.cos(S.dir + Math.PI / 2), sp2 = Math.sin(S.dir + Math.PI / 2);
       let tx = S.px + ca * wb + cp * wp, ty = S.py + sa * wb + sp2 * wp;
-      const reach = ((n.skills.haul || 0) >= 2 ? DATA.T.looterBase + ((n.skills.haul || 0) - 2) * DATA.T.looterPer : 0) * FX.reachMul;
+      const reach = ((n.skills.haul || 0) >= 2 ? DATA.T.looterBase + ((n.skills.haul || 0) - 2) * DATA.T.looterPer : 0) * FX.reachMul * moodFx(n).reachMul;
       if (reach && !n.hungry && !looted) {
         let fd = reach, fetch = null;
         const w2 = n.carry.reduce((a, c) => a + c.kg, 0);
@@ -687,7 +886,7 @@ const NPC = (() => {
         if (ownFood >= 0) {
           const ate = n.carry.splice(ownFood, 1)[0];
           n.fedT = 360 * Porter.eff().upkeepMul;
-          svc(n).meals++; svcNote(n, `ate ${ate.name.toLowerCase()} from the pack`);
+          svc(n).meals++; svc(n).lastMeal = S.time; svcNote(n, `ate ${ate.name.toLowerCase()} from the pack`);
           if (n.hungry) { n.hungry = false; UI.toast(`${n.name.split(' ')[0]} eats from the pack — back in step`); }
           UI.refreshCargo();
         } else if (O.mess === 'fast') {
@@ -696,7 +895,7 @@ const NPC = (() => {
         } else if (S.banked.provisions >= 1) {
           S.banked.provisions -= 1;
           n.fedT = 360 * Porter.eff().upkeepMul;
-          svc(n).meals++; svcNote(n, 'ate from the bank');
+          svc(n).meals++; svc(n).lastMeal = S.time; svcNote(n, 'ate from the bank');
           if (n.hungry) { n.hungry = false; UI.toast(`${n.name.split(' ')[0]} eats — back in step`); }
         } else if (!n.hungry) {
           n.hungry = true;
@@ -711,22 +910,33 @@ const NPC = (() => {
       n.recoverT = (n.recoverT || 0) - dt;
       if (n.recoverT <= 0) { n.state = 'pool'; n.age = 0; Systems.addMail(`${n.name} is back on their feet`, `The keepers at ${DATA.stations[n.at].name} cleared them for the road. They asked after you first thing. No fee — you already paid it in blood.`); }
     }
-    // routes
+    // routes — v3.37: by THE RUN and THE PACE, from the runner's own store
     for (const r of S.npcs) {
       if (r.state !== 'route' || !r.route) continue;
       r.route.t -= dt;
       if (r.route.t <= 0) {
-        r.route.t = routeInterval(r);
-        if (S.banked.provisions >= 0.5) {
-          S.banked.provisions = Math.round((S.banked.provisions - 0.5) * 10) / 10;
+        const O = ordersOf(r), WO = MUSTER.WORK_ORDERS;
+        r.route.t = routeInterval(r) * (WO.pace.mul[O.pace] || 1);
+        const eat = 0.5 * (WO.pace.eat[O.pace] || 1);
+        if (S.banked.provisions >= eat) {
+          S.banked.provisions = Math.round((S.banked.provisions - eat) * 10) / 10;
           r.route.runs++;
-          const likes = 5 + Math.round(((r.skills.foot || 0) + (r.skills.bal || 0)) * 0.8);
+          svc(r).runs = (svc(r).runs || 0) + 1;
+          const likes = Math.round((5 + Math.round(((r.skills.foot || 0) + (r.skills.bal || 0)) * 0.8)) * (WO.run.likesMul[O.run] || 1));
           Systems.addStationLikes(r.route.a, likes);
           Systems.addStationLikes(r.route.b, likes);
           State.grantLikes(Math.round(likes * 0.6));
           Systems.stampTraffic(r.route.a, r.route.b);   // v3.20: every run's feet are REAL — the line between the towns wears in
           if (rand() < 0.25) S.banked.metal += 4;
-          if (r.route.runs % 4 === 0) UI.toast(`${r.name.split(' ')[0]}'s run: ${DATA.stations[r.route.a].name} ⇄ ${DATA.stations[r.route.b].name} · +${likes} ◆ each end`, '', 3500);
+          let carried = '';
+          if (O.run === 'freight') {
+            /* a crate each run onto the emptiest shelf on the freight list — the ends take turns */
+            const here = r.route.runs % 2 ? r.route.b : r.route.a, other = here === r.route.a ? r.route.b : r.route.a;
+            const good = freightFor(r, here, other)[0];
+            if (good) { S.stations[here].stock[good] = Math.min(100, (S.stations[here].stock[good] || 0) + DATA.T.stockPerCrate); svc(r).crates = (svc(r).crates || 0) + 1; carried = ` · a crate of ${goodName(good)} onto ${DATA.stations[here].name}'s shelf`; svcNote(r, `ran a crate of ${goodName(good)} into ${DATA.stations[here].name}`); }
+            else { svcNote(r, `ran empty — nothing on the freight list for ${DATA.stations[here].name}`); if (!r.fempty) { r.fempty = 1; UI.toast(`<b>${r.name.split(' ')[0]}</b>'s run carried nothing — nothing ${DATA.stations[here].name} wants is on their freight list. Mark it on the muster roll.`, 'rust', 6000); } }
+          } else svcNote(r, `ran the post ${DATA.stations[r.route.a].name} ⇄ ${DATA.stations[r.route.b].name}`);
+          if (r.route.runs % 4 === 0) UI.toast(`${r.name.split(' ')[0]}'s run: ${DATA.stations[r.route.a].name} ⇄ ${DATA.stations[r.route.b].name} · +${likes} ◆ each end${carried}`, '', 3500);
         } else if (!r.hungry) {
           r.hungry = true;
           Systems.addMail(`${r.name}'s route is stalled`, 'No provisions banked. Waylighters cannot eat gratitude.');
@@ -886,7 +1096,7 @@ const NPC = (() => {
   }
   function resolveRescue(flavor) {
     const ev = S.event;
-    const {npc} = ev.data;
+    const npc = ev.data.npc;
     npc.bond = true; npc.feeWaived = true; npc.age = -2;
     npc.state = 'pool'; npc.at = nearestConnected(ev.x, ev.y);
     S.npcs.push(npc);
@@ -949,14 +1159,15 @@ const NPC = (() => {
       return State.makeItem(`man_${sid}${vol}`);
     }
     if (kind === 'mat') {
-      return State.makeItem(U.pick(rand, ['metal', 'ceramic', 'metal', 'lumen']));
+      const it = State.makeItem(U.pick(rand, ['metal', 'ceramic', 'metal', 'lumen']));
+      return it;
     }
     return null;
   }
   function lootRuin(ruin) {
     const def = RUIN_TYPES[ruin.type];
     const got = [];
-    const {luck} = Porter.eff();
+    const luck = Porter.eff().luck;
     for (let i = 0; i < def.rolls; i++) {
       let r = rand() * 100;
       if (luck > 1 && rand() < 0.3) r *= 0.75; // lean toward the rarer end
@@ -1052,5 +1263,6 @@ const NPC = (() => {
     forresterNear: (x, y, r) => S.npcs.some(n => n.state === 'field' && n.job === 'forrester' && n.fx !== undefined && U.dist(n.fx, n.fy, x, y) < r),
     give, take, assistWobble, struggleBonus, tryShove, intercept, onPorterDeath, update, eventInteractions, lootRuin, seedRuins, peddlerStock,
     ordersOf, applyPreset, setOrder, setTreeMark, allows, svc, everyone, rollCall, callLine,   // v3.36 THE MUSTER
+    workOf, marksOf, addMark, strikeMark, freightFor, mood, moodCached, moodFx,   // v3.37 THE WORKING ORDERS
   };
 })();

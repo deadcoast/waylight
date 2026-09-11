@@ -5,7 +5,10 @@
    from what they actually did beside you, and the last thing they did in their own words; the
    WEDGE PLATE draws the formation the orders describe, the walker at its centre; the orders pane
    is the ledgers' grammar — pressed choice plates, tri-state marks over the taxonomy, the parent
-   law — over a store that belongs to ONE back. CALL THE ROLL and they sound off on the ground. */
+   law — over a store that belongs to ONE back. CALL THE ROLL and they sound off on the ground.
+   v3.37: the roll hands the pane whichever sheet a walker answers to (NPC.workOf) — the walk's
+   orders, a field job's working orders with the chain of marks, a charter's road orders — with
+   the FREIGHT LIST by good's name; every plate reads the walker's MOOD and the work it did. */
 
 const MusterUI = (() => {
   const $ = id => document.getElementById(id);
@@ -23,19 +26,30 @@ const MusterUI = (() => {
     const skills = Object.entries(n.skills || {}).filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([k, v]) => `<span class="muSk" title="${S2[k] ? S2[k].name : k}">${S2[k] ? S2[k].icon : '·'}${v}</span>`).join('');
     const v = NPC.svc(n), [stName, stCol] = STATE_PLATE[row.where] || ['—', 'var(--bone-faint)'];
     const chips = [];
-    if (n.hungry) chips.push('<span class="muChip rust">HUNGRY</span>');
+    if (n.hungry) chips.push(`<span class="muChip rust">${row.where === 'companion' || row.where === 'pool' ? 'HUNGRY' : 'UNPAID'}</span>`);
     if (n.horse) chips.push(`<span class="muChip">${(FACT.HORSES[n.horse.breed] || {}).name || 'MOUNTED'}</span>`);
     if (n.bond) chips.push('<span class="muChip gold">OWES YOU</span>');
-    const O = NPC.ordersOf(n), P = O.preset ? MUSTER.PRESETS[O.preset] : null;
+    const O = NPC.ordersOf(n), P = O.preset ? MUSTER.PRESETS[O.preset] : null, W2 = NPC.workOf(n);
     const kg = (n.carry || []).reduce((a, c) => a + c.kg, 0);
+    /* v3.37: the stripe counts the WORK a field hand or a runner does, in its own words; the mood reads beside it */
+    let stripe;
+    if (W2.kind === 'field' && n.job === 'presser') { const tr = n.ftrail; stripe = `<b>${v.km.toFixed(1)}</b> km walked · trail <b>${tr ? Math.round(tr.frac * 100) + '%' : '—'}</b> bare${tr ? ' (measured at the last end)' : ' (not yet measured)'} · <b>${NPC.marksOf(n).length}</b> mark${NPC.marksOf(n).length === 1 ? '' : 's'}`; }
+    else if (W2.kind === 'field' && n.job === 'mason') stripe = `<b>${v.km.toFixed(1)}</b> km walked · <b>${v.laid || 0}</b> stretches cobbled · reserve <b>${MUSTER.WORK_ORDERS.reserve.floor[O.reserve] || 0}</b> of <b>${Math.floor(S.banked.ceramic || 0)}</b> banked`;
+    else if (W2.kind === 'field' && n.job === 'forrester') stripe = `<b>${v.km.toFixed(1)}</b> km walked · <b>${v.felled || 0}</b> felled · <b>${(n.fkept || []).length}</b> left standing`;
+    else if (W2.kind === 'field' || W2.kind === 'road') stripe = `<b>${v.km.toFixed(1)}</b> km walked · <b>${v.runs || 0}</b> runs · <b>${v.crates || 0}</b> crates walked in${n.fempty ? ` · <span class="rust">${n.fempty} empty</span>` : ''}`;
+    else stripe = `<b>${v.km.toFixed(1)}</b> km · <b>${v.crates}</b> crates · <b>${v.met}</b> met · <b>${v.sweeps}</b> swept · <b>${v.meals}</b> meals · <b>${v.steadies}</b> steadied`;
+    const m = NPC.mood(n);
+    const why = m.causes.length ? m.causes.map(c => `${c.line} <b style="color:${c.v > 0 ? 'var(--ok)' : 'var(--rust)'}">${c.v > 0 ? '+' : ''}${c.v}</b>`).join(' · ') : 'nothing weighs on them';
+    const ordPlate = W2.kind === 'walk' ? (P ? `<span class="muOrd">${P.name}</span>` : '<span class="muOrd own">HAND-SET ORDERS</span>') : `<span class="muOrd work">${W2.name.toUpperCase()} — WORKING ORDERS</span>`;
     return `<div class="muPlate ${sel === n.id ? 'sel' : ''} ${row.where}" data-mu="${n.id}">
       <div class="muFig"><img src="${Render.npcRigURL(n, 3)}" alt="" width="${n.fk && SPRITES.KIT[n.fkCls] ? 42 : 36}" height="${n.fk && SPRITES.KIT[n.fkCls] ? 66 : 54}"></div>
       <div class="muBody">
         <div class="muTop"><span class="muName">${n.name}</span><span class="muState" style="color:${stCol};border-color:${stCol}">${stName}</span></div>
         <div class="muSub">${cls} · ${row.place}${row.where === 'companion' ? ` · ${U.fmtKg(kg)}/${NPC.capOf(n)} kg` : ''}</div>
         <div class="muStripe"><span class="muSkills">${skills || '<span class="muSk dim">green</span>'}</span>
-          <span class="muSvc" title="the service stripe — counted from what they did beside you"><b>${v.km.toFixed(1)}</b> km · <b>${v.crates}</b> crates · <b>${v.met}</b> met · <b>${v.sweeps}</b> swept · <b>${v.meals}</b> meals · <b>${v.steadies}</b> steadied</span>${chips.join('')}</div>
-        <div class="muLast">${P ? `<span class="muOrd">${P.name}</span>` : '<span class="muOrd own">HAND-SET ORDERS</span>'}${v.last ? ` <i>— ${v.last}</i>` : ''}</div>
+          <span class="muSvc" title="the service stripe — counted from what they actually did">${stripe}</span>${chips.join('')}</div>
+        <div class="muMood"><span class="muBand" style="color:${m.col};border-color:${m.col}" title="the mood: summed from what the walk is doing to them">${m.band}</span><span class="muWhy">${why}</span></div>
+        <div class="muLast">${ordPlate}${v.last ? ` <i>— ${v.last}</i>` : ''}</div>
       </div></div>`;
   }
   function roll() {
@@ -115,10 +129,19 @@ const MusterUI = (() => {
 
   /* ---------- the standing orders pane ---------- */
   const NODE_ORDER = ['resources', 'consumables', 'freight', 'curios', 'buildables', 'equipable'];
+  const treeDflt = () => { const d = {}; for (const v of Object.keys(MUSTER.TREES)) d[v] = MUSTER.TREE_DEFAULT; return d; };
   function treeRows(n, verb) {
-    const P = NPC.ordersOf(n).policy, dflt = { loot: MUSTER.TREE_DEFAULT, hand: MUSTER.TREE_DEFAULT };
-    const box = (id, isItem) => { const st = Ledger.markStateIn(P, id, verb, dflt); return `<span class="lgBox ${st === 'on' ? 'on' : st === 'mixed' ? 'mixed' : ''}" data-tree="${verb}" data-node="${id}"></span>`; };
+    const P = NPC.ordersOf(n).policy, dflt = treeDflt();
+    const box = (id, isItem) => { const st = isItem ? (Ledger.effectiveIn(P, id, verb, dflt) ? 'on' : 'off') : Ledger.markStateIn(P, id, verb, dflt); return `<span class="lgBox ${st === 'on' ? 'on' : st === 'mixed' ? 'mixed' : ''}" data-tree="${verb}" data-node="${id}"${isItem ? ' data-item="1"' : ''}></span>`; };
     const NODES = {}; (function walk(node) { NODES[node.id] = node; for (const k of node.kids || []) walk(k); })(Ledger.TAXO);
+    /* v3.37 THE FREIGHT LIST: the freight branch only, with every station good by name — a mark per crate kind */
+    if (MUSTER.TREES[verb].root === 'freight') {
+      const goods = Object.keys(DATA.goodsInfo).filter(g => DATA.items[g] && !DATA.items[g].service);
+      let htm = `<div class="muTreeRow root">${box('freight')}<span class="lgName">All freight</span><span class="muTreeLine">every crate the valley lives on — the parent law governs every child</span></div>`;
+      htm += `<div class="muTreeRow">${box('post')}<span class="lgName">The Post</span><span class="muTreeLine">letters and dispatches — a charter under THE RUN: the post carries them regardless</span></div>`;
+      htm += `<div class="muTreeRow">${box('trade')}<span class="lgName">Trade goods</span><span class="muKids">${goods.map(g => `<span class="muKid" title="${DATA.goodsInfo[g].why}">${box(g, true)}<span>${DATA.goodsInfo[g].name}</span></span>`).join('')}</span></div>`;
+      return htm;
+    }
     let htm = `<div class="muTreeRow root">${box('cargo')}<span class="lgName">All cargo</span><span class="muTreeLine">the whole taxonomy — the parent law governs every child</span></div>`;
     for (const id of NODE_ORDER) {
       const node = NODES[id]; if (!node) continue;
@@ -126,18 +149,44 @@ const MusterUI = (() => {
     }
     return htm;
   }
+  const dirWord = (dx, dy) => { const a = Math.atan2(dy, dx); const k = Math.round(a / (Math.PI / 4)); return ['E', 'SE', 'S', 'SW', 'W', 'NW', 'N', 'NE'][((k % 8) + 8) % 8]; };
+  /* the presser's chain of marks, in order from the town, with the ground's own distances */
+  function marksPane(n) {
+    const home = DATA.stations[n.route.a], marks = NPC.marksOf(n);
+    const tr = n.ftrail;
+    let htm = `<div class="fmGroup">THE CHAIN OF MARKS<i class="muTreeHint">walked in order from ${home.name} and back — click ADD A MARK, then the ground</i></div>`;
+    if (!marks.length) htm += `<div class="muMarkRow"><span class="muMarkNo">→</span><span>to <b>${DATA.stations[n.route.b] ? DATA.stations[n.route.b].name : 'the far end'}</b> — a town at the far end; marks are for a presser sent to a point</span></div>`;
+    let from = home;
+    marks.forEach((m, i) => {
+      htm += `<div class="muMarkRow"><span class="muMarkNo">${i + 1}</span><span>${U.fmtDist(U.dist(from.x, from.y, m.x, m.y))} ${dirWord(m.x - from.x, m.y - from.y)} of ${i === 0 ? home.name : `mark ${i}`}</span></div>`;
+      from = m;
+    });
+    htm += `<div class="muMarkRow trail"><span class="muMarkNo">◇</span><span>the trail: <b>${tr ? Math.round(tr.frac * 100) + '%' : '—'}</b> bare of what can wear${tr ? ` · ${tr.bare} of ${tr.total} stretches` : ' · measured each time they reach an end'} · done at ${Math.round(MUSTER.TRAIL_DONE * 100)}%</span></div>`;
+    if (marks.length) htm += `<div class="muMarkBtns"><button class="miniBtn" data-addmark="1">ADD A MARK</button>${marks.length > 1 ? '<button class="miniBtn" data-strikemark="1">STRIKE THE LAST</button>' : ''}</div>`;
+    return htm;
+  }
   function orders() {
     const row = rows.find(r => r.n.id === sel); if (!row) return `<div class="fmNote">Choose a walker on the roll — their standing orders open here, and the wedge plate shows where they will stand.</div>`;
-    const n = row.n, O = NPC.ordersOf(n);
-    let htm = `<div class="muOrdHead"><span class="muName">${n.name}</span><span class="muSub">standing orders${row.where !== 'companion' ? ' — kept until they walk with you' : ''}</span></div>
-      <div class="muPresets">${Object.entries(MUSTER.PRESETS).map(([id, P]) => `<button class="miniBtn ${O.preset === id ? 'on' : ''}" data-preset="${id}" title="${P.line}">${P.name}</button>`).join('')}</div>
-      <div class="muPresetLine">${O.preset ? MUSTER.PRESETS[O.preset].line : 'hand-set — the Order\'s presets are a starting point, not a leash'}</div>`;
-    for (const [key, rowD] of Object.entries(MUSTER.ORDERS)) {
+    const n = row.n, O = NPC.ordersOf(n), W2 = NPC.workOf(n);
+    let htm;
+    if (W2.kind === 'walk') {
+      htm = `<div class="muOrdHead"><span class="muName">${n.name}</span><span class="muSub">standing orders${row.where !== 'companion' ? ' — kept until they walk with you' : ''}</span></div>
+        <div class="muPresets">${Object.entries(MUSTER.PRESETS).map(([id, P]) => `<button class="miniBtn ${O.preset === id ? 'on' : ''}" data-preset="${id}" title="${P.line}">${P.name}</button>`).join('')}</div>
+        <div class="muPresetLine">${O.preset ? MUSTER.PRESETS[O.preset].line : 'hand-set — the Order\'s presets are a starting point, not a leash'}</div>`;
+    } else {
+      /* v3.37: the working orders — the job's rows from the registry, on the same store */
+      const where = W2.kind === 'road' ? `${DATA.stations[n.route.a].name} ⇄ ${DATA.stations[n.route.b].name}` : `out of ${DATA.stations[n.route.a].name}${n.route.b ? ` to ${DATA.stations[n.route.b].name}` : ''}`;
+      htm = `<div class="muOrdHead"><span class="muName">${n.name}</span><span class="muSub">working orders — ${W2.name.toLowerCase()} ${where}</span></div>
+        <div class="muPresetLine">${W2.kind === 'road' ? 'a charter runs on its own clock; these orders set what it carries and how hard it runs' : `${(CHAR.FIELD_JOBS[n.job] || {}).note || ''}`}</div>`;
+    }
+    for (const [key, rowD] of Object.entries(W2.rows)) {
       htm += `<div class="muOrder"><span class="muOrdName">${rowD.name}<i>${rowD.line}</i></span><span class="muChoices">${Object.entries(rowD.choices).map(([c, d]) => `<button class="miniBtn ${O[key] === c ? 'on' : ''}" data-order="${key}" data-choice="${c}">${d.name}</button>`).join('')}</span>
         <div class="muOrdLine">${rowD.choices[O[key]].line}</div></div>`;
     }
-    for (const [verb, T2] of Object.entries(MUSTER.TREES)) {
-      htm += `<div class="fmGroup">${T2.name}<i class="muTreeHint">${T2.line}${verb === 'hand' ? ' · mission cargo, tools and the lost never move' : ''}</i></div>${treeRows(n, verb)}`;
+    if (W2.kind === 'field' && n.job === 'presser') htm += marksPane(n);
+    for (const verb of W2.trees) {
+      const T2 = MUSTER.TREES[verb];
+      htm += `<div class="fmGroup">${T2.name}<i class="muTreeHint">${T2.line}${verb === 'hand' ? ' · mission cargo, tools and the lost never move' : verb === 'haul' ? ' · a town takes only what it NEEDS, from this list' : ''}</i></div>${treeRows(n, verb)}`;
     }
     return htm;
   }
@@ -174,16 +223,19 @@ const MusterUI = (() => {
     ov.addEventListener('click', e => {
       if (e.target === ov) { close(); return; }
       const pl = e.target.closest('[data-mu]');
-      const t = e.target.closest('[data-preset],[data-order],[data-tree]');
+      const t = e.target.closest('[data-preset],[data-order],[data-tree],[data-addmark],[data-strikemark]');
       if (pl && !t) { const row = rows.find(r => String(r.n.id) === pl.dataset.mu); if (row) sel = row.n.id; render(); Snd.sfx.ui && Snd.sfx.ui(); return; }
       if (!t) return;
       const row = rows.find(r => r.n.id === sel); if (!row) return;
       if (t.dataset.preset) NPC.applyPreset(row.n, t.dataset.preset);
-      else if (t.dataset.order) NPC.setOrder(row.n, t.dataset.order, t.dataset.choice);
+      else if (t.dataset.order) { NPC.setOrder(row.n, t.dataset.order, t.dataset.choice); Systems.tut && Systems.tut('firstWorking'); }
       else if (t.dataset.tree) {
-        const st = Ledger.markStateIn(NPC.ordersOf(row.n).policy, t.dataset.node, t.dataset.tree, { loot: MUSTER.TREE_DEFAULT, hand: MUSTER.TREE_DEFAULT });
-        NPC.setTreeMark(row.n, t.dataset.tree, t.dataset.node, st !== 'on');
+        const P = NPC.ordersOf(row.n).policy, dflt = treeDflt();
+        if (t.dataset.item) NPC.setTreeMark(row.n, t.dataset.tree, t.dataset.node, !Ledger.effectiveIn(P, t.dataset.node, t.dataset.tree, dflt), true);
+        else { const st = Ledger.markStateIn(P, t.dataset.node, t.dataset.tree, dflt); NPC.setTreeMark(row.n, t.dataset.tree, t.dataset.node, st !== 'on'); }
       }
+      else if (t.dataset.addmark) { close(); NPC.armPress(row.n.id, row.n.route.a, true); Snd.sfx.ui && Snd.sfx.ui(); return; }   // v3.37: the next click on the ground is the next mark
+      else if (t.dataset.strikemark) NPC.strikeMark(row.n);
       Snd.sfx.ui && Snd.sfx.ui();
       render();
     });

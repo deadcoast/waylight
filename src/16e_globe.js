@@ -82,7 +82,7 @@ const Globe = (() => {
           else if (t < 0.35) { r = 62 + t * 90; g = 96 + t * 60; b = 44 + t * 30; }   // lowland green
           else if (t < 0.62) { r = 118 + t * 60; g = 100 + t * 40; b = 62 + t * 30; } // highland ochre
           else { const s = (t - 0.62) / 0.38; r = 140 + s * 100; g = 132 + s * 105; b = 120 + s * 115; }  // rock to snow
-          if (alat > 0.72) { const s = Math.min(1, (alat - 0.72) / 0.2); r += (238 - r) * s; g += (242 - g) * s; b += (246 - b) * s; }  // ice caps
+          if (alat > 0.72) { const s = Math.min(1, (alat - 0.72) / 0.2); r = r + (238 - r) * s; g = g + (242 - g) * s; b = b + (246 - b) * s; }  // ice caps
           // night side: settlements glitter along coasts and lowlands — a world FULL of people we cannot reach yet
           const nl = fbm(px3 * 11 + 77, py3 * 11 + 77, pz3 * 11 + 77, 3, 2.3, 0.5);
           if (t < 0.3 && nl > 0.62 && alat < 0.65) nightM[i] = Math.min(255, ((nl - 0.62) / 0.1) * 255) | 0;
@@ -168,7 +168,7 @@ const Globe = (() => {
       const diff = tblDiff[o];
       let lum = 0.06 + diff * 0.97;
       lum *= (1 - cs * 0.22);                                        // cloud shadow on the ground
-      r *= lum; g2 *= lum; b *= lum;
+      r = r * lum; g2 = g2 * lum; b = b * lum;
       if (h < SEA) { const sp = tblSpec[o] * 165; r += sp; g2 += sp * 0.96; b += sp * 0.82; }   // the sun on the sea
       if (cl > 0.02) { const ca = cl * 0.9 * (0.1 + diff * 0.95); r += (250 - r) * ca; g2 += (250 - g2) * ca; b += (252 - b) * ca; }
       if (diff < 0.1 && h >= SEA) { const nl = nightM[i1] * (1 - diff / 0.1); r += nl * 0.5; g2 += nl * 0.32; b += nl * 0.1; }  // the cities of the night side

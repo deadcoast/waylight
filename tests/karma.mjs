@@ -40,7 +40,7 @@ r = await ev(() => {
   Systems.offerSmuggle();
   const contra = S.cargo.filter(c => c.cat === 'contra');
   const green = Render.cargoGlyph(contra[0]).pal.X === '#4a6e3a';
-  const {to} = S.contra;
+  const to = S.contra.to;
   WL.tp([DATA.stations[to].x + 40, DATA.stations[to].y]); S.moveTo = null;
   const passAct = Systems.getInteractions().some(a => /quietly/.test(a.label));
   const l0 = S.likes, rg0 = S.renegade, ap0 = S.stations[to].appr || 0;
@@ -60,7 +60,7 @@ ok('the first clean pass brings THE REPUBLIC down from the mountain', r.republic
 /* ---------- the quiet work: caught ---------- */
 r = await ev(() => {
   Systems.offerSmuggle();
-  const {to} = S.contra;
+  const to = S.contra.to;
   WL.tp([DATA.stations[to].x + 40, DATA.stations[to].y]); S.moveTo = null;
   const ap0 = S.stations[to].appr || 0, rg0 = S.renegade, l0 = S.likes;
   Systems.passContraband(to, 'caught');

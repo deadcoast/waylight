@@ -346,7 +346,7 @@ cued. WE ARE MIVIM : MIVIM ERA WE * STANDARDS.
    carry a valley to any browser under the no-purge law; paper scale; the court reading `live`;
    the larder and the Reaper as texel glyphs. manual.mjs 19 checks; 621-check battery, 39 suites.
    · NEXT on the same line (for the people): key caps on the rail read from KEYS for every prompt
-     (today the rail's letters are labels by law).
+     (today the rail's letters are labels by law). — the hint strip SHIPPED in v3.37 (see 4e).
 4d. **v3.36 THE MUSTER** (SHIPPED — the v3.31 promise kept: companion management on the policy
    engine, parameterized by store): four scalar orders + two policy trees + five presets as
    registry rows; orders on real feet (station slots, sweep, the overflow, the mess, the stand,
@@ -356,7 +356,24 @@ cued. WE ARE MIVIM : MIVIM ERA WE * STANDARDS.
    · REMAINING on this line: orders for the FIELD and the ROADS (a hauler's route policy, a
      presser's mark policy) on the same stores; a walker's MOOD read on the plate (the bond, the
      hunger, the days since a meal — the plate has the room); the wedge plate as a HUD card in
-     the world (a small live formation glyph beside the prompts, toggled).
+     the world (a small live formation glyph beside the prompts, toggled). — all three SHIPPED as
+     **v3.37 THE WORKING ORDERS** (see 4e).
+4e. **v3.37 THE WORKING ORDERS** (SHIPPED — the v3.36 REMAINING, whole): the field and the roads
+   on the SAME per-walker stores — THE FREIGHT LIST as a third policy tree over the taxonomy's
+   freight branch (the station goods are items), seven working-order rows named per job by the
+   registry (THE LOAD · THE MARKS · THE RESERVE · THE REACH · THE WOODS · THE RUN · THE PACE),
+   `NPC.workOf` handing the roll whichever sheet a walker answers to; a v3.36 store repaired and
+   never purged; the orders working the land (an honest empty pack, the split load, the chain of
+   marks walked in order with the trail MEASURED and COME IN, the marks as numbered flags on the
+   ground, the reserve floor, the far reach, the thinned wood kept by cell, the charter's freight
+   run and hard pace); the work stripe; THE MOOD summed from sixteen causes into five bands with
+   real effects and a DONE walker sitting down at a fire with the mail; THE WEDGE CARD on the HUD
+   with a live glyph, put away and kept; the hint strip in your keys. workorders.mjs 16 checks;
+   650-check battery, 41 suites.
+   · REMAINING on this line: orders for the POSTS (a mailroom hand's round policy on the same
+     store — which letters, which hours); a walker's mood for field hands beyond paid/unpaid (the
+     weather they work in, the distance from home); the wedge card's glyph as a compass overlay
+     when the survey is open; a presser's chain drawn on the survey sheet.
 5. **THE ASSET PASS** (SHIPPED v3.33 — credits landed; twenty generations spent): the pipeline
    (generate → Lab k-means ramp snapped to OUR bands → quantize → cluster discipline → embed as
    registry rows) proven on THE STABLE — five breeds + the caravan donkey at the discovered
