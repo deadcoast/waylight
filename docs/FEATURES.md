@@ -1,10 +1,12 @@
 # WAYLIGHT — MASTER FEATURE LIST
+
 Compiled from every MIVIM request across development: the ADDITIONS REQUEST LOG, the post-testing
 notes, the faction/diplomacy notes, and every mid-turn order. Each line carries its status:
 **SHIPPED (vX)** — live in the build, covered by the test battery · **ROADMAP (vX)** — scheduled,
 designed · **OPEN** — requested, not yet scheduled into a version. Current build: v3.30, 524 automated checks green across thirty-four suites — the shop audit standing among them (three legacy probes run beside the battery error-free).
 
 ## 1 · Delivery satisfaction & mission clarity
+
 - DELIVER button/prompt when in range — the reward phase is a held moment, not an auto-vanish: gold DELIVER prompt, two-click hand-over, crate-hop animation, grade stamp slam, keeper voice on the slip — **SHIPPED (v3.7–v3.13)**
 - Mission items always readable as mission items — THE LAW: gold band + gold text everywhere (tray, board, world drops, the pack itself; band row injected on every cargo glyph) — **SHIPPED (v3.13, extended v3.19)**
 - Icons for every item, before the title, correctly sourced — authored pixel icon set on all rows — **SHIPPED (v3.15)**
@@ -14,6 +16,7 @@ designed · **OPEN** — requested, not yet scheduled into a version. Current bu
 - Earn notifications for ALL currencies with icons, animated (trust diamond, per-town hearth-heart, material crate; Renegade bandana seated) — merge-and-count-up chips beside the trust readout — **SHIPPED (v3.20)**
 
 ## 2 · Visual identity
+
 - Authored pixel art everywhere; kill the grid-overlay patches and blur — player rig redrawn (12×18 authored texels, cutout rig), NPC figures, structures, icon set — **SHIPPED (v3.15–v3.17)**; remaining older sprites queued for the PixelLab pass — **OPEN (asset pass)**
 - The phasing screen-wide line distortions — root-caused (fractional buffer scale) and fixed with the exact 3× world buffer + snapped camera — **SHIPPED (v3.15)**
 - Cargo visuals on the player: complete authored overhaul — 11-glyph cargo table, duffel for smalls, equipped frame drawn holding the tower, worn coat/boots recolour the rig — **SHIPPED (v3.19)**
@@ -21,6 +24,7 @@ designed · **OPEN** — requested, not yet scheduled into a version. Current bu
 - PixelLab MCP — integration SHIPPED (v3.20), then **SHELVED by directive (v3.23)**: the current aesthetic is the identity; polish it with the audited research on every source touch
 
 ## 3 · The world is ALIVE through interaction (never effect-spam)
+
 - Leaves on the wind: gust puts leaves in motion; hit the model → deflect or stick a beat; miss → never change trajectory; sparse by law — **SHIPPED (v3.19)**
 - Snow accumulation: piles on hood/shoulders by intensity and stillness, sheds with work, melts in warmth; falls as flakes in the north, never "more raindrops" — **SHIPPED (v3.19)**
 - No screen-shake/motion-blur dependence; particles sparse and eloquent — standing law — **SHIPPED**
@@ -28,6 +32,7 @@ designed · **OPEN** — requested, not yet scheduled into a version. Current bu
 - Living-changing land: traffic wears foot paths between towns; player steps accelerate; staged permanent wear; paths guide NPCs and players and grant speed — **SHIPPED (v3.20)**
 
 ## 4 · Placement & building
+
 - Blueprint ghosts for ALL placeables — semi-transparent, exact pose, honest validity + why; click/E lays, Esc folds away; far click past an invalid ghost walks instead of trapping the mouse — **SHIPPED (v3.19)**
 - Move built objects — V re-hangs an owned structure as a free blueprint, exact re-seat — **SHIPPED (v3.19)**
 - Destroy built objects — X takes down: ladders fold back onto the pack, structures refund 60% metal — **SHIPPED (v3.19)**
@@ -38,6 +43,7 @@ designed · **OPEN** — requested, not yet scheduled into a version. Current bu
 - Defensive structures that actually act — the horn tower calls out and slows pursuers, the armed post knocks them sprawling — **SHIPPED (v3.21)**
 
 ## 5 · Automation, not idle
+
 - Chain movement from map and world (shift-click strung routes, click-to-travel, pathfound legs) — **SHIPPED (v3.2, v3.14)**
 - Wobble as EARNED pushback: calm ground at sane load never rings; Balance-per-terrain auto-steadies silently; rings only past the kit; stumbles never cancel the chain — **SHIPPED (v3.19)**
 - Keep-walking-when-hidden toggle for long trips — background clock, always auto-steadies, clean handback — **SHIPPED (v3.19)**
@@ -45,6 +51,7 @@ designed · **OPEN** — requested, not yet scheduled into a version. Current bu
 - Companions never a burden: stuck escorts self-heal to your back; companions catch up on their own — **SHIPPED (v3.19)**
 
 ## 6 · Letters, the post, and appreciation
+
 - Letters are the Order's SERVICE — never cash; appreciation + porter XP only; all other goods are luxury and pay — **SHIPPED (v3.16, standing law)**
 - Letter tiers by distance/danger/darkness (LOCAL/LONG/GREY POST), mailbag fills with time — **SHIPPED (v3.16)**
 - Appreciation as its own per-town ladder (KNOWN/TRUSTED/HONOURED/BELOVED) with creative non-cash rewards — warm meals, salvage tips, town lamp, waived wages — **SHIPPED (v3.16)**
@@ -53,6 +60,7 @@ designed · **OPEN** — requested, not yet scheduled into a version. Current bu
 - Job management: assign, change round, relieve, take as companion, inventory hand-over — **SHIPPED (v3.16)**
 
 ## 7 · The working world (field automation)
+
 - Field crews from the Waylighters tab (3 per town, provision wages, stall honest): — **SHIPPED (v3.20)**
   - PATH PRESSER — wears custom trails in along assigned routes — **SHIPPED (v3.20)**; press player-clicked custom routes — **OPEN (v3.21 candidate)**
   - MASON — lays cobblestone along the route, a slab a stretch — **SHIPPED (v3.20)**
@@ -63,11 +71,13 @@ designed · **OPEN** — requested, not yet scheduled into a version. Current bu
 - LOOTER earner skill: companion sweeps ground cargo entering player vision, reach per Hauling level — **SHIPPED (v3.20)**; full automation (chests, nodes, self-directed hauls home to sell) — **ROADMAP (v3.22+)**
 
 ## 8 · Karma & choice (NOT good/bad — the Han Solo law)
+
 - Renegade currency beside Appreciation, independent tiers under the KARMA ledger, its own chip, read in the character sheet — **SHIPPED (v3.22)**
 - Highleaf smuggling with legible risk and caught/clean outcomes per place (heat, seizure, smoke in supplied yards) + cutpurse skim jobs — **SHIPPED (v3.22)**; mercenary-guild work (weapon + party gated, Farkeeper combat) — **ROADMAP (v3.23)**
 - Consequences SEEN in the world, never text-only — smoke loungers, camp-claim respect, armed-watch eyes in the risk equation — **SHIPPED (v3.22, standing law)**
 
 ## 9 · Factions & diplomacy (CK3 / Bannerlord 2 reference)
+
 - THE REPUBLIC OF CONNECTION (Waylight + Farkeep; famine, descent, merger) — the banner, the founding letter, the arrival milestone — **SHIPPED (v3.22)**
 - Lore correction: ALL security/battle purpose transferred to FARKEEPERS in every player-facing string; the militia riders are Farkeeper riders, retroactively — **SHIPPED (v3.22)**
 - Farkeepers: larger fiercely-loyal mountain people (NOT giants), drawn taller/wider in iron and pale; WARDS hireable (heavy intercept); quell/take-by-force doctrine in faction culture — **SHIPPED (v3.22)**; rebellion/taking-towns systems — **ROADMAP (v3.23+)**
@@ -78,12 +88,14 @@ designed · **OPEN** — requested, not yet scheduled into a version. Current bu
 - Expansion door open: the mountain to Farkeep, the Farlands beyond — **ROADMAP (post-v3.22)**
 
 ## 10 · Progression & pacing
+
 - Mechanics introduced early and linearly; early movement mechanic signals the game has more than one speed; other actors visibly operate (route porters, field crews, militia, convoys, echo builders) — **SHIPPED (cumulative; v3.14 progression pass + v3.16–v3.20 world actors)**
 - Nothing feels like filler: needs economy prices every delivery; letters carry the service identity; circuits/convoys/salvage diversify the work — **SHIPPED (v3.0, v3.16, v3.18)**
 - Price/pace balance under continued review — greedy-bot balance law stands — **SHIPPED (standing, session bot)**
 - World reset separate from New Waylighter, with explaining confirm — **SHIPPED (v3.16)**
 
 ## 11 · The myth & the character (v3.23)
+
 - The Postman spirit through gameplay: legend tiers, record-cited bystander lines, stopped yards, keeper hello prefixes, children running the fences — **SHIPPED (v3.23)**
 - Micro-cutscenes capped at one slow zoom + first line, skippable, sim never pauses — **SHIPPED (v3.23)**
 - THE HANDOFF parody (slow-mo, three cuts, SUPER ZOOM, freeze-frame stamp, once per town) — **SHIPPED (v3.23)**
@@ -92,6 +104,7 @@ designed · **OPEN** — requested, not yet scheduled into a version. Current bu
 - Framing the mysterious protagonist (origin fragments, the overworld-knowledge angle) — **ROADMAP**
 
 ## 11b · The wider world & the production (v3.24)
+
 - THE CINE ENGINE: reusable shot-list scene player (CUT/PUSH/DOLLY/VEER/HOLD, world slow-mo under a real camera clock, shared speedline/flash/stamp/vignette primitives, skip-anywhere) — **SHIPPED (v3.24)**
 - 90s directing research applied (The Postman's myth beats + displaced violence; Waterworld's intimacy-first) — **SHIPPED (v3.24, research-90s-directing.md)**
 - THE RIDE: once-ever firing-squad parody — "THAT'S MY DAD!", "RIDE, WAYLIGHTER!", the veer-out with gunshots HEARD, "THE MAIL GOT OUT." stamp — **SHIPPED (v3.24)**
@@ -106,6 +119,7 @@ designed · **OPEN** — requested, not yet scheduled into a version. Current bu
 - Rain remade as water (wash/patter/rumble) with its own persisted volume dial; wraith drone kept and taught to breathe; sfx palette designed (jittered steps, warmer bells, gunshots) — **SHIPPED (v3.24)**
 
 ## 11c · The names & the exiles (v3.25)
+
 - Waylight = the capital city (Republic of Connection seat) — menus stop calling the world by it; the land is THE GREYMARCH, the globe header THE KNOWN WORLD — **SHIPPED (v3.25)**
 - Globe pins the lore's places: Greymarch (walked) / Waylight (glowing, coastal) / the Farlands (Farkeep) / two uncharted — **SHIPPED (v3.25)**
 - Protagonist framed as the scorned hero in micro-cine fragments BEFORE any mechanics (the dark walked too easily; the name "Lamplighter" dropped once) — **SHIPPED (v3.25)**
@@ -117,6 +131,7 @@ designed · **OPEN** — requested, not yet scheduled into a version. Current bu
 - The Lamplighter Nomads' own city; Diefenbunker as a walkable place; C3A1/C20 as gear tiers; ammo trade lanes — **ROADMAP**
 
 ## 11d · The Darklands table (v3.26)
+
 - Scale ladder made honest: THE GREYMARCH → THE DARKLANDS (the developed continental briefing table) → THE KNOWN WORLD (globe demoted to aesthetic farthest-zoom, says so in its caption) — **SHIPPED (v3.26)**
 - The table at the reference ANGLE in the game's own aesthetic: tilted contour terrain with relief, dotted land-density field, stippled sea, receding graticule, far coasts beyond the edge, leader-line labels, scale bar + survey stamp — **SHIPPED (v3.26)**
 - One truth: continent sampled from the same planet bake as the globe; the Greymarch footprint carries the LIVE game (coverage stipple, station pips, camp rings, the walker's pulse) — **SHIPPED (v3.26)**
@@ -125,6 +140,7 @@ designed · **OPEN** — requested, not yet scheduled into a version. Current bu
 - Globe atmosphere halo padding fixed (corners empty, glow unclipped — verified by pixel, on record) — **SHIPPED (v3.26)**
 
 ## 11e · The ecosystem (v3.27)
+
 - Utilities and works named as TWO THINGS: the Fabricate sheet's two shelves + per-item ↻ loop lines + the loop law at the counter — **SHIPPED (v3.27)**
 - Three production works, terrain-sited with honest ghosts: LUMEN STILL (veil-sited, storm-doubled), SAWCAMP (treeline, mutual ×1.25 synergy with a working forrester), CLAY OVEN (wet ground) — **SHIPPED (v3.27)**
 - Tier production: armed post's spotter's tithe (metal), the room's drying rack (provisions, meadow-honest) — every banked resource has an automated source — **SHIPPED (v3.27)**
@@ -133,6 +149,7 @@ designed · **OPEN** — requested, not yet scheduled into a version. Current bu
 - Deeper chains (works consuming works' goods, outpost clusters) — **SHIPPED (v3.28: outposts haul into the same bank)**
 
 ## 11f · The watchdog (v3.28a — stability law)
+
 - The step is fault-guarded: sim/myth/frame faults are caught, reported on screen with their own message, and the loop keeps walking — a freeze can no longer be silent — **SHIPPED (v3.28a)**
 - The watchdog repairs stuck gates within ~2s: paused-with-no-sheet, station-sheet-with-nobody-home, stranded timeScale/letterbox, zip-with-no-ride, map flag desync, stuck mouse button — **SHIPPED (v3.28a)**
 - Modal-list gaps closed: the tailor freezes/blocks like a modal, answers ESC, and closeAllModals tears it down — **SHIPPED (v3.28a)**
@@ -140,6 +157,7 @@ designed · **OPEN** — requested, not yet scheduled into a version. Current bu
 - The battery now boots the PLAYER'S page: inputs.mjs runs waylight.html with no debug flag — **SHIPPED (v3.28a, standing)**
 
 ## 11g · The dead boot law (v3.28b — the frozen-input report answered at the ROOT)
+
 - ROOT CAUSE FOUND: a save carrying a committed death (written by the death-screen auto-save in any earlier build) booted a ZOMBIE WORLD — sim gated off, click and WASD refused, ESC menu the only living surface. The exact reported symptom, reproduced and extinguished — **SHIPPED (v3.28b)**
 - Death is now committed WITH its certificate facts (S.deadInfo) and saved the moment it happens — no alt-F4 resurrection; the Zomboid law with teeth — **SHIPPED (v3.28b)**
 - A dead save boots INTO the Certificate of Passage (honest fallback for older saves: "the road took them between saves") → next walker → the valley EXACTLY as left — **SHIPPED (v3.28b)**
@@ -150,6 +168,7 @@ designed · **OPEN** — requested, not yet scheduled into a version. Current bu
 - deadboot.mjs: 19 checks — commit, dead-boot certificate, fallback, valley continuity, watchdog heal, diag line, release, no-deletion proof, fault chip, attic restore — **SHIPPED (v3.28b, standing)**
 
 ## 11h · The frontier (v3.28 — RECON & OUTPOSTS, the Frostpunk law on the Darklands table)
+
 - The uncharted pins are MISSIONS: click a pin, the frontier desk opens on the table (LEDGERLIGHT paper — blurb, costs, the banked line, one gold button) — **SHIPPED (v3.28)**
 - FUND THE RECON RIDE (20 metal · 6 provisions, wants a connected stable town): a named Farkeeper rider goes out, drawn LIVE on the table — a white dot walking the survey line, dashed, toward the pin — **SHIPPED (v3.28)**
 - The hazard roll at the midpoint (30%): the rider GOES QUIET (+45s, rust label, worried mail) but always comes home — the mountain does not lose riders to weather — **SHIPPED (v3.28)**
@@ -165,12 +184,14 @@ designed · **OPEN** — requested, not yet scheduled into a version. Current bu
 - frontier.mjs: 24 checks — refusals, exact costs, the chart, the hauls, the raid dice, the escort and its lapse, both reaches' distinct yields, the desk, the presser's mark, the looter's sweep and deposit, save round-trip — **SHIPPED (v3.28, standing)**
 
 ## 11i · The clean shop (v3.28c — standards correction, executed)
+
 - THE TYPE LEDGER replaces the attic/splice patchwork: a versioned structure-type migration map applied at one load() seam (history audited: additive-only, so it opens empty — the seam is the law), and genuinely foreign types become REAL inert `unmapped` world objects (authored glyph, original type carried, auto-restores when a build knows it) — **SHIPPED (v3.28c)**
 - Runtime garbage is a CODE bug and behaves like one: named on screen by the fault guard, never absorbed silently — **SHIPPED (v3.28c)**
 - FULL DEAD-CODE AUDIT (tools/audit.py): 61 findings raised → every one verified by eyeball → 1 unreachable branch removed, 6 dead declarations removed, 1 dead UI subsystem (the DOM cine-title that could never show) removed end to end, 44 dead exports trimmed with their living functions kept, 9 analyzer false-positives fixed IN THE INSTRUMENT (spread syntax, ternary tut() calls, destructured imports, T() reads, static DOM nodes) — full ledger in SHOP-AUDIT.md — **SHIPPED (v3.28c)**
 - shopaudit.mjs: the audit is a STANDING BATTERY GATE — any future dead declaration, dead export, unread tuning constant, unfired tutorial, unreachable branch, or ghost save-field fails the build — **SHIPPED (v3.28c, standing)**
 
 ## 11j · The memorial (v3.29 — the ground that keeps the Order's own)
+
 - THE LANTERN ROWS: a real war-memorial ground near Haven the player VISITS — site found once on open ground, kept on the save, marked on the compass and the survey sheet — **SHIPPED (v3.29)**
 - Every fallen or retired walker earns a STONE, tiered by the walk they walked (small / mid / GRAND past 25 deliveries or 350 ◆ — the Darkest Dungeon headstone law); grand stones glow — **SHIPPED (v3.29)**
 - VISUAL PROGRESSION: the ground GROWS with the roll — kept ground (plinth) → the stones (+ flanking lantern posts) → the rows (+ paved apron) → THE HALL (etched wall crowning the ground) — **SHIPPED (v3.29)**
@@ -182,6 +203,7 @@ designed · **OPEN** — requested, not yet scheduled into a version. Current bu
 - memorial.mjs: 20 checks — site, stages, tiers, ceremony, sheet + modal law, pixels on screen, compass duty, four-design completeness, save round-trip, a real death writing a stone-ready row — **SHIPPED (v3.29, standing)**
 
 ## 11k · The exile roads (v3.30 — Shutterlight, the guild, the C-series, the Hooded Row)
+
 - SHUTTERLIGHT, the exiles' own city: REVEALED, never charted — the v3.25 rescue marks the table ("a mark nobody made"), FOLLOW THE MARK runs the guided journey, and the city opens on the table's far NW edge with its own pin and desk — **SHIPPED (v3.30)**
 - THE EXCHANGE: .338 rounds at 3 metal apiece from a cycled stock (6/cycle) — dear because the Nomads collect rifles, not brass — **SHIPPED (v3.30)**
 - THE GUILD: mercenary contracts gated HONESTLY (rifle on the back + party of two) — Ridge watch / Caravan gun / Quiet collection (writes the Renegade ledger), hazard roll mid-contract ("it went loud" = half pay), guild standing 1→2 (3 done)→3 (7 done) — **SHIPPED (v3.30)**
@@ -191,10 +213,12 @@ designed · **OPEN** — requested, not yet scheduled into a version. Current bu
 - exileroads.mjs: 22 checks — reveal gates, journey, exchange arithmetic, restock cycle, guild gating/pay/lapse-free ledger, rank ladder, door, C-series purchases, desk on the table, stone routing, the exiles' sheet voice, save round-trip — **SHIPPED (v3.30, standing)**
 
 ## 11l · Standards revisions (v3.30, by directive)
+
 - SCREEN SHAKE REMOVED AT THE ROOT: the per-frame random camera jolt (fed continuously by damage-over-time — the reported "violent vibration") is deleted with all nine callers and the 40Hz HUD heart jitter; impact speaks through sound, stagger, and bursts; THE STILLNESS LAW stands in the battery (ground still to the pixel under bleeding) — **SHIPPED (v3.30)**
 - The appreciation icon sized like it matters: 30px on the waybill's "+N APPRECIATION" line, 16–18px in the ledgers — proven on a real local-post delivery — **SHIPPED (v3.30)**
 
 ## 11m · The delivery ledgers (v3.31 — the management layer)
+
 - ITEM-SYSTEM AUDIT VERDICT: no database — one merged flat def map (97 defs) was already right; the management layer ships as two pure DATA layers over it (taxonomy + policy), zero defs moved — **SHIPPED (v3.31)**
 - THE TAXO TREE: Cargo → Equipable (utilities/provisions/weapon/wearables BY SLOT: boots·coats·packs·charms) · Buildables · Resources (wood/metal/ceramic/lumen — every cut and grade under its one parent) · Consumables · Freight · Curios; classify() from def fields + 4-line OVERRIDES; coverage() a STANDING check (97/97 — a future def that fits no branch fails the battery) — **SHIPPED (v3.31)**
 - ONE POLICY STORE, five verbs (Deliver/Store/Donate/Scrap/Pickup), resolution item→leaf→root→default; THE PARENT LAW: marking a parent clears descendant overrides and flips the whole column VISIBLY; tri-state half-bar for mixed — **SHIPPED (v3.31)**
@@ -205,6 +229,7 @@ designed · **OPEN** — requested, not yet scheduled into a version. Current bu
 - ledgers.mjs: 16 checks — coverage, chains, defaults, parent law + mixed + reassert, a full dossier at Haven (slip totalled), exemption held, letters-first, arrival edge, save round-trip, modal law, search, rail sync — **SHIPPED (v3.31, standing)**
 
 ## 11n · The fairness pass (v3.31 — four field verdicts, four roots)
+
 - THE CHASE OBEYS THE WORLD: scrapper sprint 152-flat → 118 taxed by the SAME terrain/slope the player pays; leash 720; stall-giveup; the MOUNTED LAW — a runner watching the gap grow under hooves calls the chase off ("A horse. Forget it.") — no relative-speed cheat anywhere — **SHIPPED (v3.31)**
 - THE HILL IS NOT A MINIGAME: the wobble ring requires a REASON (overload past 1.0 / sprinting on rough ground / fear / empty lungs) — a sane load WALKING any slope never rings; proof runs with the wobble LIVE (calm flag cleared — the earlier vacuous green named and replaced) — **SHIPPED (v3.31)**
 - THE BALK IS A BEAT: water/rungs still dismount the rider, and the horse PICKS YOU BACK UP past the obstacle — no button, no lockout, one line once; a CHOSEN dismount stays dismounted — **SHIPPED (v3.31)**
@@ -213,6 +238,7 @@ designed · **OPEN** — requested, not yet scheduled into a version. Current bu
 - fairness.mjs: 10 checks measuring the WORLD (gaps in px, rings counted, lockouts timed, strides bounded); body/shapes rewritten where they enshrined the old warp law — **SHIPPED (v3.31, standing)**
 
 ## 11o · The Republic in force (v3.32 — the CK3 sandbox foundation)
+
 - THE REGISTRY LAW extended from the memorial (v3.29) to the WHOLE sandbox: every faction, stance rule, doctrine, world presence and interior is a ROW in 12d_republic.js read by ONE engine (15g_republic.js) and one glyph set — a future faction/doctrine/room is a row, never a new code path — **SHIPPED (v3.32)**
 - STANCE PLAY on one ordered ladder (Absolute Ally→Unknown): Waylight/Farkeep SEALED ally, Reapers/Cannibals SEALED hostile (no play moves a seal); Raiders walk to a WARY truce, Flame Keepers climb by shrines fed, the Unlit's posture is set by the player, Lamplighters/Diefenbunker MIRROR the guild rank and cold door — every gate reads an EXISTING ledger, never a new currency — **SHIPPED (v3.32)**
 - THE BANNER SHEET: the Republic in session (survey-sheet rail + Farkeep's desk) — THE COURT (every banner, stance, culture line) and THE HOLDINGS (every town's light as a political fact, the doctrines, the mountain road) — modal-law compliant, no TODO — **SHIPPED (v3.32)**
@@ -224,6 +250,7 @@ designed · **OPEN** — requested, not yet scheduled into a version. Current bu
 - republic.mjs: 19 checks — seeding, seals, the truce and its horn-price, risings, both doctrines (the quell marching + paying + raising a stone), shrine ladder, procession toll, the far shape in frame, the mountain + full kit, the class-read intercept, the walked hall, the banner sheet's modal law — **SHIPPED (v3.32, standing)**
 
 ## 11p · The asset pass (v3.33 — the PixelLab pipeline, on our terms)
+
 - THE VERDICT ON PEOPLE: generated humanoids (38 texels, realistic proportion) fit this game's stocky 12×18 rig at NO scale — the rig stays hand-authored; THE KIT is DRAWN instead: five Farkeeper classes at 14×22 in the walker's own letters (a head taller, a hand wider — height drawn, never scaled), each its own silhouette (stave, claymore + fur collar, breech, pale cloak, the Pugugly's width) — **SHIPPED (v3.33)**
 - THE FLAME KEEPER TENDER drawn at last: a torch-bearing robed figure standing every fed bowl at ALLY (the v3.32 promise kept in pixels) — **SHIPPED (v3.33)**
 - THE STABLE: six generated quadrupeds (five breeds + the caravan donkey) at the discovered world-scale size (24 → 26–30 texels), each distinct in coat and build, each with a four-frame template walk — **SHIPPED (v3.33)**
@@ -236,6 +263,7 @@ designed · **OPEN** — requested, not yet scheduled into a version. Current bu
 - WAITING: the courier set against the user's own 32×32 sheet (not in the workspace) — the rig stands untouched until it lands — **HELD**
 
 ## 11q · The holdings (v3.34 — conquest, the world's own wars, two walked halls)
+
 - THE TAKING: `DOCTRINE.take` — a raider camp taken by a five-shield column on the real road, gated on the mountain road (Farkeep takes no ground it cannot reach), one column at a time — **SHIPPED (v3.34)**
 - THE WATCHPOST: a held camp stands two shields at its fire under Farkeep's grey pennant, pitches mountain-grey canvas, hauls a salvage tithe (a crate per period, capped, carried off at the post), and BREAKS any chase that crosses its ring; the light's own pacify stands beside it untouched (`pacified` the quiet flag, `taken` the how) — **SHIPPED (v3.34)**
 - THE PRICE WRITTEN BY THE WORLD: a raider truce dies with the first shield; the reprisal season (camps claim 1.25× wider, run 1.15× quicker, 420 s); the nearest town +6; the casualty roll raises a Standing Teeth stone (`casualtyRoll` shared with the quell); Farkeep↔Raiders to WAR — **SHIPPED (v3.34)**
@@ -249,6 +277,7 @@ designed · **OPEN** — requested, not yet scheduled into a version. Current bu
 - holdings.mjs: 19 checks — registries, the gated view, the taking end to end, the tithe, the held ring, the light's answer beside it, the doused bowl → ask → answers/lapse, the cull, the courting heard/ignored, the ledger, both rooms walked, materials, the save, the modal law — **SHIPPED (v3.34, standing)**
 
 ## 11r · The player's pass (v3.35 — the field manual, the keys, the passage papers)
+
 - THE KEYS REGISTRY (12f_keys.js): every bound action one row; 18_main resolves input through it; rebinding persisted in the options with refusals by name (a clash's holder, the rail's letters, the digits, the fixed keys) and a reset; lessons and the rail read with the player's keys (`KEYS.say`, the interact cap) — **SHIPPED (v3.35)**
 - THE FIELD MANUAL (16j_manual.js; F1 · pause · survey rail · title): CONTROLS with caps that LISTEN; LESSONS — all thirty-four pages, walked in full, sealed otherwise, searchable, counted; THE PAPERS — every sheet indexed from the `PAPERS` registry with OPEN; THE PASSAGE — **SHIPPED (v3.35)**
 - THREE VALLEYS: save slots with slot 1 on the legacy key (migration-safe), plates on the title, the chosen slot persisted, RETURN TO THE TITLE from the pause sheet, CONTINUE back in — **SHIPPED (v3.35)**
@@ -259,6 +288,7 @@ designed · **OPEN** — requested, not yet scheduled into a version. Current bu
 - manual.mjs: 19 checks — registries, rebinding by law, the listening cap, lessons, search, papers, codes (seal/decode/import/backup/refusals), the passage tab, the title's valleys, F1, CONTINUE, paper scale, the rumour, the glyphs — **SHIPPED (v3.35, standing)**
 
 ## 11s · The muster (v3.36 — standing orders for the people who walk with you)
+
 - THE ENGINE PARAMETERIZED: `effectiveIn / setMarkIn / markStateIn / seedStore` over any policy store; the pack's `effective / setMark / markState` are wrappers and read identically (proven per item and verb) — the v3.31 promise kept — **SHIPPED (v3.36)**
 - THE MUSTER REGISTRY (12g_muster.js): four scalar orders (STATION wedge/close/loose/point · MESS bank/pack/fast · STAND meet/hold/quiet · VOICE talk/quiet), two trees (SWEEP INTO THEIR PACK · TAKE MY OVERFLOW), five presets (the Walker's Own, the Pack Mule, the Shield, the Scout, the Quartermaster), slot geometry and station effects, the hold ring, roll-call words — **SHIPPED (v3.36)**
 - ORDERS ON REAL FEET: station slots dealt per station; the looter's fetch and harvest gated by SWEEP; THE OVERFLOW lifting the heaviest allowed crate off an overloaded walker (mission cargo never); the mess three ways; the stand three ways (hold = the 120 px screen around you); voice; a Farkeeper hire walks in as THE SHIELD — **SHIPPED (v3.36)**
@@ -267,6 +297,7 @@ designed · **OPEN** — requested, not yet scheduled into a version. Current bu
 - muster.mjs: 13 checks — registries + engine identity, defaults + store isolation, station on real feet, sweep, overflow, mess, stand, voice/preset/roll call, the sheet, the parent law, papers/keys/lessons, the save — **SHIPPED (v3.36, standing)**
 
 ## 11t · The working orders (v3.37 — the field and the roads, on the same stores)
+
 - THE SAME STORES IN FACT: a hauler, a presser, a mason, a forrester and a charter runner keep their orders in the same `n.orders` store a companion keeps; THE FREIGHT LIST is a third policy tree (verb `haul`, rooted on the taxonomy's freight branch — every station good is an item under it; default every trade good ON, the post OFF); `NPC.workOf(n)` names the sheet a walker answers to (walk · field · road) from the registry — a new field job is one registry entry — **SHIPPED (v3.37)**
 - SEVEN WORKING-ORDER ROWS (12g_muster.js): THE LOAD full/split · THE MARKS come in/keep the beat · THE RESERVE none/keep 20/keep 60 · THE REACH near/far · THE WOODS clear/thin · THE RUN the post/freight · THE PACE steady/hard; FIELD and ROAD name which rows each job walks under — **SHIPPED (v3.37)**
 - REPAIRED, NEVER PURGED: a v3.36 store gets a tree's registry default only when it holds no mark for that tree at all; every mark it held stands, working rows take their defaults, the pack's ledger untouched — **SHIPPED (v3.37)**
@@ -279,4 +310,5 @@ designed · **OPEN** — requested, not yet scheduled into a version. Current bu
 - workorders.mjs: 16 checks — registries, the repaired store, the freight list, the load, the marks (chain / measured / keep / come in), the reserve, the reach and the woods, the run and the pace, the mood, DONE, the sheet, the wedge card, the hint strip, lessons + save — **SHIPPED (v3.37, standing)**
 
 ## 12 · Verification law (standing)
+
 - Every claim executable: Playwright bots, pixel measurements, screenshot evidence; full battery green before any ship — currently 650 tallied checks / forty-one suites, the shop audit among them — **SHIPPED (standing law)**
