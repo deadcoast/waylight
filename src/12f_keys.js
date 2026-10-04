@@ -18,20 +18,20 @@ const KEYS = (() => {
     sprint:   { codes: ['ShiftLeft', 'ShiftRight'], name: 'Sprint (drains stamina)',  group: 'walk',  hold: true },
     brace:    { codes: ['Space'],                 name: 'Brace · steady a wobble · struggle', group: 'walk', hold: true },
     interact: { codes: ['KeyE'],                  name: 'Interact · pick up · set a blueprint', group: 'hands' },
-    build:    { codes: ['KeyB'],                  name: 'The build bar',              group: 'hands' },
+    build:    { codes: ['KeyB'],                  name: 'Build menu',                 group: 'hands' },
     flare:    { codes: ['KeyF'],                  name: 'Flare (frees the kept, scatters wraiths)', group: 'hands' },
-    rifle:    { codes: ['KeyY'],                  name: 'The rifle (when scrappers stand inside its argument)', group: 'hands' },
+    rifle:    { codes: ['KeyY'],                  name: 'Rifle (when scrappers are in range)', group: 'hands' },
     eat:      { codes: ['KeyH'],                  name: 'Eat from the pack',          group: 'hands' },
-    map:      { codes: ['KeyM', 'Tab'],           name: 'The survey sheet (map)',     group: 'papers' },
+    map:      { codes: ['KeyM', 'Tab'],           name: 'Map',                        group: 'papers' },
     cargo:    { codes: ['KeyI'],                  name: 'Cargo & equipment',          group: 'papers' },
-    skills:   { codes: ['KeyK'],                  name: 'Skills & self',              group: 'papers' },
-    manual:   { codes: ['F1'],                    name: 'The field manual',           group: 'papers' },
-    muster:   { codes: ['KeyO'],                  name: 'The muster roll',            group: 'papers' },
-    pause:    { codes: ['Escape'],                name: 'Pause · close the top sheet', group: 'papers', fixed: true },
-    next:     { codes: ['Enter'],                 name: 'Next result slip',           group: 'papers', fixed: true },
+    skills:   { codes: ['KeyK'],                  name: 'Skills',                     group: 'papers' },
+    manual:   { codes: ['F1'],                    name: 'Manual',                     group: 'papers' },
+    muster:   { codes: ['KeyO'],                  name: 'Crew',                       group: 'papers' },
+    pause:    { codes: ['Escape'],                name: 'Pause · close the top window', group: 'papers', fixed: true },
+    next:     { codes: ['Enter'],                 name: 'Next delivery result',       group: 'papers', fixed: true },
   };
   /* the rail's letters: context prompts printed beside what they do — not rebindable, listed */
-  const PROMPT_KEYS = ['E', 'R', 'L', 'G', 'C', 'T', 'V', 'X', 'P', 'U'];
+  const PROMPT_KEYS = ['E', 'R', 'L', 'G', 'C', 'T', 'V', 'X', 'P', 'U', 'Q'];   // v3.46: Q — the line's orders at a held ring
   const BUILD_SLOTS = 'Digit1 … Digit9';
 
   /* ---------- bindings: defaults + the player's overrides, persisted ---------- */
@@ -87,16 +87,53 @@ const KEYS = (() => {
 })();
 
 /* ---------- THE PAPERS: every sheet the Order keeps, and the way it opens ---------- */
-const PAPERS = [
-  { id: 'survey',   name: 'THE SURVEY SHEET',   key: 'map',   line: 'The Greymarch drawn: stations, roads, your works, the camps\' claims, the deep grey — click to walk, shift-click to string a route. The rail carries the dossier toggles, the ledgers and the banner sheet.', open: 'map' },
-  { id: 'darklands', name: 'THE DARKLANDS TABLE', via: 'the survey sheet → THE DARKLANDS', line: 'The continent at the lean: the far pins, the recon rides, the outposts, the mountain pass and Farkeep\'s desk, Shutterlight and the cold door once found.', open: 'cont' },
-  { id: 'world',    name: 'THE KNOWN WORLD',     via: 'the survey sheet → THE KNOWN WORLD', line: 'The farthest the glass pulls back — an ornament of the survey, with the Farlands opening on it when the road is cut.', open: 'globe' },
-  { id: 'cargo',    name: 'CARGO & EQUIPMENT',   key: 'cargo', line: 'What rides the pack, what is worn, what weighs; drop, eat, equip, hand over.', open: 'cargo' },
-  { id: 'skills',   name: 'THE SERVICE RECORD',  key: 'skills', line: 'Skills & self — what the body knows, the body keeps; the coat you cut at the tailor.', open: 'skills' },
-  { id: 'ledgers',  name: 'THE DELIVERY LEDGERS', via: 'the survey rail → OPEN THE LEDGERS', line: 'The Haulin\' Manifest and the Cargo Checklist: one policy under both — deliver, store, donate, scrap, pick up — mission items first, always.', open: 'ledgers' },
-  { id: 'republic', name: 'THE BANNER SHEET',    via: 'the survey rail → THE BANNER SHEET, or Farkeep\'s desk', line: 'The Republic in session: every banner and its stance, every holding and its owner, the doctrines that answer the dark, the world\'s own wars, the world\'s asks.', open: 'republic' },
-  { id: 'muster',   name: 'THE MUSTER ROLL',     key: 'muster', line: 'Everyone under your command, where they stand, and their STANDING ORDERS — the wedge, the mess, how they meet trouble, what they sweep and what they lift off your back. Call the roll and they sound off.', open: 'muster' },
-  { id: 'terminal', name: 'A STATION TERMINAL',  via: 'E at any lit terminal', line: 'The board of orders, the market\'s needs, storage, donations, the stable, the works to fabricate.', open: null },
-  { id: 'memorial', name: 'THE MEMORIAL GROUND', via: 'walk to the kept ground (near Haven) and read the stones', line: 'The Roll of the Order in stone — every fallen walker\'s card; each banner keeps its own ground once found.', open: null },
-  { id: 'manual',   name: 'THE FIELD MANUAL',    key: 'manual', line: 'This. Controls, every lesson the road has taught you, the papers, and the passage — your valleys and the codes that carry them.', open: 'manual' },
+/* v3.51 THE BUS MAP — every window says, in one plain line, what it does for your deliveries (`loop`), under the mark of what
+   it moves (`mark`); the windows the index had left out are rows now (the slip, the transfer, the ruin, the trader, the
+   appearance, the build menu, Farkeep's desk, a camp's roll, the death certificate). DESIGN.md keeps the whole table: every
+   system, what it takes from the loop and what it gives back. */
+const PAPERS = [   // v3.49: every window by the plain name on its title bar — what it IS; the flavour stays in the line
+  { id: 'survey',   name: 'MAP',                 key: 'map',   line: 'The Greymarch drawn: stations, roads, your works, the camps\' claims, the deep grey — click to walk, shift-click to string a route. The side rail opens Cargo Rules, Factions, Crew and the party card.', open: 'map',
+    mark: 'road', loop: 'Plans every walk: who is short of what, where your loads are bound, the letters on the wire, the camps to walk round — or through, once they are on your routes.' },
+  { id: 'darklands', name: 'REGION MAP',         via: 'Map → REGION', line: 'The Darklands around the valley: the far pins, the recon rides, the outposts, the mountain pass and Farkeep\'s desk, Shutterlight and the cold door once found.', open: 'cont',
+    mark: 'surplus', loop: 'Where the outposts\' caravans come from: materials walked into Haven\'s bank — and past the reserve, freight on Haven\'s board.' },
+  { id: 'world',    name: 'WORLD MAP',           via: 'Map → WORLD', line: 'The known world — with the Farlands opening on it when the road is cut.', open: 'globe',
+    mark: 'mv_wire', loop: 'How far the waylight reaches: the valley\'s coverage, and the regions your crates are bound for.' },
+  { id: 'cargo',    name: 'CARGO & EQUIPMENT',   key: 'cargo', line: 'What rides the pack, what is worn, what weighs; drop, eat, equip, hand over.', open: 'cargo',
+    mark: 'gift', loop: 'What you can carry and how well: the load against the cap, the frame and the coat that carry it, the crates\' condition that sets the grade.' },
+  { id: 'skills',   name: 'SKILLS',              key: 'skills', line: 'What the body knows, the body keeps; the coat you cut at the tailor.', open: 'skills',
+    mark: 'stand', loop: 'What the walks teach: footwork, balance, endurance, the lumen sense — every delivery pays some of it back into the next one.' },
+  { id: 'ledgers',  name: 'CARGO RULES',         via: 'Map → CARGO RULES', line: 'What happens to your cargo when you arrive in a town — deliver, store, donate, scrap, pick up — mission items first, always.', open: 'ledgers',
+    mark: 'errand', loop: 'The arrival done for you: deliveries handed over first, the rest stored, donated or scrapped by your rules, so a stop is one key.' },
+  { id: 'republic', name: 'FACTIONS',            via: 'Map → FACTIONS, or Farkeep\'s desk', line: 'Every banner and its stance, every holding and its owner, the doctrines that answer the dark, the world\'s own wars, the world\'s asks.', open: 'republic',
+    mark: 'standing', loop: 'Who holds each door and how they stand toward you — a stance moved is a board that pays more, or less.' },
+  { id: 'muster',   name: 'CREW',                key: 'muster', line: 'Everyone under your command, where they stand, and their STANDING ORDERS — the formation, meals, how they meet trouble, what they sweep and what they lift off your back. Report orders and they sound off.', open: 'muster',
+    mark: 'hold', loop: 'The hands who carry beside you, run the post and work the fields: more crates on one walk, the mailbag filled, the woods and ruins banked.' },
+  { id: 'terminal', name: 'STATION TERMINAL',    via: 'E at any lit terminal', line: 'Orders, mail, fabricating, hiring, donations, storage and the town\'s records.', open: null,
+    mark: 'home', loop: 'Where the work is: the board (who is short, what it pays, the town\'s standing, the bank\'s surplus), the hires, the lockers.' },
+  { id: 'results',  name: 'DELIVERY COMPLETE',   via: 'every hand-over at a door', line: 'The slip: the grade from your time and the crates\' condition, the pay and what multiplied it — and WHAT IT MOVED.', open: null,
+    mark: 'mv_stock', loop: 'Reads each delivery back to you: what it paid, and what it changed — the shelf, the light, the road, a camp, your word on the wire.' },
+  { id: 'transfer', name: 'TRANSFER CARGO',      via: 'a companion, a PO box or a locker, within reach', line: 'Two columns, your back and theirs: move a crate across, or everything.', open: null,
+    mark: 'come', loop: 'Balances a load between backs and boxes, so the walk is carried whole and nothing rides over the cap.' },
+  { id: 'ruin',     name: 'RUIN',                via: 'E at a ruin, a wreck or a salvage pile', line: 'What the place still holds: take it onto the pack, or leave it for the grey.', open: null,
+    mark: 'coil', loop: 'Materials off the land for the bank — the ladders, the pavers, the works that make the next walks easier.' },
+  { id: 'trader',   name: 'TRADER',              via: 'E at a trader on the road', line: 'A wanderer\'s pack of odds and ends, for materials.', open: null,
+    mark: 'ks_button', loop: 'Spare materials turned into what a walk is short of, out where there is no board.' },
+  { id: 'tailor',   name: 'APPEARANCE',          via: 'the tailor, at a lit terminal', line: 'The coat, the hood, the scarf, the boots — cut and worn.', open: null,
+    mark: 'ks_ring', loop: 'The coat you walk in is warmth on the far roads and the face the towns know at the door.' },
+  { id: 'build',    name: 'BUILD MENU',          key: 'build', line: 'The blueprints you have learned: ladders, bridges, ziplines, shelters, watchtowers, the works.', open: null,
+    mark: 'mv_road', loop: 'The road made easier — crossings, rests, lines over the grey — and the works that bank what the board\'s surplus freight is packed from.' },
+  { id: 'desk',     name: 'FARKEEP\'S DESK',     via: 'Map → REGION → the desk', line: 'The mountain\'s working sheet: outposts to raise, caravans and their escorts, the recon charts.', open: null,
+    mark: 'wired', loop: 'The outposts\' hauls walk into Haven\'s bank; past the reserve they are freight on Haven\'s board.' },
+  { id: 'roll',     name: 'A CAMP\'S ROLL',      via: 'click a camp on the Map', line: 'Who stands at a camp\'s fire, what it wants, what it has given you, and where it stands with you.', open: null,
+    mark: 'camproute', loop: 'Whether a camp is ground to walk round or part of your routes — a rest fire, a door, knives who let you through and carry their salvage in.' },
+  { id: 'memorial', name: 'MEMORIAL',            via: 'walk to the memorial ground (near Haven) and read the stones', line: 'The Roll of the Order in stone — every fallen walker\'s card; each banner keeps its own ground once found.', open: null,
+    mark: 'stone', loop: 'The walkers the road cost, and the kin who keep their stones — whose days send you a hand for the walk.' },
+  { id: 'death',    name: 'DEATH CERTIFICATE',   via: 'when the valley takes you', line: 'Who fell, where, of what — and the stone it cuts.', open: null,
+    mark: 'scar', loop: 'What the fall cost: the crates go lost to their doors, a stone is cut, and the valley carries on under the next walker.' },
+  { id: 'manual',   name: 'MANUAL',              key: 'manual', line: 'This. Controls, every lesson the road has taught you, every window, and your saves — three valleys and the codes that carry them.', open: 'manual',
+    mark: 'heard', loop: 'Every lesson the road has taught you, kept — so the next walk goes as the last one taught it to.' },
+  { id: 'pause',    name: 'PAUSED',              key: 'pause', line: 'The clock held: the sound and the rain, the screen\'s grain, the interface scale, the manual, the title, Unstick — and the word on anything holding your boots.', open: 'pause',
+    mark: 'pause', loop: 'The valley held still while you plan a walk or step away — nothing on the road moves and nothing on your back spoils; Unstick frees a walk the game has caught, and deletes nothing.' },   // v3.52: the index had left the Paused sheet out
 ];
+
+

@@ -42,7 +42,7 @@ const LedgerUI = (() => {
       <div class="lgGroup">${ck('pickup', '▾ <b>Pickup all marked</b>')}
         <div class="lgIndent">${ck('pickupLetters', 'Pickup all letters')}${ck('pickupCargo', 'Pickup all cargo')}</div></div>
       <div style="margin-top:14px;display:flex;gap:10px;align-items:center">
-        <button class="btn primary" id="lgRunBtn">RUN THE DOSSIER HERE</button>
+        <button class="btn primary" id="lgRunBtn">Run it here</button>
         <span class="desc" id="lgRunNote">runs at the town you are standing in</span>
       </div>`;
   }
@@ -64,7 +64,7 @@ const LedgerUI = (() => {
       }
       return htm;
     };
-    return `<p class="desc" style="margin-bottom:8px">The streamlined book: ONE mark — what the dossier's pickup may take. A checked parent takes everything under it.</p>
+    return `<p class="desc" style="margin-bottom:8px">One mark per kind: what the arrival routine's pickup may take. A checked parent takes everything under it.</p>
       <div class="lgHead"><span style="width:18px"></span><span class="lgBoxHead">TAKE</span><span class="lgName">Category</span></div>
       ${row(Ledger.TAXO, 0)}`;
   }
@@ -115,7 +115,7 @@ const LedgerUI = (() => {
       if (unex) { const L = Ledger.led(); L.donateExempt = L.donateExempt.filter(x => x !== unex); render(); return; }
       if (e.target.id === 'lgRunBtn') {
         const stId = Systems.nearStation ? Systems.nearStation(120) : null;
-        if (!stId || !S.stations[stId].connected) { UI.toast('The dossier runs AT a lit town — stand at one and run it there', 'rust', 5000); return; }
+        if (!stId || !S.stations[stId].connected) { UI.toast('The arrival routine runs at a lit town — stand at one and run it there', 'rust', 5000); return; }
         close();
         Ledger.runDossier(stId);
         return;
@@ -166,3 +166,5 @@ const LedgerUI = (() => {
 
   return { open, close, render, syncRail };
 })();
+
+

@@ -13,8 +13,36 @@ const SAVE_KEY = () => slotKey(CUR_SLOT);
 const State = (() => {
   const { T, stations, stationOrder, items } = DATA;
 
+  /* ---------- v3.48 THE CAMP ON THE WIRE ----------
+     A camp's relay makes it a door: its rows go into the station registry while the relay stands (DATA.campPosts) and come
+     out again for a valley where it never did. Every module holds DATA.stations and DATA.stationOrder by reference, so a post
+     is a door everywhere at once — the board, the wire, the sheet, the light, the hands for hire. */
+  const BASE_ORDER = stationOrder.slice();
+  function postRow(campId) {
+    const cd = DATA.camps.find(c => c.id === campId), P = DATA.campPosts[campId], TP = T.post; if (!cd || !P) return null;
+    return { name: cd.name, x: cd.x + TP.at[0], y: cd.y + TP.at[1], role: P.role, baseR: TP.baseR, pop: TP.pop, needs: P.needs.slice(), makes: P.makes.slice(), line: P.line, camp: campId, post: true };
+  }
+  function syncPosts(fresh) {
+    const want = {};
+    if (!fresh && S && S.camps) for (const [cid, c] of Object.entries(S.camps)) if (c && c.wired && DATA.campPosts[cid]) want[DATA.campPosts[cid].id] = cid;
+    for (let i = stationOrder.length - 1; i >= 0; i--) {
+      const id = stationOrder[i]; if (BASE_ORDER.includes(id) || want[id]) continue;
+      stationOrder.splice(i, 1); delete stations[id]; delete DATA.keepers[id]; delete DATA.keeperGrief[id]; delete DATA.starRewards[id];
+    }
+    for (const [id, cid] of Object.entries(want)) {
+      if (!stations[id]) stations[id] = postRow(cid);
+      if (!stationOrder.includes(id)) stationOrder.push(id);
+      const P = DATA.campPosts[cid], kit = S.camps[cid].wired.kit || 'chief';
+      DATA.keepers[id] = { name: P.chiefs[kit] || P.chiefs.chief, role: 'chief', voice: P.voice, react: P.react };
+      DATA.keeperGrief[id] = P.grief; DATA.starRewards[id] = P.stars;
+      if (S.stations && !S.stations[id]) { S.stations[id] = { connected: false, litT: 0, likesTo: 0, stars: 0, storage: [] }; Economy.seedStation(id); }   // the chief's hello waits for the first time you open his board
+    }
+    return Object.keys(want);
+  }
+
   function newGame() {
     World.clearWear();   // a fresh valley grows its grass back
+    syncPosts(true);     // v3.48: a new valley has no camp on the wire
     const st = {};
     for (const id of stationOrder) st[id] = { connected: !!stations[id].prelit, litT: stations[id].prelit ? 1 : 0, likesTo: 0, stars: 0, storage: [] };
     S = {
@@ -30,12 +58,12 @@ const State = (() => {
       banked: { metal: 30, ceramic: 15, lumen: 0, wood: 0, provisions: 10 },
       stations: st,
       structures: [], zipLinks: [], zipSel: 0,
-      roads: {}, roadFund: {},
+      roads: {},   // v3.51: no ghost fields — roadFund, awayStamp and a town's wireT rode every save for nobody (the away clock is savedAt)
       orders: { avail: {}, active: [], done: {}, prioIdx: 0, prioAccepted: false },
       weather: { state: 'clear', t: 120, intensity: 0 },
       wraiths: [], flareCd: 0,
       camps: {}, nodes: [], lost: [], snags: [], drops: [],
-      mails: [], echoSpawned: {}, likedEchoes: {}, awayStamp: Date.now(),
+      mails: [], echoSpawned: {}, likedEchoes: {},
       horse: { loaner: false, rentedUntil: 0, on: false, spookT: 0 },
       graves: [], npcs: [], ruins: [], legacy: [], echoRoster: [],
       compPos: { x: 0, y: 0 }, event: null, eventCd: 40, surgeT: 0, stormT: 0, poolT: 20,
@@ -97,7 +125,7 @@ const State = (() => {
     const list = [];
     for (const id of stationOrder) {
       const st = S.stations[id], def = stations[id];
-      if (!st.connected || st.litT <= 0) continue;
+      if (!st.connected || st.litT <= 0 || st.cut) continue;   // v3.49: a post whose wire is cut throws no light
       let r = def.baseR + st.stars * T.starR;
       if (S.flags.effects.reach60) r += 150;
       if (st.dimmed) r *= 0.75;                     // a station out of what it needs burns low
@@ -147,16 +175,19 @@ const State = (() => {
   /* ---------- banked materials ---------- */
   function canAfford(cost) { return !cost || Object.entries(cost).every(([k, v]) => (S.banked[k] || 0) >= v); }
   function pay(cost) { if (!cost) return; for (const [k, v] of Object.entries(cost)) S.banked[k] -= v; }
-  function bank(k, n) { S.banked[k] = (S.banked[k] || 0) + n; if (n > 0 && typeof UI !== 'undefined' && UI.earn) UI.earn('mat', n, k); }
+  function bank(k, n, from) {
+    S.banked[k] = (S.banked[k] || 0) + n; if (n > 0 && typeof UI !== 'undefined' && UI.earn) UI.earn('mat', n, k);
+    if (from && n > 0) { S.eco = S.eco || { produced: {} }; (S.eco.madeAt = S.eco.madeAt || {})[k] = from; }   // v3.51: the board where it was made posts its surplus
+  }
 
   /* ---------- save / load ---------- */
   function save() {
     try {
-      const s = { ...S, wraiths: [], qte: null, struggle: null, handover: null, zip: null, cine: null, state: 'walk', savedAt: Date.now(), event: null, surgeT: 0, stormT: 0, moveTo: null, route: [], place: null, timeScale: 1, mcine: null, handoff: null, mythSay: null, kids: null, ride: null, cineSeq: false, rescue: null, lamp: null, rifleCd: 0 };
+      const s = { ...S, stand: null, ringHold: null, settle: null, wraiths: [], qte: null, struggle: null, handover: null, zip: null, cine: null, state: 'walk', savedAt: Date.now(), event: null, surgeT: 0, stormT: 0, moveTo: null, route: [], place: null, timeScale: 1, mcine: null, handoff: null, mythSay: null, kids: null, ride: null, cineSeq: false, rescue: null, lamp: null, rifleCd: 0 };
       s.wearSave = World.packWear();   // the paths your feet wore — the valley keeps them across lives
       s.paveSave = World.packPave(); s.fellSave = World.packFell();   // and the ways laid over them, and the clearings cut
       s.camps = {};
-      for (const [k, v] of Object.entries(S.camps)) s.camps[k] = { pacified: v.pacified, alert: 0, stash: v.stash, runners: [], taken: v.taken || null, culled: v.culled || 0 };   // v3.34: a held camp stays held; a harvested one stays short for its day
+      for (const [k, v] of Object.entries(S.camps)) s.camps[k] = { pacified: v.pacified, alert: 0, stash: v.stash, runners: [], taken: v.taken || null, culled: v.culled || 0, lost: v.lost || null, swept: v.swept || 0, sold: v.sold || 0, chiefLost: v.chiefLost || 0, stakeBare: v.stakeBare || 0, chiefReturned: v.chiefReturned || 0, chiefGen: v.chiefGen || 0, chiefFelledBy: v.chiefFelledBy || null, grudge: v.grudge || null, truce: v.truce || 0, pact: v.pact || null, parley: v.parley || null, truceRuns: v.truceRuns || 0, ragsDown: v.ragsDown || null, roadKept: v.roadKept || 0, newChief: v.newChief || 0, roadOpen: v.roadOpen || null, asks: v.asks || 0, wired: v.wired || null, watchRun: v.watchRun || null, siegeTruce: v.siegeTruce || null, lines: v.lines || 0, given: v.given || null, stoneGiven: v.stoneGiven || 0 };   // v3.49: the times come out to the line, the ring given, the knives' stone   // v3.48: the camp asks, the camp on the wire, the nights watched running, the truce at the line   // v3.47: the rags down, the road kept, the road standing open   // v3.42: a camp's mourning; v3.43: the bare stake (a return in progress restarts on load)   // v3.34: a held camp stays held; a harvested one stays short for its day; v3.39: a fallen post remembers its falls; v3.40: a counted camp stays counted (a storm in progress is dropped like every fight — a save never resumes mid-night)
       localStorage.setItem(SAVE_KEY(), JSON.stringify(s));
       UI.savedBlink();
       return true;
@@ -175,7 +206,9 @@ const State = (() => {
       if (!s || (s.v !== 1 && s.v !== 2 && s.v !== 3)) return false;
       S = s;
       if (S.v === 1) migrateV1();
+      syncPosts();   // v3.48: the camps this valley put on the wire are doors again
       Economy.ensure(); S.v = 3;
+      S.stand = null; S.ringHold = null; S.settle = null;   // v3.45; v3.46: the settling is a moment, not state
       S.state = 'walk'; S.qte = null; S.struggle = null; S.zip = null; S.cine = null; S.stagger = 0; S.moveTo = null; S.place = null; S.inside = null; S.timeScale = 1; S.mcine = null; S.handoff = null; S.mythSay = null; S.kids = null; S.ride = null; S.cineSeq = false; S.rescue = null; S.lamp = null; S.rifleCd = 0; S.room = null; S.eco = S.eco || { produced: {} };   // v3.32: a save never resumes mid-room — the hall re-enters from the door
       S.wraiths = [];
       if (!S.horse) S.horse = { loaner: false, rentedUntil: 0, on: false, spookT: 0 };
@@ -225,7 +258,7 @@ const State = (() => {
       const t = j.time || 0, dayN = Math.floor(t / T.dayLen) + 1;
       return { n, empty: false, name: j.pName || 'The Walker', cls: (typeof CHAR !== 'undefined' && CHAR.CLASSES[j.pClass] || {}).name || 'Courier',
         title: titleFor(j.level || 1), level: j.level || 1, day: dayN, likes: j.likes || 0, legacy: (j.legacy || []).length,
-        lit: Object.values(j.stations || {}).filter(x => x.connected).length, dead: !!j.dead, savedAt: j.savedAt || 0, bytes: raw.length };
+        lit: Object.values(j.stations || {}).filter(x => x.connected).length, dead: !!j.dead, savedAt: j.savedAt || 0, bytes: raw.length, look: j.look || null };   // v3.45: the slot's face
     } catch (e) { return { n, empty: false, name: '(a page the ink ran on)', broken: true, bytes: raw.length }; }
   }
   const slots = () => [1, 2, 3].map(slotInfo);
@@ -249,7 +282,7 @@ const State = (() => {
   async function decodeCode(code) {
     const c = String(code || '').replace(/\s+/g, '');
     const m = /^WL([01]):(.+)$/.exec(c);
-    if (!m) throw new Error('no seal — a passage code begins WL1: or WL0:');
+    if (!m) throw new Error('not a save code — a save code begins WL1: or WL0:');
     let bytes;
     try { bytes = unb64(m[2]); } catch (e) { throw new Error('the code is not whole — a character the seal cannot read'); }
     if (m[1] === '1') {
@@ -309,6 +342,8 @@ const State = (() => {
     Systems.addMail('The valley changed while you walked', 'Waylighters are mortal now. The network is not. Your journal transcribes at every terminal — whatever happens, the next one carries what you learned.');
   }
 
-  return { newGame, refreshSources, cap, weight, makeItem, addCargo, removeCargo, countTool, takeTool, grantLikes, titleFor, canAfford, pay, bank, save, load, hasSave, peekLegacy, wipe,
+  return { syncPosts, postRow, newGame, refreshSources, cap, weight, makeItem, addCargo, removeCargo, countTool, takeTool, grantLikes, titleFor, canAfford, pay, bank, save, load, hasSave, peekLegacy, wipe,
     slot, setSlot, slotInfo, slots, exportCode, decodeCode, importCode };
 })();
+
+

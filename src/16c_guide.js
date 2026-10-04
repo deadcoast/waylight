@@ -39,8 +39,13 @@ const Guide = (() => {
     return null;
   }
   function lostStep(lc) {
-    const nm = lc.item ? lc.item.name : 'Your cargo', to = stations[lc.order.to].name;
-    if (lc.where === 'ground') return { id: 'lost', head: `${nm} is on the ground — go back for it`, sub: `It fell when you stumbled · ${to} is still waiting on it · E or click it when you are close`, color: RUST, target: { x: lc.x, y: lc.y, label: 'crate' }, dist: U.dist(S.px, S.py, lc.x, lc.y) };
+    const st0 = lostStep0(lc);
+    if (st0 && lc.item && lc.item.sworn) st0.head = 'YOUR WORD — ' + st0.head;   // v3.44: a promise given at the door rides the step
+    return st0;
+  }
+  function lostStep0(lc) {
+    const nm = lc.item && lc.item.parcel ? lc.item.parcel.name.charAt(0).toUpperCase() + lc.item.parcel.name.slice(1) : lc.item ? lc.item.name : 'Your cargo', to = stations[lc.order.to].name;   // v3.43: a parcel by what it is
+    if (lc.where === 'ground') return { id: 'lost', head: lc.item && lc.item.parcel ? `${nm} is on the ground — the town's own; ${to} knows` : `${nm} is on the ground — go back for it`, sub: lc.item && lc.item.parcel ? `A parcel addressed to ${to} — a grievance until you carry it through · E or click it when you are close` : `It fell when you stumbled · ${to} is still waiting on it · E or click it when you are close`, color: RUST, target: { x: lc.x, y: lc.y, label: lc.item && lc.item.parcel ? 'parcel' : 'crate' }, dist: U.dist(S.px, S.py, lc.x, lc.y) };   // v3.43: the guide names a parcel for what it is
     if (lc.where === 'snag') return { id: 'lost', head: `${nm} hangs at a snag`, sub: 'The wraith carried it off · the ▲ marks the snag · E to cut it down', color: RUST, target: { x: lc.x, y: lc.y, label: 'snag' }, dist: U.dist(S.px, S.py, lc.x, lc.y) };
     if (lc.where === 'camp') return { id: 'lost', head: `Scrappers took ${nm} to ${lc.camp.name}`, sub: 'Their stash holds it · raid it, or light the ground until they stand down', color: RUST, target: { x: lc.x, y: lc.y, label: lc.camp.name.split(' ')[0] }, dist: U.dist(S.px, S.py, lc.x, lc.y) };
     if (lc.where === 'porter') return { id: 'lost', head: `${lc.npc.name} carries ${nm}`, sub: `Take it back before you deliver at ${to} — Waylighter panel, or E beside them`, color: GOLD };
@@ -48,12 +53,89 @@ const Guide = (() => {
     return { id: 'lost', head: `${nm} is gone — ${to}’s order can’t be filled`, sub: 'Give it up on the tray (✕) · the need stays posted, so another crate can be carried', color: RUST };
   }
 
+  /* v3.44 — YOUR WORD: a promise given at the door is the walk's next thing — where the sworn parcel lies, and the hours left */
+  function swornStep() {
+    const g = (S.grievances || []).find(x => x.word === 'promise'); if (!g) return null;
+    const to = stations[g.to], nm = g.name.charAt(0).toUpperCase() + g.name.slice(1), left = Economy.wordLeft ? Economy.wordLeft(g) : 0, hrs = Math.max(1, Math.floor(left / DATA.T.dayLen * 24));
+    const onPack = S.cargo.find(c => c.parcel && c.parcel.id === g.id);
+    if (onPack) { const d = U.dist(S.px, S.py, to.x, to.y); if (d < 96) return null; return { id: 'sworn', head: `YOUR WORD — ${nm} to ${to.name}`, sub: `On your pack · ${hrs} h of your word left · the door thanks you more for a word kept`, color: GOLD, target: { x: to.x, y: to.y, label: to.name }, dist: d }; }
+    const dr = S.drops.find(d => d.item && d.item.parcel && d.item.parcel.id === g.id);
+    if (dr) return { id: 'sworn', head: `YOUR WORD — ${nm} is on the ground`, sub: `Pick it up and carry it to ${to.name} · ${hrs} h of your word left`, color: GOLD, target: { x: dr.x, y: dr.y, label: 'the parcel' }, dist: U.dist(S.px, S.py, dr.x, dr.y) };
+    for (const cd of DATA.camps) { const c = S.camps[cd.id]; if (c && (c.stash || []).some(it => it.parcel && it.parcel.id === g.id)) return { id: 'sworn', head: `YOUR WORD — ${nm} is in ${cd.name}'s stash`, sub: `Take it back and carry it to ${to.name} · ${hrs} h of your word left`, color: RUST, target: { x: cd.x, y: cd.y, label: cd.name.split(' ')[0] }, dist: U.dist(S.px, S.py, cd.x, cd.y) }; }
+    return null;
+  }
+  /* v3.45 — THE KIN'S ERRAND on the guide: while you carry the fallen's shield or lantern, the stones (or a waylight for a cold lantern) */
+  function kinStep() {
+    const it = S.cargo.find(c => c.kin); if (!it || typeof Memorial === 'undefined') return null;
+    const ms = Memorial.site('town'); if (!ms) return null;
+    if (it.defId === 'kinLantern' && !it.lit) {
+      let best = null, bd = Infinity; for (const id of DATA.stationOrder) { if (!S.stations[id].connected) continue; const d = U.dist(S.px, S.py, stations[id].x, stations[id].y); if (d < bd) { bd = d; best = id; } }
+      if (best) return { id: 'kin', head: `${it.name} is cold — take a flame at ${stations[best].name}'s waylight`, sub: 'L at the terminal · it burns a quarter of an hour · then THE FIELD STONES', color: GOLD, target: { x: stations[best].x, y: stations[best].y, label: stations[best].name }, dist: bd };
+    }
+    const d = U.dist(S.px, S.py, ms.x, ms.y); if (d < 120) return null;
+    return { id: 'kin', head: `${it.name} — THE FIELD STONES`, sub: it.defId === 'kinLantern' ? `A flame, burning down · ${U.fmtTime(Math.max(0, DATA.T.kin.burn - (S.time - it.litT)))} left · G at the stone` : 'The kin waits at the stones · G to give it home', color: GOLD, target: { x: ms.x, y: ms.y, label: 'stones' }, dist: d };
+  }
+  /* v3.46 — the stone's flame asked again (the lantern still cold on the stone), and a score paid with the one who fell
+     walking beside you: guided only while no order rides the pack — the compass keeps both marks either way */
+  function relightStep() {
+    if (typeof Republic === 'undefined' || !Republic.kinOpen || typeof Memorial === 'undefined' || S.orders.active.length) return null;
+    const e = Republic.kinOpen().find(x => x.kind === 'relight' && !Republic.lanternOff(x.fallen)); if (!e) return null;
+    const ms = Memorial.site('town'); if (!ms) return null;
+    const d = U.dist(S.px, S.py, ms.x, ms.y); if (d < 120) return null;
+    return { id: 'relight', head: `${e.fallen.split(' ')[0]}'s lantern went out — THE FIELD STONES`, sub: 'G to take it from the stone · a lit waylight gives it a flame · set it back before it burns down', color: GOLD, target: { x: ms.x, y: ms.y, label: 'stones' }, dist: d };
+  }
+  function settleStep() {
+    if (typeof Republic === 'undefined' || !Republic.scores || S.settle || S.orders.active.length) return null;
+    for (const [cid, sc] of Object.entries(Republic.scores())) {
+      if (!sc.paid) continue;
+      const n = NPC.party().find(x => x.id === sc.npc), cd = DATA.camps.find(c => c.id === cid); if (!n || !cd) continue;
+      const d = Math.max(1, U.dist(S.px, S.py, cd.x, cd.y)), edge = cd.r + DATA.T.score.settleR * 0.5, tx = cd.x + (S.px - cd.x) / d * edge, ty = cd.y + (S.py - cd.y) / d * edge;
+      return { id: 'settle', head: `Walk ${n.name.split(' ')[0]} to ${cd.name}'s ring — the score is paid`, sub: `${sc.paid} · they want to see it · at the ring's edge they settle it`, color: GOLD, target: { x: tx, y: ty, label: cd.name.split(' ')[0] }, dist: U.dist(S.px, S.py, tx, ty) };
+    }
+    return null;
+  }
+  /* v3.47 THE ROAD KEPT — the road's gift on the pack: to the chief at the fire before the word runs out */
+  function roadGiftStep() {
+    if (typeof Republic === 'undefined' || !Republic.giftFor) return null;
+    for (const cd of DATA.camps) {
+      if (!Republic.giftFor(cd.id)) continue;
+      const left = Republic.wordLeft ? Republic.wordLeft(cd) : 0;
+      return { id: 'roadgift', head: `Walk the road's gift to ${cd.name}'s fire`, sub: `the chief keeps the road · the word runs out in ${Math.max(1, Math.round(left / DATA.T.dayLen * 24))} h · on the truce road the knives let you walk`, color: GOLD, target: { x: cd.x - 30, y: cd.y + 18, label: cd.name.split(' ')[0] }, dist: U.dist(S.px, S.py, cd.x - 30, cd.y + 18) };
+    }
+    return null;
+  }
+  /* v3.48 THE CAMP ON THE WIRE — the relay kit on the pack, bound for the chief's fire */
+  function relayStep() {
+    if (typeof Republic === 'undefined' || !Republic.kitFor) return null;
+    for (const cd of DATA.camps) {
+      if (!Republic.kitFor(cd.id) || S.camps[cd.id].wired) continue;
+      return { id: 'relaykit', head: `Raise the relay at ${cd.name}'s fire`, sub: 'G at the chief\'s fire · the camp goes on the wire — a lit door', color: GOLD, target: { x: cd.x - 30, y: cd.y + 18, label: cd.name.split(' ')[0] }, dist: U.dist(S.px, S.py, cd.x - 30, cd.y + 18) };
+    }
+    return null;
+  }
+  /* v3.49 — the splice coil on the pack, bound for the cut mast */
+  function spliceStep() {
+    if (typeof Republic === 'undefined' || !Republic.coilFor) return null;
+    for (const cd of DATA.camps) {
+      if (!Republic.coilFor(cd.id) || !Republic.cutAt(cd)) continue;
+      const m = Republic.mastOf(cd); if (!m) continue;
+      return { id: 'splice', head: `Splice the wire at ${cd.name}'s mast`, sub: 'G at the mast · the door lights again, and the camp pays for the walk', color: GOLD, target: { x: m.x, y: m.y, label: cd.name.split(' ')[0] }, dist: U.dist(S.px, S.py, m.x, m.y) };
+    }
+    return null;
+  }
   function compute() {
     if (!S || S.dead || S.cine) return null;
     if (S.qte) return { id: 'steady', head: 'SPACE — steady the load!', sub: 'or click — before the ring closes', color: RUST };
     if (S.struggle) return { id: 'struggle', head: 'Mash SPACE — it has your cargo', sub: 'clicking works too', color: RUST };
     const lc = lostCrate();
     if (lc && (lc.where !== 'storage' || UI.curStation !== lc.station)) return lostStep(lc);
+    const sw = swornStep(); if (sw) return sw;   // v3.44: your word outranks the plan
+    const kn = kinStep(); if (kn) return kn;     // v3.45: the kin's errand, while you carry it
+    const rl = relightStep(); if (rl) return rl; // v3.46: the stone's flame, asked again
+    const se = settleStep(); if (se) return se;  // v3.46: a score paid, walking with you
+    const rg = roadGiftStep(); if (rg) return rg; // v3.47: the road's gift, bound for the fire
+    const rk = relayStep(); if (rk) return rk;    // v3.48: the relay kit, bound for the fire
+    const sp = spliceStep(); if (sp) return sp;   // v3.49: the splice coil, bound for the mast
     if (S.flags.guideAfter > 0) return { id: 'after', head: 'Elm Farm is on the wire', sub: 'Watch the terminal: Haven’s food and Elm’s tools now move between them on their own. Lit ground is safe ground. Every board shows who is short of what — load up and go where it pays.', color: GOLD };
     const idx = S.orders.prioIdx, prio = DATA.priority[idx];
     const g = guided();
@@ -118,6 +200,12 @@ const Guide = (() => {
       const here = World.terrainAt(S.px, S.py);
       if (S.qte) return { id: 'steady', head: 'SPACE — steady the load!', sub: 'or click — before the ring closes', color: RUST };
       if (d < 96) return { id: 'deliver', head: `Deliver at ${to.name}`, sub: 'E — or click the terminal', color: GOLD, target: { x: to.x, y: to.y, label: to.name }, dist: d };
+      /* v3.51 THE CAMPS ON THE ROUTES — hurt or cold under a load, a given ring's fire or a camp's door on the way is a stop */
+      const RT = DATA.T.routes, hurt = S.health < RT.hurt, cold = S.warmth < RT.cold;
+      if ((hurt || cold) && typeof Republic !== 'undefined' && Republic.restStopOn) {
+        const rs = Republic.restStopOn(S.px, S.py, to.x, to.y), rd = rs ? U.dist(S.px, S.py, rs.x, rs.y) : 0;
+        if (rs && rd > rs.reach) return { id: 'reststop', head: `${hurt ? 'Hurt' : 'Cold'} — stop at ${rs.cd.name}'s ${rs.kind === 'given' ? 'fire' : 'door'} on the way`, sub: `${rs.kind === 'given' ? 'the given ring\'s fire' : 'the knives\' door on the wire'} warms and mends you · then on to ${to.name}`, color: GOLD, target: { x: rs.x, y: rs.y, label: rs.cd.name.split(' ')[0] }, dist: rd };
+      }
       const stops = []; for (const x of byDist) if (!stops.includes(x.to)) stops.push(x.to);
       const mood = o.item && !o.prio ? Economy.needMood(o.to, o.item) : null;
       const plan = stops.map(id => `${stations[id].name} ${U.fmtDist(U.dist(S.px, S.py, stations[id].x, stations[id].y))}`).join(' → ');
@@ -169,6 +257,7 @@ const Guide = (() => {
     }
     if (!changed && S.time - domT < 0.1) return;   // the arrow and distance refresh at 10 Hz — plenty for eyes, kind to layout
     domT = S.time;
+    el.classList.toggle('noDir', !cur.target);   // v3.52: no arrow, no empty column
     if (cur.target) {
       const a = Math.atan2(cur.target.y - S.py, cur.target.x - S.px);
       $('guideArrow').style.transform = `rotate(${a + Math.PI / 2}rad)`;
@@ -189,3 +278,5 @@ const Guide = (() => {
 
   return { tick, target, hot, current, quiet, guided, whereIs, lostCrate };
 })();
+
+

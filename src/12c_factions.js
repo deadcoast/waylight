@@ -78,6 +78,22 @@ const FACT = (() => {
     berserker: { name: 'Berserker', role: 'Pistol & claymore', line: 'Smaller and less agile than his Pugugly brothers-in-arms; makes up for it swinging a human-sized sword with ease.', stats: { intercept: 3, interceptCd: 8, wage: 3 }, req: null, live: false },
   };
 
+  /* ---------- v3.41 THE CAMPS' OWN — the raiders by trade. A camp's ROLL is its people in order:
+     the road sends the knives (never the chief, who keeps the fire), the storm brings the first
+     three. A class is a row — the road and the storm read the stats, the renderer reads the kit:
+       speed: the walk, against the knife's · knocks: how many blows put him down (the first only
+       staggers a ram) · takeMul: how long he must stand at a post's fire to take it · range: a
+       bowman stands off this far from the fire and looses at the shields, PINNING one for `pin`
+       seconds every `shotCd` · roadRange/roadDmg/stagger: the bowman's shot at a walker on the road
+       · rally: while the chief stands, the knives' downtime is multiplied by this; put him down and
+       the storm BREAKS — the knives run · road:false keeps a class at the fire. ---------- */
+  const CAMP_CLASSES = {
+    knife: { name: 'Knife', line: 'the plain runner — a hood, a blade, a headlamp', kit: 'knife', stats: { speed: 1, knocks: 1, takeMul: 1 } },
+    bowman: { name: 'Bowman', line: 'stands off and looses — a shield he hits keeps its arm down while the arrow is in it', kit: 'bowman', stats: { speed: 1, knocks: 1, takeMul: 1, range: 230, shotCd: 6, pin: 5, roadRange: 260, roadDmg: 3, stagger: 0.9 } },
+    ram: { name: 'Ram', line: 'a door on one arm and a beam on the other — the first knock only staggers him, and he takes a fire fast', kit: 'ram', stats: { speed: 0.78, knocks: 2, takeMul: 0.6 } },
+    chief: { name: 'Chief', line: 'the camp\'s own — while he stands the knives get up twice as fast; put him down and they run', kit: 'chief', stats: { speed: 0.9, knocks: 1, takeMul: 1, rally: 0.5, road: false } },
+  };
+
   /* ---------- v3.30 THE EXILE ARSENAL — the C-series, tiered (our homage stands) ----------
      The Timberwolf is the hand-me-down every exile shoulders; the C3A1 and C20 come out of the
      Society's unsealed wing, sold across the exchange at Shutterlight to guild hands the Nomads
@@ -112,5 +128,7 @@ const FACT = (() => {
     line: 'Every counting room runs a skim. The skim can walk.',
   };
 
-  return { RENEGADE_TIERS, FACTIONS, FK_CLASSES, RIFLES, HORSES, STABLES, SMUGGLE, CUTPURSE };
+  return { RENEGADE_TIERS, FACTIONS, FK_CLASSES, CAMP_CLASSES, RIFLES, HORSES, STABLES, SMUGGLE, CUTPURSE };
 })();
+
+

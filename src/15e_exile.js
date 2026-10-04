@@ -238,3 +238,5 @@ const Exile = (() => {
 
   return { phase, visible, rank, rifleDef, tick, follow, buyRounds, buyRifle, canWork, takeContract, knock, renderDesk, deskAct };
 })();
+
+

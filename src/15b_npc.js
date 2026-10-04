@@ -6,6 +6,13 @@ const NPC = (() => {
   const rand = Math.random;
 
   /* ---------- generation ---------- */
+  /* v3.45 — no two hands answer to one first name: the cards, the roll and the line call them by it */
+  function freshName(rng) {
+    const worn = new Set(S.npcs.map(n => String(n.name).split(' ')[0]));
+    if (S.pName) worn.add(String(S.pName).split(' ')[0]);
+    const free = CHAR.FIRST.filter(f => !worn.has(f));
+    return U.pick(rng, free.length ? free : CHAR.FIRST) + ' ' + U.pick(rng, CHAR.LAST);
+  }
   function gen(opts = {}) {
     const rng = opts.rng || rand;
     const cls = opts.cls || U.pick(rng, Object.keys(CLASSES));
@@ -18,7 +25,7 @@ const NPC = (() => {
       skills[id] = lv; sum += lv;
     }
     return {
-      id: U.uid(), name: Porter.randomName(rng), cls,
+      id: U.uid(), name: freshName(rng), cls,
       traits: Porter.randomTraits(CLASSES[cls].pts, rng).slice(0, 2),
       skills, seed: (rng() * 1e9) | 0,
       line: U.pick(rng, CHAR.QUIRKS),
@@ -29,22 +36,38 @@ const NPC = (() => {
       carry: [], fedT: 360, shoveCd: 0, route: null,
     };
   }
+  /* v3.42 — one of the town's own, put on the roll: a record like any hand's, in the town's kit, never
+     for hire and never dismissed by you — the square decides when they go home */
+  function genOwn(townId) {
+    const n = gen({ at: townId, cls: 'courier' });
+    n.state = 'square'; n.job = 'square'; n.own = townId; n.kit = 'townshield'; n.feeWaived = true; n.fee = { metal: 0, ceramic: 0 };
+    ordersOf(n); n.orders.hours = 'nights';   // the square's default: stand the dark, when it matters
+    S.npcs.push(n);
+    svcNote(n, `walked into ${DATA.stations[townId].name}'s square with a round shield`);
+    return n;
+  }
+  const ownAt = townId => S.npcs.filter(n => n.state === 'square' && n.own === townId);
   const capOf = n => 30 + (n.skills.haul || 0) * 6;
   const speedOf = n => 118 + (n.skills.foot || 0) * 5;
 
   function companion() { return S.npcs.find(n => n.state === 'companion') || null; }
   /* v3.24 THE PARTY OF FOUR — up to three hired backs walk with you; the fourth quarter is you */
   function party() { return S.npcs.filter(n => n.state === 'companion'); }
+  const hired = () => party().filter(n => !n.lent);   // v3.48: the backs you hired — a hand the town lent walks beside them, past a full wedge
   function partyCap() { return DATA.T.partyMax; }
   /* the health pool's first quarters: a conscious companion takes the blow that would drop you.
      They go down doing it — carried to the nearest lit town to mend, re-hirable when they wake. */
   function partyAbsorb(cause) {
-    const p = party().filter(n => !n.hungry || true);   // hungry or not, they will not watch you die
+    const p = party();   // hungry or not, they will not watch you die (a filter that let every back through, taken out)
     if (!p.length) return null;
     const n = p[p.length - 1];                          // the newest hire falls first; the oldest bond holds longest
     const stId = nearestConnected(S.px, S.py);
     if (n.carry.length) { for (const it of n.carry) S.stations[stId].storage.push(it); n.carry = []; }
+    if (n.lent) { n.lent = null; n.feeWaived = false; }   // v3.48: a hand the town lent, down for you, mends like any — and hires like any after
     n.state = 'recover'; n.at = stId; n.recoverT = DATA.T.koRecover; n.koCount = (n.koCount || 0) + 1; n.koFromParty = true; n.koT = S.time;   // v3.37: the mood remembers the fall for a while
+    /* v3.45 THE WALKER'S SCORE — whose knives: a road hit or a storm's cut stamps its camp; a bolt carries its bowman's */
+    { const camp = cause === 'scrappers' && S.hitBy && S.time - S.hitBy.t < 3 ? S.hitBy.camp : cause === 'the bolt' && S.arrow && S.arrow.from ? S.arrow.from : null;
+      if (camp && typeof Republic !== 'undefined' && Republic.scoreSet) Republic.scoreSet(camp, n); }
     if (n.horse && !n.horse.owned) n.horse = null;      // the loaner bolts home
     Render.say(S.px + 20, S.py - 14, U.pick(rand, ['NOT TODAY. Get UP.', 'I have you. GO.', 'Walk. WALK!']), '224,101,74');
     Render.burst(S.px, S.py);
@@ -72,7 +95,7 @@ const NPC = (() => {
       if (!S.stations[id].connected) continue;
       const want = S.stations[id].stars >= 3 ? 2 : 1;
       const here = S.npcs.filter(n => n.state === 'pool' && n.at === id);
-      for (const n of here) { n.age++; if (n.age > 3 && !n.bond && here.length > 1 && rand() < 0.5) S.npcs.splice(S.npcs.indexOf(n), 1); }
+      for (const n of here) { n.age++; if (n.age > 3 && !n.bond && !n.kinLegs && !n.stays && here.length > 1 && rand() < 0.5) S.npcs.splice(S.npcs.indexOf(n), 1); }   // v3.49: a town's hand for a stone's day, and a hand who stayed, keep their place at the fire
       while (S.npcs.filter(n => n.state === 'pool' && n.at === id).length < want) S.npcs.push(gen({ at: id }));
     }
   }
@@ -92,7 +115,7 @@ const NPC = (() => {
   }
   function hire(n, mode) {
     if (mode === 'companion' && n.state === 'recover') { UI.toast(`${n.name.split(' ')[0]} is still mending — ${U.fmtTime(n.recoverT || 0)} before they can walk`, 'rust'); return false; }
-    if (mode === 'companion' && party().length >= partyCap()) { UI.toast(`The party is full — ${partyCap()} walk with you already. A posse of four is a posse.`, 'rust'); return false; }
+    if (mode === 'companion' && hired().length >= partyCap()) { UI.toast(`The party is full — ${partyCap()} walk with you already. A posse of four is a posse.`, 'rust'); return false; }   // v3.48: a hand lent for a leg takes no one's place
     if (mode === 'route' && routesActive() >= routeSlots()) { UI.toast(routeSlots() ? `All ${routeSlots()} route charters are spoken for — coverage opens more` : 'Route charters open once the light covers more of the valley', 'rust'); return false; }
     const cost = hireCost(n);
     if (cost && !State.canAfford(cost)) { UI.toast(`${n.name} asks ${Systems.fmtCost(cost)} — banked`, 'rust'); return false; }
@@ -156,17 +179,37 @@ const NPC = (() => {
     }
     return false;
   }
+  /* v3.38 THE POSTED ORDERS — a post hand's round runs by THE HOURS (the shift clock only ticks in
+     the hours they keep), pays by THE KEEP (the bank's provision, or the town's own rations off
+     the shelf for thinner thanks), and teaches by THE TRAINING (the round's verb, or half of it to
+     their weakest skill). The same store, the same engine, the same roll. */
+  function weakestSkill(n) {
+    let best = null, bv = 99;
+    for (const id of CHAR.SKILL_IDS) { const v = n.skills[id] || 0; if (v < bv) { bv = v; best = id; } }
+    return best;
+  }
   function updatePost(dt) {
+    const night = Economy.dayPhase().night;
     for (const n of S.npcs) {
       if (n.state !== 'post' || !n.job) continue;
+      const O = ordersOf(n), WO = MUSTER.WORK_ORDERS;
+      if ((O.hours === 'days' && night) || (O.hours === 'nights' && !night)) { n.resting = true; continue; }   // the round keeps its hours
+      n.resting = false;
       n.shiftT = (n.shiftT === undefined ? DATA.T.shiftLen : n.shiftT) - dt;
       if (n.shiftT > 0) continue;
       n.shiftT = DATA.T.shiftLen;
-      const stId = n.at, job = CHAR.JOBS[n.job];
+      const stId = n.at, job = CHAR.JOBS[n.job], st = S.stations[stId];
       if (!job) { n.job = null; n.state = 'pool'; continue; }
-      // wages first — BELOVED towns waive them (they volunteer)
+      // the keep first — BELOVED towns waive the wage (they volunteer); the table takes it off the shelf
       const waived = Economy.apprLevel(stId) >= 4;
-      if (!waived) {
+      if (O.keep === 'table') {
+        const eat = WO.keep.food.table;
+        if ((st.stock.food || 0) - eat < WO.keep.foodFloor) {
+          if (!n.hungry) { n.hungry = true; svcNote(n, `${DATA.stations[stId].name}'s table is bare`); UI.toast(`<b>${n.name}</b>'s round stalled — ${DATA.stations[stId].name} has no rations to spare for their keep. Bank provisions and set them to wages, or feed the town.`, 'rust', 6000); }
+          continue;
+        }
+        st.stock.food -= eat;
+      } else if (!waived) {
         if (S.banked.provisions < DATA.T.shiftWage) {
           if (!n.hungry) { n.hungry = true; UI.toast(`<b>${n.name}</b>'s post round stalled — no provisions banked for wages`, 'rust', 5000); Systems.addMail(`${n.name} stands unpaid`, `The ${job.name.toLowerCase()} round at ${DATA.stations[stId].name} waits on wages. Bank provisions.`); }
           continue;
@@ -174,10 +217,32 @@ const NPC = (() => {
         S.banked.provisions -= DATA.T.shiftWage;
       }
       if (n.hungry) n.hungry = false;
-      // the town feels the round
-      Economy.addAppr(stId, DATA.T.postAppr + (n.job === 'nightpost' ? 1 : 0));
-      // and the worker learns the verb
-      trainNpc(n, job.skill, DATA.T.shiftXp, `came back from the ${job.name.toLowerCase()} round sharper`);
+      // the town feels the round — more for the lamp-lit hours, less for a hand it feeds
+      const appr = Math.max(1, Math.round((DATA.T.postAppr + (n.job === 'nightpost' ? 1 : 0) + (WO.hours.appr[O.hours] || 0)) * (WO.keep.apprMul[O.keep] || 1)));
+      Economy.addAppr(stId, appr);
+      const v = svc(n); v.shifts = (v.shifts || 0) + 1; v.appr = (v.appr || 0) + appr;
+      const round = job.name.toLowerCase().replace(/ rounds?$/, '');   // 'Parcel rounds' → 'the parcel round', not 'the parcel rounds round'
+      // and the worker learns the verb — or half of it, and half to the weakest skill
+      if (O.training === 'cross') {
+        const weak = weakestSkill(n);
+        trainNpc(n, job.skill, DATA.T.shiftXp / 2, `came back from the ${round} round sharper`);
+        if (weak && weak !== job.skill) trainNpc(n, weak, DATA.T.shiftXp / 2, `rounded out on the ${round} round`);
+        svcNote(n, `ran the ${round} round, cross-training ${CHAR.SKILLS[weak] ? CHAR.SKILLS[weak].name.toLowerCase() : weak}`);
+      } else {
+        trainNpc(n, job.skill, DATA.T.shiftXp, `came back from the ${round} round sharper`);
+        svcNote(n, `ran the ${round} round${O.hours === 'nights' ? ' by lamplight' : ''}${O.keep === 'table' ? ' on the town\'s table' : ''}`);
+      }
+      /* v3.40 THE LETTERS — a parcels round packs the town's own parcels, every second shift, if the round is
+         marked for them; the packing is the round's last word on the plate */
+      if (n.job === 'parcels' && allows(n, 'post', 'parcel')) {
+        v.packing = (v.packing || 0) + 1;
+        const shelf = Economy.parcelsOf(stId);   // v3.41: the shelf is a list of ADDRESSED parcels
+        if (v.packing % DATA.T.parcelEvery === 0 && shelf.length < DATA.T.parcelCap) {
+          const pc = Economy.packParcel(stId);
+          if (pc) { v.parcels = (v.parcels || 0) + 1; svcNote(n, `packed ${pc.name} for ${DATA.stations[pc.to].name} — ${shelf.length} wait${shelf.length === 1 ? 's' : ''} for a run`); Systems.tut && Systems.tut('firstLetters'); }
+          else svcNote(n, 'nothing to pack for — no lit door but this one');
+        }
+      }
     }
   }
   /* ---------- v3.20 THE WORKING WORLD: field crews — hands on the LAND ----------
@@ -303,7 +368,7 @@ const NPC = (() => {
       const O = ordersOf(n), WO = MUSTER.WORK_ORDERS;   // v3.37: the job's working orders, from the same store
       const caravan = n.job === 'hauler' && (n.skills.haul || 0) >= DATA.T.haulLvCaravan;
       const spMul = n.job === 'hauler' ? (caravan ? 0.5 : 0.6) : n.job === 'mason' ? 0.45 : 0.9;
-      const sp = speedOf(n) * spMul;
+      const sp = speedOf(n) * spMul * (moodFx(n).workMul || 1);   // v3.38: a bright hand works faster, a low one slower
       if (n.job === 'forrester') {
         // the axe: walk to the nearest standing wood, work it, fell it, bank the timber
         const home = DATA.stations[n.route.a];
@@ -331,7 +396,7 @@ const NPC = (() => {
           if (n.fwork >= DATA.T.fellTime) {
             n.fwork = 0;
             if (World.fellAt(n.ftarget.x, n.ftarget.y)) {
-              State.bank('wood', DATA.T.fellWood); Render.buildFx(n.ftarget.x, n.ftarget.y); Snd.sfx.build();
+              State.bank('wood', DATA.T.fellWood, Economy.bankedFrom('wood', n.ftarget.x, n.ftarget.y)); Render.buildFx(n.ftarget.x, n.ftarget.y); Snd.sfx.build();
               svc(n).felled = (svc(n).felled || 0) + 1; svcNote(n, O.woods === 'thin' ? 'felled a tree, left the next' : 'felled a tree');
               n.fthinNext = true;   // under THE WOODS: thin, the next tree stands
             }
@@ -524,6 +589,14 @@ const NPC = (() => {
       for (const k of MUSTER.ROAD.rows) rows[k] = MUSTER.WORK_ORDERS[k];
       return { kind: 'road', job: 'route', rows, trees: [MUSTER.ROAD.tree], name: 'charter runner' };
     }
+    if (n.state === 'post' && n.job) {   // v3.38: the posts on the same store; v3.40: with THE LETTERS tree
+      for (const k of MUSTER.POST.rows) rows[k] = MUSTER.WORK_ORDERS[k];
+      return { kind: 'post', job: n.job, rows, trees: MUSTER.POST.tree ? [MUSTER.POST.tree] : [], name: (CHAR.JOBS[n.job] || {}).name || 'post hand' };
+    }
+    if (n.state === 'square') {   // v3.42: the town's own on the roll — THE HOURS on the square
+      for (const k of MUSTER.SQUARE.rows) rows[k] = MUSTER.WORK_ORDERS[k];
+      return { kind: 'square', job: 'square', rows, trees: [], name: 'the town\'s own' };
+    }
     return { kind: 'walk', job: null, rows: MUSTER.ORDERS, trees: ['loot', 'hand'], name: 'walker' };
   }
   function svc(n) { n.svc = n.svc || { km: 0, crates: 0, met: 0, sweeps: 0, meals: 0, steadies: 0, last: '', lastT: 0 }; return n.svc; }
@@ -564,6 +637,35 @@ const NPC = (() => {
     if (walking && party().length >= C.company.party) add('company');
     if (v.km >= C.seasoned.km) add('seasoned');
     if (walking && n.fireT !== undefined && now - n.fireT > C.longOut.after) add('longOut');
+    /* v3.38 — the working world's own weather: a field hand in the greyfall or the night, far from
+       home; a post hand at a town that thanks them, or fed at its table */
+    if (n.state === 'field' && n.fx !== undefined) {   // paid or stalled, they are OUT THERE in it
+      if (Systems.rainAt && Systems.rainAt(n.fx, n.fy) > 0) add('greyfall');
+      if (Economy.dayPhase().night) add('nightWork');
+      const home = n.route && DATA.stations[n.route.a];
+      const far = n.route && (n.route.custom ? marksOf(n).reduce((m, k) => Math.max(m, U.dist(home.x, home.y, k.x, k.y)), 0) : n.route.b ? U.dist(home.x, home.y, DATA.stations[n.route.b].x, DATA.stations[n.route.b].y) : 0);
+      if (home && far > C.far.beyond) add('far');
+    }
+    if (n.state === 'post' && !n.hungry) {
+      const O = ordersOf(n);
+      if (O.hours === 'nights') add('nightWork');
+      if (O.keep === 'table') add('table');
+    }
+    if (walking && typeof Republic !== 'undefined' && Republic.scores && Object.values(Republic.scores()).some(sc => sc.npc === n.id && !sc.paid)) add('score');   // v3.45: a score to settle
+    if (n.settledT && S.time - n.settledT < DATA.T.score.settledDays * DATA.T.dayLen) add('settled');   // v3.46: said at the camp
+    if (n.cairnT && S.time - n.cairnT < DATA.T.stone.moodDays * DATA.T.dayLen) add('cairn');   // v3.47: their stones, seen standing
+    if (n.watchedT && S.time - n.watchedT < DATA.T.watch.moodDays * DATA.T.dayLen) add('watched');   // v3.47: a night kept at a ring
+    if (n.kstone && S.time - n.kstone.t < DATA.T.kstone.moodDays * DATA.T.dayLen) add('kstone');   // v3.49: the camp set its own stone by theirs
+    if (n.stays) add('stays');   // v3.49: stayed on for a stone's day
+    if (n.state === 'square') {
+      add('ownSquare'); if (ordersOf(n).hours === 'full') add('ownClock');
+      const st2 = typeof Republic !== 'undefined' && Republic.stonesOf ? Republic.stonesOf(n.own) : 0;   // v3.44: the stones at the field's edge
+      if (st2 >= 2) add('stones'); else if (st2 === 1) add('stone');
+    }
+    if (working && !n.hungry) {
+      const town = n.state === 'field' && n.route ? n.route.a : n.state === 'route' && n.route ? n.route.a : n.at;
+      if (town && S.stations[town] && Economy.apprLevel(town) >= C.thanked.apprLv) add('thanked');
+    }
     const sum = causes.reduce((a, c) => a + c.v, 0);
     let band = M.bands[0];
     for (const b of M.bands) if (sum >= b[0]) band = b;
@@ -592,6 +694,23 @@ const NPC = (() => {
         if (n.doneT >= M.quitAfter && S.time - n.fireT < 1) sitDown(n, m);   // at a fire, after saying so: they sit
       }
     }
+    /* v3.38 — the working hands feel it too: a field hand DONE for the minute comes in to the fire */
+    for (const n of S.npcs) {
+      if (n.state !== 'field' || !n.job) continue;
+      const m = mood(n), was = n.moodBand;
+      if (was !== m.band) { n.moodBand = m.band; n.doneT = 0; if (was !== undefined && (m.band === 'LOW' || m.band === 'DONE')) svcNote(n, m.band === 'DONE' ? 'said they were done' : 'asked for a fire'); }
+      if (m.band === 'DONE' && moodFx(n).quits) {
+        n.doneT = (n.doneT || 0) + 2;
+        if (n.doneT >= M.quitAfter) {
+          const why = m.causes.filter(c => c.v < 0).map(c => c.line).join(', ');
+          const home = DATA.stations[n.route ? n.route.a : n.at];
+          n.state = 'pool'; n.at = n.route ? n.route.a : n.at; n.job = null; n.fpath = null; n.ftarget = null; n.doneT = 0; n.moodBand = undefined;
+          svcNote(n, `came in DONE — ${why}`);
+          UI.toast(`<b>${n.name}</b> comes in from the field to ${home.name} — DONE: ${why}. They will take the field again when it lifts.`, 'rust', 8000);
+          Systems.addMail(`${n.name} came in`, `They worked as long as they had in them. The roll said why: ${why}. Pay them, keep them out of the greyfall and the nights, and they will go back out.`);
+        }
+      }
+    }
   }
   /* a walker at the end of their patience sits down at the fire they are standing beside — the
      cargo racked in the lockers, a mail that says why, and the hire open again once the causes lift */
@@ -613,16 +732,21 @@ const NPC = (() => {
     const out = [];
     for (const n of S.npcs) {
       let where = n.state, place = '';
-      if (n.state === 'companion') place = 'walking with you';
-      else if (n.state === 'pool') place = `at ${DATA.stations[n.at] ? DATA.stations[n.at].name : 'Haven'}'s fire`;
+      const forDay = n.stays ? ` — walks for ${(n.stays.for || '').split(' ')[0] || 'a stone'}'s day, stayed on` : '';   // v3.49: the hand who stayed
+      if (n.state === 'companion') place = (n.lent ? `walking your leg — sent by ${DATA.stations[n.lent.town] ? DATA.stations[n.lent.town].name : 'a town'}` : 'walking with you') + forDay;   // v3.48: a hand lent on the kin's day
+      else if (n.state === 'pool') place = `at ${DATA.stations[n.at] ? DATA.stations[n.at].name : 'Haven'}'s fire${forDay}`;
       else if (n.state === 'route' && n.route) place = `${DATA.stations[n.route.a].name} ⇄ ${DATA.stations[n.route.b].name}`;
       else if (n.state === 'post') place = `${(CHAR.JOBS[n.job] || {}).name || 'posted'} at ${DATA.stations[n.at] ? DATA.stations[n.at].name : '?'}`;
       else if (n.state === 'field') place = `${(CHAR.FIELD_JOBS[n.job] || {}).name || 'field work'} out of ${DATA.stations[n.route && n.route.a] ? DATA.stations[n.route.a].name : (DATA.stations[n.at] || {}).name || '?'}${n.job === 'presser' && marksOf(n).length ? ` · ${marksOf(n).length} mark${marksOf(n).length > 1 ? 's' : ''}` : n.route && n.route.b ? ` to ${DATA.stations[n.route.b].name}` : ''}`;
       else if (n.state === 'recover') place = `mending at ${DATA.stations[n.at] ? DATA.stations[n.at].name : '?'}`;
+      else if (n.state === 'square') place = `the town's own — stands the square at ${DATA.stations[n.at] ? DATA.stations[n.at].name : '?'}`;   // v3.42
+      else if (n.state === 'watch') { const w = (S.watches || []).find(x => x.id === n.watchId), cdW = w && DATA.camps.find(c => c.id === w.camp); place = n.walkHome ? `walking home from the watch — to ${w && w.home && DATA.stations[w.home.to] ? DATA.stations[w.home.to].name : 'a lit door'}` : `on the watch at ${cdW ? cdW.name : 'a camp'}'s ring`; }   // v3.47
+      else if (n.state === 'waiting') place = `home from the watch — at ${DATA.stations[n.waitAt] ? DATA.stations[n.waitAt].name : '?'}'s door`;   // v3.47
+      else if (n.state === 'lentHome' && n.lent) place = `walking home to ${DATA.stations[n.lent.town] ? DATA.stations[n.lent.town].name : 'their town'} — the leg walked`;   // v3.48
       else continue;
       out.push({ n, where, place });
     }
-    const rank = { companion: 0, pool: 1, field: 2, route: 3, post: 4, recover: 5 };
+    const rank = { companion: 0, watch: 0.5, waiting: 0.6, lentHome: 0.7, pool: 1, field: 2, route: 3, post: 4, square: 5, recover: 6 };   // v3.47: the watch next to the wedge
     return out.sort((a, b) => (rank[a.where] - rank[b.where]) || (a.n.name < b.n.name ? -1 : 1));
   }
   /* the roll call: each back sounds off its orders on the ground, in turn */
@@ -675,7 +799,8 @@ const NPC = (() => {
      v3.32 — the meeting is CLASS-READ: every Farkeeper trade answers from its own row in
      FACT.FK_CLASSES (a longbowman answers at 320, a rifle rider at 380, a berserker up close
      and horribly), so a future class is a data row, never a new branch. */
-  function intercept(r) {
+  function intercept(r, campId) {
+    const sc = campId && typeof Republic !== 'undefined' && Republic.scores ? Republic.scores()[campId] : null;   // v3.45: a score to settle
     for (const n of party()) {
       if (n.hungry || n.shoveCd > 0) continue;
       /* v3.36 STAND: quiet keeps the hands down; hold meets trouble only inside the ring around YOU */
@@ -684,8 +809,8 @@ const NPC = (() => {
       if (stand === 'hold' && U.dist(r.x, r.y, S.px, S.py) > MUSTER.HOLD_SCREEN) continue;
       const cls = n.fk ? FACT.FK_CLASSES[n.fkCls || 'pugugly'] : null;
       const st2 = cls ? cls.stats : null;
-      const reach = st2 && st2.range ? st2.range : (n.fk ? 210 : 150);
-      const nx = n.fk ? n.x : (n.cx !== undefined ? n.cx : n.x), ny = n.fk ? n.y : (n.cy !== undefined ? n.cy : n.y);
+      const reach = (st2 && st2.range ? st2.range : (n.fk ? 210 : 150)) * (sc && sc.npc === n.id ? DATA.T.score.reachMul : 1);   // v3.45: the one who went down meets that camp's runners from farther
+      const nx = n.cx !== undefined ? n.cx : n.x, ny = n.cy !== undefined ? n.cy : n.y;   // v3.51: every back walks on cx/cy — a hired Farkeeper too (he read n.x, which no back carries, and met no runner at all)
       if (nx === undefined || U.dist(nx, ny, r.x, r.y) > reach) continue;
       n.shoveCd = st2 ? (st2.interceptCd || 6) : 8;
       svc(n).met++; svcNote(n, 'met a runner');
@@ -695,7 +820,7 @@ const NPC = (() => {
         r.cd = 6 + (st2.intercept || 1) * 2;
         Render.burst(r.x, r.y);
         Render.say(nx, ny, n.fkCls === 'rifle_rider' ? 'Crack. Next.' : 'Loose.');
-        Render.say(r.x, r.y - 10, 'DOWN—', '224,101,74');
+        Render.say(r.x, r.y - 10, 'DOWN—', '224,101,74', r);
         Snd.sfx.stumble();
       } else {
         const d = Math.max(1, U.dist(r.x, r.y, nx, ny));
@@ -778,7 +903,7 @@ const NPC = (() => {
       // hands: a dropped crate near their feet gets picked up and stowed — by their SWEEP orders
       n.pickCd = (n.pickCd || 0) - dt;
       if (n.pickCd <= 0) {
-        const dr = S.drops.find(d2 => U.dist(d2.x, d2.y, n.cx, n.cy) < 46 && allows(n, 'loot', d2.item.defId));
+        const dr = S.drops.find(d2 => U.dist(d2.x, d2.y, n.cx, n.cy) < 46 && !d2.item.kin && allows(n, 'loot', d2.item.defId));   // v3.45: what the fallen left is the Walker's to carry
         if (dr) {
           const w2 = n.carry.reduce((a, c) => a + c.kg, 0);
           if (w2 + dr.item.kg <= capOf(n)) {
@@ -817,11 +942,24 @@ const NPC = (() => {
       const [wb, wp] = slots[si % slots.length];
       const ca = Math.cos(S.dir), sa = Math.sin(S.dir), cp = Math.cos(S.dir + Math.PI / 2), sp2 = Math.sin(S.dir + Math.PI / 2);
       let tx = S.px + ca * wb + cp * wp, ty = S.py + sa * wb + sp2 * wp;
+      /* v3.46 A SCORE SETTLED — the one who fell steps out to the spot, faces the camp, and stays till it is said */
+      if (S.settle && S.settle.npc === n.id) { tx = S.settle.x; ty = S.settle.y; n.holdDir = S.settle.dir; }
+      /* v3.45 THE LINE AT THE RING — a ring walk's end: the backs stand abreast of the line's centre, at the ring's edge, facing the camp
+         (v3.46: HOLD keeps them on the edge while you walk in alone; COME forms the line on you and walks it in) */
+      else if (S.ringHold) {
+        const cdR = DATA.camps.find(c => c.id === S.ringHold.camp);
+        if (cdR) {
+          const ux = cdR.x - S.ringHold.x, uy = cdR.y - S.ringHold.y, ul = Math.max(1, Math.hypot(ux, uy)), px2 = -uy / ul, py2 = ux / ul, gap = DATA.T.ring.gap;
+          const lineSlot = [-1, 1, -2, 2][pi % 4];
+          tx = S.ringHold.x + px2 * lineSlot * gap; ty = S.ringHold.y + py2 * lineSlot * gap;
+          n.holdDir = Math.atan2(uy, ux);
+        }
+      } else n.holdDir = undefined;
       const reach = ((n.skills.haul || 0) >= 2 ? DATA.T.looterBase + ((n.skills.haul || 0) - 2) * DATA.T.looterPer : 0) * FX.reachMul * moodFx(n).reachMul;
       if (reach && !n.hungry && !looted) {
         let fd = reach, fetch = null;
         const w2 = n.carry.reduce((a, c) => a + c.kg, 0);
-        for (const d2 of S.drops) { const dd = U.dist(d2.x, d2.y, S.px, S.py); if (dd < fd && w2 + d2.item.kg <= capOf(n) && allows(n, 'loot', d2.item.defId)) { fd = dd; fetch = d2; } }
+        for (const d2 of S.drops) { const dd = U.dist(d2.x, d2.y, S.px, S.py); if (dd < fd && !d2.item.kin && w2 + d2.item.kg <= capOf(n) && allows(n, 'loot', d2.item.defId)) { fd = dd; fetch = d2; } }
         if (fetch) { tx = fetch.x; ty = fetch.y; looted = true; }
         /* v3.28 LOOTER FULL AUTOMATION (haul ≥ lootAutoLv, earned): with no drop to fetch, the
            trained back works the LAND itself — blooms, scrap, ruins in your sight get harvested
@@ -838,7 +976,7 @@ const NPC = (() => {
                 n.nodeT = 0; node.taken = true;
                 if (node.type === 'lumen' && node.respawn !== -1) node.respawn = 480;
                 const key = node.type === 'lumen' ? 'lumen' : node.type === 'metal' ? 'metal' : 'ceramic';
-                State.bank(key, node.qty);
+                State.bank(key, node.qty, Economy.bankedFrom(key, node.x, node.y));
                 svc(n).sweeps++; svcNote(n, `worked a ${node.type === 'lumen' ? 'bloom' : node.type === 'metal' ? 'scrap pile' : 'ruin'} in passing`);
                 Render.buildFx && Render.buildFx(node.x, node.y);
                 Snd.sfx.pickup();
@@ -866,6 +1004,24 @@ const NPC = (() => {
           }
         }
       }
+      /* v3.47 THE STONE'S KEEPING — a back passing a standing cairn stops a beat and faces it; the one who set it says so */
+      if (n.pauseT > 0) { n.pauseT -= dt; tx = n.cx; ty = n.cy; }
+      else if (typeof Republic !== 'undefined' && Republic.settleStones && !S.settle && !S.ringHold) {
+        const St = DATA.T.stone;
+        for (const st2 of Republic.settleStones()) {
+          if (U.dist(n.cx, n.cy, st2.x, st2.y) > St.passR) continue;
+          const key = st2.camp + ':' + st2.t; n.stonePass = n.stonePass || {};
+          if (n.stonePass[key] && S.time - n.stonePass[key] < St.passCd) continue;
+          n.stonePass[key] = S.time;
+          const own = st2.npc === n.id || (!st2.npc && st2.name === n.name.split(' ')[0]), cdS = DATA.camps.find(c => c.id === st2.camp);
+          const L = st2.down ? (own ? DATA.stoneLines.kicked : null) : own ? DATA.stoneLines.own : DATA.stoneLines.others;
+          if (L) Render.say(n.cx, n.cy - 12, U.pick(rand, L).replace(/\{name\}/g, st2.name).replace(/\{camp\}/g, cdS ? cdS.name : 'the camp'), '198,206,186');
+          if (st2.down) break;
+          n.pauseT = St.pauseT; n.pauseDir = Math.atan2(st2.y - n.cy, st2.x - n.cx); tx = n.cx; ty = n.cy;
+          if (own) { n.cairnT = S.time; svcNote(n, `stopped at their stones by ${cdS ? cdS.name : 'the ring'}`); }
+          break;
+        }
+      }
       const d = U.dist(n.cx, n.cy, tx, ty);
       if (d > 6) {
         const mountMul = n.horse ? 2.1 : 1.6;            // a mounted companion holds a mounted pace
@@ -885,7 +1041,7 @@ const NPC = (() => {
         const ownFood = O.mess === 'own' ? n.carry.findIndex(c => DATA.items[c.defId] && DATA.items[c.defId].cat === 'food' && !c.orderId && !c.lostTo) : -1;
         if (ownFood >= 0) {
           const ate = n.carry.splice(ownFood, 1)[0];
-          n.fedT = 360 * Porter.eff().upkeepMul;
+          n.fedT = 360 / Porter.eff().upkeepMul;   // v3.51: a smaller upkeep spaces the meals out (it had brought them closer)
           svc(n).meals++; svc(n).lastMeal = S.time; svcNote(n, `ate ${ate.name.toLowerCase()} from the pack`);
           if (n.hungry) { n.hungry = false; UI.toast(`${n.name.split(' ')[0]} eats from the pack — back in step`); }
           UI.refreshCargo();
@@ -894,7 +1050,7 @@ const NPC = (() => {
           n.fedT = 60;
         } else if (S.banked.provisions >= 1) {
           S.banked.provisions -= 1;
-          n.fedT = 360 * Porter.eff().upkeepMul;
+          n.fedT = 360 / Porter.eff().upkeepMul;   // v3.51: a smaller upkeep spaces the meals out (it had brought them closer)
           svc(n).meals++; svc(n).lastMeal = S.time; svcNote(n, 'ate from the bank');
           if (n.hungry) { n.hungry = false; UI.toast(`${n.name.split(' ')[0]} eats — back in step`); }
         } else if (!n.hungry) {
@@ -916,7 +1072,10 @@ const NPC = (() => {
       r.route.t -= dt;
       if (r.route.t <= 0) {
         const O = ordersOf(r), WO = MUSTER.WORK_ORDERS;
-        r.route.t = routeInterval(r) * (WO.pace.mul[O.pace] || 1);
+        const tr = typeof Republic !== 'undefined' && Republic.truceRoadFor ? Republic.truceRoadFor(r.route.a, r.route.b) : null;   // v3.46: the road through a ring under truce
+        r.route.t = routeInterval(r) * (WO.pace.mul[O.pace] || 1) * (tr ? DATA.T.parley.roadMul : 1);
+        if (tr) { r.route.truce = tr.id; S.camps[tr.id].truceRuns = (S.camps[tr.id].truceRuns || 0) + 1; if (!S.flags.tut || !S.flags.tut.firstTruceRoad) { UI.toast(`<b>${r.name.split(' ')[0]} walks the truce road</b> — straight through ${tr.name}'s ring, the runs quicker while it holds.`, 'gold', 7000); Systems.tut && Systems.tut('firstTruceRoad'); } }
+        else r.route.truce = null;
         const eat = 0.5 * (WO.pace.eat[O.pace] || 1);
         if (S.banked.provisions >= eat) {
           S.banked.provisions = Math.round((S.banked.provisions - eat) * 10) / 10;
@@ -935,7 +1094,7 @@ const NPC = (() => {
             const good = freightFor(r, here, other)[0];
             if (good) { S.stations[here].stock[good] = Math.min(100, (S.stations[here].stock[good] || 0) + DATA.T.stockPerCrate); svc(r).crates = (svc(r).crates || 0) + 1; carried = ` · a crate of ${goodName(good)} onto ${DATA.stations[here].name}'s shelf`; svcNote(r, `ran a crate of ${goodName(good)} into ${DATA.stations[here].name}`); }
             else { svcNote(r, `ran empty — nothing on the freight list for ${DATA.stations[here].name}`); if (!r.fempty) { r.fempty = 1; UI.toast(`<b>${r.name.split(' ')[0]}</b>'s run carried nothing — nothing ${DATA.stations[here].name} wants is on their freight list. Mark it on the muster roll.`, 'rust', 6000); } }
-          } else svcNote(r, `ran the post ${DATA.stations[r.route.a].name} ⇄ ${DATA.stations[r.route.b].name}`);
+          } else svcNote(r, `ran the post ${DATA.stations[r.route.a].name} ⇄ ${DATA.stations[r.route.b].name}${r.route.truce ? ` — through ${DATA.camps.find(c => c.id === r.route.truce).name}'s ring, the truce road` : ''}`);
           if (r.route.runs % 4 === 0) UI.toast(`${r.name.split(' ')[0]}'s run: ${DATA.stations[r.route.a].name} ⇄ ${DATA.stations[r.route.b].name} · +${likes} ◆ each end${carried}`, '', 3500);
         } else if (!r.hungry) {
           r.hungry = true;
@@ -1168,11 +1327,10 @@ const NPC = (() => {
     const def = RUIN_TYPES[ruin.type];
     const got = [];
     const luck = Porter.eff().luck;
+    const line = r => { let acc = 0; for (const [k, w] of def.table) { acc += w; if (r < acc) return [k, w]; } return ['junk', Infinity]; };
     for (let i = 0; i < def.rolls; i++) {
-      let r = rand() * 100;
-      if (luck > 1 && rand() < 0.3) r *= 0.75; // lean toward the rarer end
-      let acc = 0, kind = 'junk';
-      for (const [k, w] of def.table) { acc += w; if (r < acc) { kind = k; break; } }
+      let [kind, w] = line(rand() * 100);
+      if (luck > 1 && rand() < 0.3) { const [k2, w2] = line(rand() * 100); if (w2 < w) kind = k2; }   // v3.51: Lucky Find takes a second look and keeps the rarer line (the old lean had pushed the roll toward the table's common lines)
       const it = rollLoot(kind);
       if (it) got.push(it);
       Porter.xp('sal', 12);
@@ -1237,7 +1395,25 @@ const NPC = (() => {
     if (!pts) { const A = DATA.stations[a], B = DATA.stations[b2]; pts = [[A.x, A.y + 40], [B.x, B.y + 40]]; }
     return { pts, len: U.polyLen(pts) };
   }
+  /* v3.46 THE TRUCE ROAD, SEEN: while a road through a ring stands open and you are near it, the charter runner who
+     walks it is on it — their own figure, straight through the ring, the camp's knives letting them by */
+  let truceWalkT = 0;
+  function updateTruceWalker(dt) {
+    truceWalkT -= dt;
+    if (amb.some(w => w.truce) || truceWalkT > 0 || typeof Republic === 'undefined' || !Republic.truceRoads) return;
+    for (const tr of Republic.truceRoads()) {
+      if (tr.cross.length < 1) continue;
+      const mid = tr.cross.length > 1 ? { x: (tr.cross[0].x + tr.cross[1].x) / 2, y: (tr.cross[0].y + tr.cross[1].y) / 2 } : tr.cross[0];
+      if (U.dist(S.px, S.py, mid.x, mid.y) > 2400) continue;
+      const A = DATA.stations[tr.a], B = DATA.stations[tr.b], pts = [[A.x, A.y + 40], [B.x, B.y + 40]], len = U.polyLen(pts);
+      const t0 = tr.cross[0].t, t1 = tr.cross.length > 1 ? tr.cross[1].t : 1;
+      amb.push({ n: tr.npc, pts, len, d: Math.max(20, t0 * len - 260), end: Math.min(len - 20, t1 * len + 260), sp: 92, said: false, crates: 1, truce: tr.cd.id });
+      truceWalkT = 45;
+      break;
+    }
+  }
   function updateAmbient(dt) {
+    updateTruceWalker(dt);
     const conn2 = DATA.stationOrder.filter(id => S.stations[id].connected).length;
     const want = S.cov > 0.14 ? 3 : conn2 >= 2 ? 2 : 1;
     if (amb.length < want && rand() < dt * 0.25) {
@@ -1246,16 +1422,30 @@ const NPC = (() => {
     }
     for (let i = amb.length - 1; i >= 0; i--) {
       const w = amb[i];
-      w.d += w.sp * dt;
-      if (w.d >= w.len - 20) { amb.splice(i, 1); continue; }
+      if (w.pauseT > 0) w.pauseT -= dt; else w.d += w.sp * dt;   // v3.47: stopped a beat at a cairn
+      if (w.d >= (w.end || w.len - 20)) { amb.splice(i, 1); continue; }
       const p = U.polyAt(w.pts, w.d);
       w.x = p.x; w.y = p.y; w.ang = p.ang;
+      if (!(w.pauseT > 0) && typeof Republic !== 'undefined' && Republic.settleStones) for (const st2 of Republic.settleStones()) {
+        if (st2.down || U.dist(w.x, w.y, st2.x, st2.y) > DATA.T.stone.passR) continue;
+        const key = st2.camp + ':' + st2.t; w.stones = w.stones || {}; if (w.stones[key]) continue;
+        w.stones[key] = true; w.pauseT = DATA.T.stone.pauseT; w.pauseDir = Math.atan2(st2.y - w.y, st2.x - w.x);
+        if (U.dist(w.x, w.y, S.px, S.py) < 500) Render.say(w.x, w.y - 12, U.pick(rand, DATA.stoneLines.others).replace(/\{name\}/g, st2.name), '198,206,186');
+        break;
+      }
+      if (w.truce) {   // v3.46: through the ring — a knife near the road lets them by, and says so
+        const c2 = S.camps[w.truce];
+        if (c2 && !w.let) for (const r2 of c2.runners) if (U.dist(r2.x, r2.y, w.x, w.y) < 150) { w.let = true; r2.letT = S.time; Render.say(r2.x, r2.y - 12, U.pick(rand, ['Truce. Walk on.', 'His word\'s good. Go.', 'Road\'s open. Keep walking.']), '224,101,74'); break; }
+        if (!w.said && U.dist(w.x, w.y, S.px, S.py) < 140) { w.said = true; Render.say(w.x, w.y, U.pick(rand, ['Truce road. Quicker.', 'Straight through, while it holds.']), '198,206,186'); }
+        continue;
+      }
       if (!w.said && U.dist(w.x, w.y, S.px, S.py) < 95) { w.said = true; Render.say(w.x, w.y, U.pick(rand, AMB_LINES), '198,206,186'); }
     }
   }
   function ambient() { return amb; }
 
   return {
+    hired,   // v3.48
     gen, companion, party, partyCap, partyAbsorb, rallyParty, capOf, speedOf, seedStarterPool, hire, hireCost, dismiss, assignRoute, routeSlots, routesActive,
     assignPost, postCap, postStaff, npcTrainNeed, trainNpc, ambient,
     assignField, recallField, fieldStaff, fieldAll, seedFarkeeper,
@@ -1264,5 +1454,8 @@ const NPC = (() => {
     give, take, assistWobble, struggleBonus, tryShove, intercept, onPorterDeath, update, eventInteractions, lootRuin, seedRuins, peddlerStock,
     ordersOf, applyPreset, setOrder, setTreeMark, allows, svc, everyone, rollCall, callLine,   // v3.36 THE MUSTER
     workOf, marksOf, addMark, strikeMark, freightFor, mood, moodCached, moodFx,   // v3.37 THE WORKING ORDERS
+    genOwn, ownAt, svcNote,   // v3.42 THE REMEMBERING: the town's own on the roll
   };
 })();
+
+

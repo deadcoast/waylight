@@ -1,18 +1,17 @@
 {
   "name": "waylight",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "directories": {
-    "test": "tests"
-  },
+  "version": "3.52.0",
+  "private": true,
+  "type": "module",
+  "description": "WAYLIGHT - a delivery and connection game. One self-contained page built from src/.",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "python build.py",
+    "test": "node tools/battery.mjs",
+    "audit": "python tools/audit.py",
+    "records": "python tools/records.py"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "dependencies": {
-    "playwright": "^1.62.1"
-  }
+  "devDependencies": {
+    "playwright": "1.62.1"
+  },
+  "license": "ISC"
 }

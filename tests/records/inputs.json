@@ -1,0 +1,59 @@
+{
+  "suite": "inputs",
+  "version": "v3.28a",
+  "record": {
+    "doc": "DESIGN.md",
+    "where": "The watchdog (v3.28a — the frozen-input report answered as law)",
+    "count": 16,
+    "count_text": "Verification: `tests/inputs.mjs` (16 checks"
+  },
+  "clauses": [
+    { "id": "c1", "text": "non-debug boot with live WASD/click" },
+    { "id": "c2", "text": "tests/inputs.mjs runs on waylight.html with NO debug flag — the first suite that boots exactly what the artifact serves" },
+    { "id": "c3", "text": "the pause/map/ skills/blueprint/tailor fuzz" },
+    { "id": "c4", "text": "The tailor now counts as the modal it is (modalExceptMap), answers ESC like every other sheet (escPressed), and is torn down by closeAllModals" },
+    { "id": "c5", "text": "all four watchdog repairs each within two seconds",
+      "figure": { "record": "within two seconds", "asserted": "exact", "note": "each repair is timed and must land under 2000 ms" } },
+    { "id": "c6", "text": "a paused clock with no pause sheet" },
+    { "id": "c7", "text": "a station sheet with nobody home (which eats every click while it stands)" },
+    { "id": "c8", "text": "a stranded timeScale or letterbox with no scene running" },
+    { "id": "c9", "text": "a zip state with no ride under it" },
+    { "id": "c10", "text": "the legacy-type survival" },
+    { "id": "c11", "text": "Unknown legacy structure types (the classic save-migration crasher) leave the world quietly in decay and produce nothing, instead of throwing every frame" },
+    { "id": "c12", "text": "a type past the map becomes a real unmapped world object" },
+    { "id": "c13", "text": "inert, original type carried on the object" },
+    { "id": "c14", "text": "the sabotage check where the sim is made to throw and must report on screen and keep walking" },
+    { "id": "c15", "text": "the first fault of any kind is reported ON SCREEN" },
+    { "id": "c16", "text": "Waylight caught a fault in <where> — the walk continues" },
+    { "id": "c17", "text": "and the loop keeps stepping" },
+    { "id": "c18", "text": "inputs re-proves loud-not-absorbed" },
+    { "id": "c18b", "text": "zero uncaught page errors" },
+    { "id": "c19", "text": "THE STILLNESS LAW now stands in the battery (the ground provably still to the pixel under bleeding)" },
+    { "id": "c20", "text": "Screen shake is REMOVED AT THE ROOT by directive" },
+    { "id": "c21", "text": "the HUD heart jitter" },
+    { "id": "c22", "text": "It measures a SETTLED frame now and says so" }
+  ],
+  "checks": [
+    { "title": "THE PLAYER'S PAGE", "clauses": ["c1", "c2"], "kind": "record" },
+    { "title": "WASD, LIVE", "clauses": ["c1"], "kind": "record" },
+    { "title": "THE CLICK, LIVE", "clauses": ["c1"], "kind": "record" },
+    { "title": "THE PAUSE", "clauses": ["c3"], "kind": "record" },
+    { "title": "THE MAP", "clauses": ["c3"], "kind": "record" },
+    { "title": "THE SKILLS", "clauses": ["c3"], "kind": "record" },
+    { "title": "THE BLUEPRINT", "clauses": ["c3"], "kind": "record" },
+    { "title": "THE TAILOR", "clauses": ["c3", "c4"], "kind": "record" },
+    { "title": "THE FUZZ", "clauses": ["c3"], "kind": "record" },
+    { "title": "THE WATCHDOG — A PAUSE WITH NO SHEET", "clauses": ["c5", "c6"], "kind": "record" },
+    { "title": "THE WATCHDOG — A STATION SHEET WITH NOBODY HOME", "clauses": ["c5", "c7"], "kind": "record" },
+    { "title": "THE WATCHDOG — A STRANDED CLOCK AND LETTERBOX", "clauses": ["c5", "c8"], "kind": "record" },
+    { "title": "THE WATCHDOG — A ZIP WITH NO RIDE", "clauses": ["c5", "c9"], "kind": "record" },
+    { "title": "A TYPE THIS BUILD NEVER HEARD OF (v3.28c", "clauses": ["c10", "c11", "c12", "c13"], "kind": "record" },
+    { "title": "THE SABOTAGE", "clauses": ["c14", "c15", "c16", "c17", "c18"], "kind": "record" },
+    { "title": "THE STILLNESS LAW (v3.30; measured on a SETTLED frame, v3.35's correction)", "clauses": ["c19", "c20", "c21", "c22"], "kind": "record", "beyond": true, "why": "v3.30 put the stillness law in the battery (THE STILLNESS LAW now stands in the battery) after the v3.28a record counted its sixteen, and states no count for it" }
+  ],
+  "finish": {"clauses": ["c18b"]},
+  "design": [
+    { "clause": "c11", "version": "v3.28b", "what": "the no-purge law amended the decay: an unknown type went to THE ATTIC, never the void" },
+    { "clause": "c11", "version": "v3.28c", "what": "the type ledger replaced the attic: a type past the map loads as a real unmapped world object, inert, its original type carried on it — no decay, nothing produced, no fault" }
+  ]
+}

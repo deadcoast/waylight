@@ -1,40 +1,45 @@
 #!/usr/bin/env python3
-"""Assemble waylight parts into dist/waylight.html (artifact body, no skeleton)
-and dist/test.html (wrapped like the published artifact for local testing)."""
-import pathlib, re, sys
+"""Waylight build — one self-contained page from src/.
 
-ROOT = pathlib.Path(__file__).parent
-SRC = ROOT / "src"
-DIST = ROOT / "dist"
-DIST.mkdir(exist_ok=True)
+src/00_style.css  -> <style>
+src/01_dom.html   -> the stage markup
+src/1x_*.js       -> one <script>, every file under its own marker, in name order
 
-css = (SRC / "00_style.css").read_text()
-dom = (SRC / "01_dom.html").read_text()
-js_parts = sorted(p for p in SRC.glob("*.js"))
-js = "\n\n".join(f"/* ================ {p.name} ================ */\n" + p.read_text() for p in js_parts)
-
-body = f"""<title>Waylight</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Atkinson+Hyperlegible:wght@400;700&display=swap">
-<style>
-{css}
-</style>
-{dom}
-<script>
-{js}
-</script>
+Writes dist/waylight.html (published) and dist/test.html (the same page; the suites open it with ?debug).
 """
+import os, sys
 
-(DIST / "waylight.html").write_text(body)
+ROOT = os.path.dirname(os.path.abspath(__file__))
+SRC = os.path.join(ROOT, 'src')
+DIST = os.path.join(ROOT, 'dist')
+HEAD = [
+    '<title>Waylight</title>',
+    '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Atkinson+Hyperlegible:wght@400;700&display=swap">',
+]
 
-# Mirror of the artifact runtime skeleton (charset/viewport + documented reset)
-test = f"""<!doctype html>
-<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<style>:root{{color-scheme:light}}body{{margin:0;font:14px system-ui;background:#faf9f5}}img{{max-width:100%}}[hidden]{{display:none!important}}</style>
-</head><body>
-{body}
-</body></html>"""
-(DIST / "test.html").write_text(test)
 
-lines = body.count("\n")
-kb = len(body.encode()) / 1024
-print(f"built: {lines} lines, {kb:.0f} KB, parts: {[p.name for p in js_parts]}")
+def read(name):
+    with open(os.path.join(SRC, name), encoding='utf8') as f:
+        text = f.read()
+    return text[:-1] if text.endswith('\n') else text
+
+
+def build():
+    js = sorted(n for n in os.listdir(SRC) if n.endswith('.js'))
+    out = HEAD + ['<style>', read('00_style.css'), '</style>', read('01_dom.html'), '<script>']
+    for name in js:
+        out.append(f'/* ================ {name} ================ */')
+        out.append(read(name))
+    out.append('</script>')
+    page = '\n'.join(out) + '\n'
+    os.makedirs(DIST, exist_ok=True)
+    for target in ('waylight.html', 'test.html'):
+        with open(os.path.join(DIST, target), 'w', encoding='utf8', newline='\n') as f:
+            f.write(page)
+    return len(js), len(page)
+
+
+if __name__ == '__main__':
+    n, size = build()
+    print(f'built {n} scripts · {size:,} bytes -> dist/waylight.html, dist/test.html')
+    sys.exit(0)

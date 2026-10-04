@@ -1,0 +1,45 @@
+{
+  "suite": "light",
+  "version": "v3.1",
+  "record": {
+    "doc": "DESIGN.md",
+    "where": "The light is the screen (v3.1) · Verification: the light, measured in pixels",
+    "count": 10,
+    "count_text": "the light, measured in pixels (10"
+  },
+  "clauses": [
+    { "id": "c1", "text": "Grey land sits under a cold blue-dark veil (62% + mist)", "figure": { "record": "62% + mist", "asserted": "changed", "note": "no veil and no alpha survive (v3.6, v3.13); the check asserts the dim the palette bands lay now — the grey meadow under half its own ground's brightness, blue-led" } },
+    { "id": "c2", "text": "dark, not black; terrain stays faintly readable and the porter's own lantern carries them" },
+    { "id": "c3", "text": "Lit land burns the veil off entirely and takes a warm gold wash" },
+    { "id": "c4", "text": "lit ground is ×2.6 the brightness of grey ground by day", "figure": { "record": "×2.6", "asserted": "threshold", "note": "at least ×2.6 on matched meadow" } },
+    { "id": "c5", "text": "30 points warmer in r−b", "figure": { "record": "30 points", "asserted": "threshold", "note": "at least 30 points warmer in r−b" } },
+    { "id": "c6", "text": "The boundary carries a golden rim (a measured warm bump above the inside→beyond blend line) at exactly the light level wraiths cannot stand" },
+    { "id": "c7", "text": "a hunting wraith crossing it burns away within a second, and the first burn teaches the rule on screen", "figure": { "record": "within a second", "asserted": "exact", "note": "the burn, from the crossing to the wraith gone, takes at most 1.0 s" } },
+    { "id": "c8", "text": "Night is a veil the waylight burns holes in (destination-out by the light field)" },
+    { "id": "c9", "text": "lit ground keeps ~96% of its day face while the grey drowns", "figure": { "record": "~96%", "asserted": "threshold", "note": "lit ground keeps at least 90% of its day face; the grey darker than by day" } },
+    { "id": "c10", "text": "the lit/grey ratio grows to ×3.2", "figure": { "record": "×3.2", "asserted": "threshold", "note": "the night ratio at least ×3.2, and past the day's" } },
+    { "id": "c11", "text": "Crossing your own network at night reads as islands of day" },
+    { "id": "c12", "text": "The map draws the same overlay, so territory reclaimed is territory brightened" },
+    { "id": "c13", "text": "+19% whole-map luminance at 14% coverage", "figure": { "record": "+19% at 14% coverage", "asserted": "threshold", "note": "the first network on the session's road past 14% coverage makes the whole map at least 19% brighter than Haven alone" } },
+    { "id": "c14", "text": "scaling with the network" },
+    { "id": "c15", "text": "Connecting a station repaints both the field and the map in the cinematic's expanding ring" },
+    { "id": "c16", "text": "lit/grey brightness and warmth ratios on matched terrain" },
+    { "id": "c17", "text": "the boundary rim, whole-map brightening with coverage, night punch-through, wraith burn and its tutorial" }
+  ],
+  "checks": [
+    { "title": "GREY LAND BY DAY", "clauses": ["c1", "c2"], "kind": "record" },
+    { "title": "LIT LAND BY DAY", "clauses": ["c3", "c4", "c16"], "kind": "record" },
+    { "title": "THE WARMTH", "clauses": ["c5", "c16"], "kind": "record" },
+    { "title": "THE RIM", "clauses": ["c6", "c17"], "kind": "record" },
+    { "title": "NIGHT PUNCH-THROUGH", "clauses": ["c8", "c9", "c17"], "kind": "record" },
+    { "title": "THE NIGHT RATIO", "clauses": ["c10", "c11"], "kind": "record" },
+    { "title": "THE MAP BRIGHTENS WITH COVERAGE", "clauses": ["c12", "c13", "c17"], "kind": "record" },
+    { "title": "THE MAP SCALES WITH THE NETWORK", "clauses": ["c14"], "kind": "record" },
+    { "title": "THE CONNECTION'S EXPANDING RING", "clauses": ["c15"], "kind": "record" },
+    { "title": "THE WRAITH BURNS AT THE LINE", "clauses": ["c7", "c17"], "kind": "record" }
+  ],
+  "design": [
+    { "clause": "c1", "version": "v3.6", "what": "the veil became the light field's palette bands (two cold blue-dark steps in the quiet) — nothing in the world translucent; v3.13 moved the grey's dim into the darkness layer a lantern burns through. The check measures the dim on the composited canvas: under half the ground's own brightness, blue-led, every tone of its ramp still its own" },
+    { "clause": "c8", "version": "v3.6", "what": "night became a palette field baked two steps deeper and bluer, lit ground keeping its day face — the full-screen veil deleted; v3.13 made the night a darkness layer that every light punches. The punch-through is measured on it" }
+  ]
+}

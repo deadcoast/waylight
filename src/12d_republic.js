@@ -5,7 +5,9 @@
    scaling law the memorial proved (four designs, one renderer) applied to the whole sandbox.
    v3.34 THE HOLDINGS adds four registries on the same law: the taking doctrine + the watchpost
    it leaves, the world's own EVENTS (what banners do to each other), RELATIONS between banners,
-   and two more walked rooms with a material style table behind one renderer. */
+   and two more walked rooms with a material style table behind one renderer.
+   v3.39 THE LOSABLE HOLDINGS: the storming doctrine (a town taken and garrisoned), the watchpost's
+   storm rows (a post that can be LOST, reinforced, retaken dearer), three more wars in EVENTS. */
 
 const REP = (() => {
   /* ---------- the stance ladder: one ordered scale, walked by play ---------- */
@@ -77,6 +79,33 @@ const REP = (() => {
     },
   };
 
+  /* v3.39 THE LOSABLE HOLDINGS — the founding's line kept whole: a TOWN taken by force. The third
+     answer to a rising: the mountain does not restore the light, it takes the town and garrisons
+     it. Held ground eats from the shelf it stands on; the town's love goes out with the banner. */
+  DOCTRINE.storm = {
+    name: 'THE STORMING', verb: 'Storm the town',
+    cost: { metal: 90, provisions: 30 },
+    dur: 100, column: 5,
+    casualty: 0.5,
+    needs: 'mountain',
+    likesHit: 40,                     // the town's love for the Order, gone with the banner
+    garrison: 2,                      // shields in the yard, under the pennant
+    tithePeriod: 120, titheGood: 'food', titheAmt: 3,   // the garrison eats off the town's own shelf
+    releaseLikes: 10,                 // what a released town gives back at once — the rest is earned
+    /* v3.40 — the square can RISE against a thin garrison in a town that hates it */
+    rise: { likesAt: 5, thinAt: 2, chance: 0.3, at: 0.7, casualty: 0.5, reinforceCost: { metal: 40, provisions: 10 }, garrisonMax: 4,
+      line: 'a town that hates the Order under two shields rises against them in the night — feed it above the line, reinforce the garrison, or release it first',
+      /* v3.41 — and a square that LOVES the Order again stands its own: recruits from the town, no tithe */
+      recruitAt: 40, recruitEvery: 240, ownMax: 2, ownLeaveBelow: 30,
+      /* v3.44 THE KIN — a town that buried its own: their kin keep the place in the square (and stand at the field
+         stones) for days; the recruit clock runs slowPerStone longer for every stone, up to maxStones */
+      kin: { days: 1, slowPerStone: 120, maxStones: 3, line: 'the fallen own\'s kin keep the place a day; a town that has buried its own recruits slower for every stone' },
+      ownLine: 'a town at forty likes sends its own to stand under the pennant, one every four minutes, two at most — no tithe; below thirty they go home',
+      /* v3.42 — THE HOURS on the square, per recruit: when they stand (all / day / night), what the town feels per recruitEvery */
+      hoursFx: { full: { cover: 'all', likes: -1, drum: 12, line: 'stands day and night — the Unlit\'s drum is slower for every night stood, and the town\'s love wears (they are away from their fields)' }, days: { cover: 'day', likes: 0, appr: 1, line: 'stands by daylight and works the fields — the town\'s thanks grow; the square is theirs alone at night' }, nights: { cover: 'night', likes: 0, drum: 12, line: 'stands the dark — the Unlit\'s drum is slower for every night stood: a town seen standing with the Order is a story against the rising' } } },
+    line: 'The mountain does not restore the light — it TAKES the town. The lamp goes back up under a garrison; the town\'s love for the Order goes out with the Unlit\'s banner; the garrison eats from the shelf it stands on; and every town watching remembers what a rising costs.',
+  };
+
   /* ---------- THE WATCHPOST: what a taken camp becomes (v3.34) ---------- */
   const WATCHPOST = {
     shields: 2,                       // standing figures at the fire, in shifts
@@ -86,6 +115,26 @@ const REP = (() => {
     titheGood: 'metal',
     likesNear: 6,                     // the nearest town: the roads are safer, and it says so
     line: 'A REPUBLIC WATCHPOST. Shields stand the fire in shifts; salvage from the ring piles by the post for whoever carries the Order\'s papers.',
+    /* v3.39 — a post can be LOST: in the reprisal season the camps STORM it by night */
+    storm: {
+      chance: 0.35,                   // per night of the reprisal season, per held post
+      at: 0.72,                       // the night's phase when the knives come
+      knives: 3,                      // what the camps send — a post holds when its shields match them
+      walkerR: 260,                   // the walker inside this ring stands the post too, and every fed back with them
+      reinforceCost: { metal: 40, provisions: 10 },
+      shieldsMax: 4,
+      retakeMul: 1.5,                 // a post lost once costs this much more to take again — the camps expect it
+      fallenDur: 600,                 // the grey pennant lies in the ring this long
+      casualtyLost: 0.6, casualtyHeld: 0.25,
+      lostLikes: 6,                   // the nearest town: the roads are dangerous again, and it says so
+      line: 'the camps remember the shields — in the season of reprisal they come back for the ground by night',
+      /* v3.40 — the storm SEEN when the walker stands the post: knives on the ground, walking for the FIRE */
+      seen: { dur: 26, knifeSpeed: 92, fireR: 26, takeAfter: 3.5, shieldCd: 4.5, shieldReach: 80, knockBack: 130, downFor: 7, shoveDmg: 5, runOut: 4,   // v3.41: runOut — how long the knives take to clear the ring once the chief is down
+        mourn: 1,   // v3.42: a chief who went down in the open is GONE this many days — the rag on a stake, the road one knife short, the camp courting the Unlit
+        /* v3.44 THE GRUDGE — a chief the WALKER put down had a brother: the new chief's first storm is the nearest post
+           you hold, on the next night, season or none, with him among the knives; unpaid for days it cools; he says so at the fire inside sayR */
+        grudge: { days: 3, sayR: 260 } },
+    },
   };
 
   /* ---------- THIRD-PARTY EVENTS: the world's own wars, ONE registry (v3.34) ----------
@@ -125,6 +174,50 @@ const REP = (() => {
       mail: ['The camps remember the shields', 'Word of the taking walked the camps before the column\'s fires were cold. For a season the ring around every camp that STANDS is wider and its runners quicker — reprisal, of a kind. The mountain does not apologize. Neither does the road.'],
       line: 'the camps that stand grow bolder for a season',
     },
+    /* v3.39 THE LOSABLE HOLDINGS — three more wars on the same law: a row, a need, a resolver */
+    unlitReprisal: {
+      actor: 'rebels', victim: 'farkeep', kind: 'reprisal',
+      trigger: 'storm', dur: 600, pressureMul: 1.5,
+      rel: -1,
+      mail: ['The story of the storming walks', 'A town taken by the mountain is a story every fire tells the same way, and the Unlit tell it best. For a season their drum beats faster in every town that still has a lamp to douse — the courting comes sooner, the risings closer. Held ground holds. Everything around it listens.'],
+      line: 'the Unlit\'s drum beats faster for a season',
+    },
+    larderRaid: {
+      actor: 'raiders', victim: 'cannibals', kind: 'strike',
+      night: true, needs: 'larderNearCamp', reach: 4000, cd: 720, chance: 0.35,   // a raid party walks a night: the larders burn far from every fire
+      lowDur: 420,                    // the larder burns LOW this long — its hunting ring halved
+      rel: -1,
+      mail: ['A camp raided a larder', 'The runners of {camp} went for the meat at {site} in the night and came back with it — the fire there burns low and the ring around it is half what it was, for a while. The camp\'s stash has a crate it did not earn on the road. Two banners that both want your cargo, and tonight they wanted each other\'s more.'],
+      line: 'a camp took the meat off a larder — the fire burns low',
+    },
+    bunkerSweep: {
+      actor: 'diefenbunker', victim: 'raiders', kind: 'strike',
+      night: true, needs: 'campForTheSociety', cd: 900, chance: 0.4,
+      sweptDur: 480,                  // the camp's ring is shrunk this long
+      claimMul: 0.7,
+      rel: -1,
+      /* v3.41 — the sweep ANSWERED: the Society sells what it counted, while the count stands and the door is open */
+      sell: { cost: { metal: 60, ceramic: 20 }, shields: 2, rel: 1, line: 'the Society sells what it counted — the ground, the fires, the stencil; a watchpost by contract, no column and no season of reprisal',
+        mail: ['The count bought', 'The Society does not raid and it does not give. It SELLS. The ground at {site} is the Order\'s by a contract signed in the raised tongue, the camp\'s runners walked north into the cold with their inventory numbers, and two shields stand the fire under the pennant. The stencil stays on the post — the Society likes its work remembered.'] },
+      mail: ['The Society swept a camp', 'Lamps in a line came down out of the north in the dark and went through {site} like a shift change — the Society does not raid, it INVENTORIES. The camp\'s salvage is gone into the cold behind the door, and the ring around the fires is smaller for a while: the runners will not walk far from a fire that has been counted. The stencil they left on a post is a raised tongue.'],
+      line: 'the Society swept a camp and took its salvage north',
+    },
+    /* v3.42 — a leaderless camp looks for a banner: its runners carry the Unlit's word to the nearest lit door */
+    campCourting: {
+      actor: 'rebels', victim: 'waylight', kind: 'court',   // the Unlit hand the banner out; the Order's door takes the shutter
+      night: true, needs: 'chieflessCamp', cd: 600, chance: 0.5,
+      rel: -1,
+      mail: ['A camp without a chief courts the Unlit', 'The runners of {camp} came to {site}\'s door in the dark with the Unlit\'s word in their mouths — a fire with no chief looks for a banner, and the Unlit hand them out. A half-flown shutter stands beside the door by morning. HEAR THEM OUT on the banner sheet, or wait for the rising.'],
+      line: 'a chiefless camp carried the Unlit\'s word to a lit door',
+    },
+    reaperVisit: {
+      actor: 'reapers', victim: 'cannibals', kind: 'strike',
+      night: true, needs: 'mistyLarder', minMist: 0.35, cd: 900, chance: 0.3,
+      hushDur: 300,                   // the eaters hide this long — the larder does not hunt
+      rel: -1,
+      mail: ['The file walked through a larder', 'The Reapers crossed the firelight\'s edge at {site} and did not turn their heads. The eaters went to ground and stayed there — the ring around that fire is QUIET until they crawl out again. Two grey banners, and the greyer one walked through the other like weather.'],
+      line: 'the Reapers walked through a larder and the eaters hid',
+    },
   };
 
   /* ---------- RELATIONS: how the banners stand to EACH OTHER (v3.34) ----------
@@ -138,6 +231,7 @@ const REP = (() => {
       'rebels|waylight': -1, 'farkeep|rebels': -2, 'flamekeepers|waylight': 0, 'flamekeepers|rebels': 1,
       'diefenbunker|lamplighters': 3, 'lamplighters|waylight': -1, 'farkeep|lamplighters': 0,
       'cannibals|raiders': -1, 'cannibals|reapers': 0, 'diefenbunker|raiders': -1, 'farkeep|irongiants': 0,
+      'diefenbunker|waylight': 0,   // v3.41: the door's own contract moves it
     },
   };
 
@@ -295,3 +389,5 @@ const REP = (() => {
 
   return { STANCES, RULES, DOCTRINE, REBELLION, PRESENCES, MOUNTAIN, KIT, WATCHPOST, EVENTS, RELATIONS, ROOM_STYLES, INTERIORS };
 })();
+
+

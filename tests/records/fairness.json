@@ -1,0 +1,230 @@
+{
+  "suite": "fairness",
+  "version": "v3.31",
+  "record": {
+    "doc": "DESIGN.md",
+    "where": "The fairness pass (v3.31 — four field verdicts, answered at the root); its Proof line shared with the delivery ledgers",
+    "count": 10,
+    "count_text": "pinned by fairness.mjs — ten checks that measure the WORLD, not the code's opinion of it"
+  },
+  "clauses": [
+    {
+      "id": "c1",
+      "text": "Now: 118 on the flat",
+      "figure": {
+        "record": "118 on the flat",
+        "asserted": "exact",
+        "note": "a knife covers 118 px (±0.6) in one second of the world's step on flat meadow, and the tuning row reads 118"
+      }
+    },
+    {
+      "id": "c2",
+      "text": "taxed by the SAME terrain and slope the player pays"
+    },
+    {
+      "id": "c3",
+      "text": "a leash at 720, a stall-giveup",
+      "figure": {
+        "record": "a leash at 720",
+        "asserted": "threshold",
+        "note": "a knife 700 off still runs and one 730 off breaks off without a step; 720 itself is not sampled"
+      }
+    },
+    {
+      "id": "c4",
+      "text": "and the mounted law — a runner who sees the gap growing under hooves calls it (\"A horse. Forget it.\") and stops burning your attention"
+    },
+    {
+      "id": "c5",
+      "text": "Proof: mounted gap 150→613 px in 3.5 s with the give-up line",
+      "figure": {
+        "record": "150→613 px in 3.5 s",
+        "asserted": "threshold",
+        "note": "the gap starts at exactly 150 and must pass 550 in 3.5 s, wider at every step; the frozen page measures 576 — 613 itself is not pinned"
+      }
+    },
+    {
+      "id": "c6",
+      "text": "on foot, light-and-sprinting pulls away while loaded-and-walking stays honestly caught"
+    },
+    {
+      "id": "c7",
+      "text": "no relative-speed cheat anywhere",
+      "doc": "FEATURES.md"
+    },
+    {
+      "id": "c8",
+      "text": "a sane load WALKING steep ground never rings; the hill's price is breath and pace"
+    },
+    {
+      "id": "c9",
+      "text": "Proof with the wobble LIVE (the calm debug flag explicitly cleared — the earlier green here was vacuous and is called out as such): sixteen seconds on 0.32+ slope, ZERO rings",
+      "figure": {
+        "record": "sixteen seconds on 0.32+ slope",
+        "asserted": "exact",
+        "note": "160 steps of 0.1 s, every one of them on ground of slope 0.32 or more, zero rings"
+      }
+    },
+    {
+      "id": "c10",
+      "text": "overloaded on the same ground, the ring still comes"
+    },
+    {
+      "id": "c11",
+      "text": "The ring now needs a REASON: overloaded past 1.0, sprinting on rough ground, fear, or empty lungs",
+      "figure": {
+        "record": "overloaded past 1.0",
+        "asserted": "threshold",
+        "note": "the overloaded trial reads a load of 1.12 and rings; the fear, lungs and sprint trials and the sane walk after read 0.54 (ringing only for their own reason, the sane walk not at all); 1.0 itself is not sampled"
+      }
+    },
+    {
+      "id": "c12",
+      "text": "Water and rungs still dismount the rider — the horse has an opinion — but the horse now WANTS back on: it auto-remounts the far side of the obstacle with no button, no spook lockout, one quiet line the first time."
+    },
+    {
+      "id": "c13",
+      "text": "A CHOSEN dismount (R) stays dismounted — the automation serves the balk only and never overrides the player."
+    },
+    {
+      "id": "c14",
+      "text": "Proof: a routed ladder crossing sampled at 100 ms — crossed, max step NINE pixels",
+      "figure": {
+        "record": "max step NINE pixels",
+        "asserted": "threshold",
+        "note": "a step on the rungs is held to nine (measured 7.3) and every step of the crossing to 11.5 (measured 9.8): nine is not held off the rungs"
+      }
+    },
+    {
+      "id": "c15",
+      "text": "the snap math exact on a real placed ladder"
+    },
+    {
+      "id": "c16",
+      "text": "the convoy junior closing 200+ px with every stride bounded under 60",
+      "figure": {
+        "record": "200+ px with every stride bounded under 60",
+        "asserted": "exact",
+        "note": "the junior closes 200 px or more and no stride reaches 60"
+      }
+    },
+    {
+      "id": "c17",
+      "text": "escortSnap (the convoy junior \"sucked to your back\") is DELETED"
+    },
+    {
+      "id": "c18",
+      "text": "trudging at half pace when left behind (never frozen, never warped)",
+      "figure": {
+        "record": "half pace",
+        "asserted": "threshold",
+        "note": "the trudge is held under 0.6 of the junior's own speed (measured 59 of 118); half itself is not pinned"
+      }
+    },
+    {
+      "id": "c19",
+      "text": "the companion catch-up teleport (300 px behind for 7 s = appear at your boots) is replaced by a visible run that closes any gap in seconds on their own legs",
+      "figure": {
+        "record": "300 px behind for 7 s",
+        "asserted": "unpinned",
+        "note": "the old teleport's trigger: a companion left 600 behind runs the gap shut stride by bounded stride inside the old 7 s mark; the 300/7 s rule itself is not sampled"
+      }
+    },
+    {
+      "id": "c20",
+      "text": "fairness.mjs: 10 checks measuring the WORLD (gaps in px, rings counted, lockouts timed, strides bounded)",
+      "doc": "FEATURES.md"
+    }
+  ],
+  "checks": [
+    {
+      "title": "THE SPRINT",
+      "clauses": [
+        "c1",
+        "c7"
+      ],
+      "kind": "record"
+    },
+    {
+      "title": "THE SAME GROUND'S TAX",
+      "clauses": [
+        "c2"
+      ],
+      "kind": "record"
+    },
+    {
+      "title": "THE LEASH AND THE STALL",
+      "clauses": [
+        "c3",
+        "c20"
+      ],
+      "kind": "record"
+    },
+    {
+      "title": "THE MOUNTED LAW",
+      "clauses": [
+        "c4",
+        "c5",
+        "c20"
+      ],
+      "kind": "record"
+    },
+    {
+      "title": "ON FOOT, HONEST",
+      "clauses": [
+        "c6",
+        "c7",
+        "c20"
+      ],
+      "kind": "record"
+    },
+    {
+      "title": "THE HILL, NO RING",
+      "clauses": [
+        "c8",
+        "c9",
+        "c20"
+      ],
+      "kind": "record"
+    },
+    {
+      "title": "THE HILL'S REASONS",
+      "clauses": [
+        "c10",
+        "c11",
+        "c20"
+      ],
+      "kind": "record"
+    },
+    {
+      "title": "THE BALK",
+      "clauses": [
+        "c12",
+        "c13",
+        "c20"
+      ],
+      "kind": "record"
+    },
+    {
+      "title": "THE LADDER LAW",
+      "clauses": [
+        "c14",
+        "c15",
+        "c20"
+      ],
+      "kind": "record"
+    },
+    {
+      "title": "EVERY WARP KILLED",
+      "clauses": [
+        "c16",
+        "c17",
+        "c18",
+        "c19",
+        "c20"
+      ],
+      "kind": "record"
+    }
+  ],
+  "design": []
+}

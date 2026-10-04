@@ -1,0 +1,32 @@
+{
+  "suite": "paths",
+  "version": "v3.7",
+  "record": {
+    "doc": "DESIGN.md",
+    "where": "v3.7 — the ground remembers, and the world speaks in pixels",
+    "count": 9,
+    "count_text": "Verification grew a tenth suite (`tests/paths.mjs`, 9 checks)"
+  },
+  "clauses": [
+    { "id": "c1", "text": "wear accumulates and clamps" },
+    { "id": "c2", "text": "six real walking passes wear a visible trail through the systems (no debug shortcuts)" },
+    { "id": "c3", "text": "the bare path lands in the terrain canvas and the light field's copy of it" },
+    { "id": "c4", "text": "the worn lane measurably outruns fresh meadow" },
+    { "id": "c5", "text": "Worn-bare ground walks 7% faster", "figure": { "record": "7% faster", "asserted": "exact", "note": "the speed at the lane's middle is ×1.07 of fresh meadow's" } },
+    { "id": "c6", "text": "The first path worn to bare earth teaches itself — a toast, and the Walker looks down" },
+    { "id": "c7", "text": "paths round-trip save/load" },
+    { "id": "c8", "text": "a spoken line lands as gold pixel-face texels on the composited canvas" }
+  ],
+  "checks": [
+    { "title": "WEAR ACCUMULATES", "clauses": ["c1"], "kind": "record" },
+    { "title": "WEAR CLAMPS", "clauses": ["c1"], "kind": "record" },
+    { "title": "SIX REAL PASSES", "clauses": ["c2"], "kind": "record" },
+    { "title": "THE BARE PATH IN THE TERRAIN CANVAS", "clauses": ["c3"], "kind": "record" },
+    { "title": "THE LIGHT FIELD'S COPY", "clauses": ["c3"], "kind": "record" },
+    { "title": "THE WORN LANE OUTRUNS FRESH MEADOW", "clauses": ["c4", "c5"], "kind": "record" },
+    { "title": "THE FIRST BARE PATH TEACHES ITSELF", "clauses": ["c6"], "kind": "record" },
+    { "title": "THE PATHS RIDE THE SAVE", "clauses": ["c7"], "kind": "record" },
+    { "title": "A SPOKEN LINE IN THE WORLD'S FACE", "clauses": ["c8"], "kind": "record" }
+  ],
+  "design": []
+}

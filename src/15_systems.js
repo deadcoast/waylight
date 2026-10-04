@@ -26,6 +26,9 @@ const Systems = (() => {
     Porter.update(dt);
     NPC.update(dt);
     Economy.update(dt);
+    tickBolt(dt);   // v3.42: the arrow in, until it is pulled
+    tickRingHold(dt);   // v3.45: the line at the ring, until you walk away from it (v3.47: and the watches)
+    tickScar(dt);   // v3.43: the wound it leaves, until it is dressed
     updateWeather(dt);
     updateCargoWeather(dt);
     updateDecay(dt);
@@ -36,7 +39,7 @@ const Systems = (() => {
     /* v3.31 — the dossier's arrival edge: crossing into a town's reach runs the travel toggles once */
     if (typeof Ledger !== 'undefined') {
       const nearT = nearStation(120);
-      if (nearT && S.stations[nearT].connected && nearT !== _dossierTown) { _dossierTown = nearT; Ledger.autoArrive(nearT); }
+      if (nearT && S.stations[nearT].connected && nearT !== _dossierTown) { _dossierTown = nearT; Ledger.autoArrive(nearT); if (typeof UI !== 'undefined' && UI.faceAtDoor) UI.faceAtDoor(nearT); }   // v3.43: the keeper says it to your face, at the door
       else if (!nearT) _dossierTown = null;
     }
     updateWraiths(dt);
@@ -335,9 +338,10 @@ const Systems = (() => {
     const mounted = horseOn();
 
     const e = Porter.eff();
+    S.stamMax = e.stamMax; if (S.stam > S.stamMax) S.stam = S.stamMax;   // v3.51: the ceiling Endurance and Deep Lungs raise (it was set once, at enlistment)
     S.braced = input.space && !S.qte && S.state === 'walk' && !mounted;
     const wantSprint = input.shift || (input.ml && input.mr);            // Shift, or both mouse buttons held
-    const canSprint = wantSprint && !S.braced && S.stam > 1 && State.weight() / State.cap() <= 0.95 && !e.noSprint && !mounted;
+    const canSprint = wantSprint && !S.braced && S.stam > 1 && State.weight() / State.cap() <= 0.95 && !e.noSprint && !mounted && !(S.ringHold && S.ringHold.order === 'come');   // v3.46: the line walks — no running
     S.sprinting = canSprint && moving;
 
     const hB = mounted && S.horse.breed && FACT.HORSES[S.horse.breed] ? FACT.HORSES[S.horse.breed] : null;
@@ -363,8 +367,7 @@ const Systems = (() => {
     }
     if (S.sprinting) sp *= T.sprintMul;
     if (S.braced) sp *= T.braceMul;
-    if (S.flags.effects.speed4) sp *= 1.04;
-    if (S.flags.effects.cheatLegs) sp *= 1.08;
+    if (S.flags.effects.cheatLegs) sp *= 1.08;   // Elm's fresh boots (speed4) ride in eff().speed, once
     if (S.stam < T.lowStam) sp *= 0.85;
     if (S.qte) sp *= 0.35;
     if (e.speedCap < 1) sp = Math.min(sp, T.walk * e.speedCap * 1.1);
@@ -430,7 +433,7 @@ const Systems = (() => {
       if (!moving) regen = T.standRegen * (lit ? T.litRegenMul : 1);
       else if (lit && !S.sprinting) regen = T.walkRegenLit;
       if (road && moving && !S.sprinting) regen = Math.max(regen, 2);
-      regen *= e.regenMul * (S.buffs && S.buffs.wellfed > 0 ? 1.2 : 1) * (S.bruisedT > 0 ? 0.75 : 1) * (S.food < 35 ? 0.7 : 1);
+      regen *= e.regenMul * (S.buffs && S.buffs.wellfed > 0 ? 1.2 : 1) * (S.bruisedT > 0 ? 0.75 : 1) * (S.food < 35 ? 0.7 : 1) * (S.arrow ? T.arrow.stamMul : 1);   // v3.42: the bolt in
       S.stam = Math.min(S.stamMax, S.stam + regen * dt);
     }
 
@@ -471,7 +474,7 @@ const Systems = (() => {
   /* what a click on the ground means: a place to stand, or a thing to reach and use */
   function clickTarget(x, y) {
     for (const id of stationOrder) { const d = stations[id]; if (U.dist(x, y, d.x, d.y) < 140) return { x: d.x, y: d.y + 24, act: true, label: d.name, radius: 46 }; }   // 24 + 46 < the terminal's 96 u reach
-    { const n = NPC.companion(); if (n && U.dist(x, y, n.x, n.y) < 56) return { x: n.x, y: n.y, act: true, label: n.name.split(' ')[0], radius: 50, fn: () => UI2.openTransfer() }; }   // click your walker: the hand-over opens
+    { const n = NPC.companion(), nx = n && (n.cx !== undefined ? n.cx : n.x), ny = n && (n.cy !== undefined ? n.cy : n.y); if (n && nx !== undefined && U.dist(x, y, nx, ny) < 56) return { x: nx, y: ny, act: true, label: n.name.split(' ')[0], radius: 50, fn: () => UI2.openTransfer() }; }   // v3.51: a companion walks on cx/cy (read as x/y, the click and the G never found them)   // click your walker: the hand-over opens
     for (const rn of S.ruins) if (!rn.looted && U.dist(x, y, rn.x, rn.y) < 60) return { x: rn.x, y: rn.y, act: true, label: CHAR.RUIN_TYPES[rn.type].name, radius: 40 };
     for (const g of S.graves) if (U.dist(x, y, g.x, g.y) < 60) return { x: g.x, y: g.y, act: true, label: `${g.name}'s cairn`, radius: 45 };
     if (S.event && S.event.x !== undefined && U.dist(x, y, S.event.x, S.event.y) < 60) return { x: S.event.x, y: S.event.y, act: true, label: 'the event', radius: 40 };
@@ -488,7 +491,7 @@ const Systems = (() => {
   function dangerZones(assumeLoaded = false) {
     const z = [];
     const loaded = assumeLoaded || S.cargo.some(c => c.cat !== 'tool');
-    if (loaded) for (const cdef of DATA.camps) { const c = S.camps[cdef.id]; if (c && !c.pacified) z.push({ x: cdef.x, y: cdef.y, r: cdef.r + 110, mul: 5 }); }
+    if (loaded) for (const cdef of DATA.camps) { const c = S.camps[cdef.id]; if (c && !c.pacified && !(typeof Republic !== 'undefined' && Republic.onRoutes && Republic.onRoutes(cdef))) z.push({ x: cdef.x, y: cdef.y, r: cdef.r + 110, mul: 5 }); }   // v3.51: a camp on your routes is road, not ground to walk round
     return z;
   }
   function walkOpts(assumeLoaded = false) { return { walk: true, cross: crossCells(), avoid: dangerZones(assumeLoaded) }; }
@@ -524,6 +527,7 @@ const Systems = (() => {
   /* a tap: go there along a route feet can take. plain: a strung waypoint — navigation only, no snapping to things */
   function moveTo(x, y, opts) {
     if (S.dead || S.cine || S.state !== 'walk') return false;
+    if (S.ringHold && !(opts && opts.ring)) S.ringHold = null;   // v3.45: a walk elsewhere lifts the line
     const hot = opts && opts.plain ? null : clickTarget(x, y);
     let tx = hot ? hot.x : x, ty = hot ? hot.y : y;
     const foot = footingNear(tx, ty);
@@ -569,6 +573,7 @@ const Systems = (() => {
     const stride = Math.max(0, S.speed * dt) * 1.2;
     if (U.dist(S.px, S.py, m.x, m.y) <= Math.max(m.radius, stride)) {
       S.moveTo = null;
+      if (m.ring) { S.ringHold = { camp: m.ring, x: m.x, y: m.y, t: S.time }; tut('firstLine'); UI.toast(`<b>The line holds at ${DATA.camps.find(c => c.id === m.ring).name}'s ring.</b> Your wedge faces the camp — walk in alone, or walk away and they follow.`, '', 5000); }   // v3.45
       if (m.act) { if (m.fn) m.fn(); else { const e = getInteractions().find(i => i.key === 'E'); if (e) e.fn(); } }
       if (S.route && S.route.length) { const nx2 = S.route.shift(); moveTo(nx2[0], nx2[1], { plain: true }); }
       return null;
@@ -1132,6 +1137,7 @@ const Systems = (() => {
     for (let i = S.structures.length - 1; i >= 0; i--) {
       const st = S.structures[i];
       if (st.hornCd > 0) st.hornCd -= dt;
+      if (st.given) continue;   // v3.49: a given ring's hides and box are kept by the valley — a rest stop, not a chore
       const def = SDEF[st.type];   // v3.28c: load() normalizes every type through the ledger, so def is always real; a runtime bug that pushes garbage SURFACES through the fault guard instead of being absorbed
       let rate = T.decayBase * def.decay;
       const lit = World.lightAt(st.x, st.y) > 0.35;
@@ -1209,7 +1215,7 @@ const Systems = (() => {
       st.workT = (st.workT || 0) + dt * mult;
       if (st.workT >= ws.w.rate) {
         st.workT -= ws.w.rate;
-        State.bank(ws.w.kind, 1);
+        State.bank(ws.w.kind, 1, Economy.bankedFrom(ws.w.kind, st.x, st.y));   // v3.51: made here — its surplus is posted on the nearest lit board
         st.made = (st.made || 0) + 1;
         S.eco.produced[ws.w.kind] = (S.eco.produced[ws.w.kind] || 0) + 1;
         UI.earn('mat', 1, ws.w.label);
@@ -1242,7 +1248,7 @@ const Systems = (() => {
     const gen = inAura('generator'), shel = inAura('shelter');
     const stHere = nearStation(150);
     if (gen || shel || stHere) {
-      S.stam = Math.min(S.stamMax, S.stam + 26 * dt);
+      S.stam = Math.min(S.stamMax, S.stam + 26 * (stHere ? Porter.eff().stationRegen : 1) * dt);   // v3.51: a station's rest by the Walker's own (Restless, the Child's drawing)
       if (gen) {
         S.warmT = (gen.tier || 1) >= 3 ? 70 : 46;
         gen.used = (gen.used || 0) + dt;
@@ -1400,7 +1406,7 @@ const Systems = (() => {
       } else {
         const sp = T.wraithSpeed;
         w.x += (S.px - w.x) / d * sp * dt; w.y += (S.py - w.y) / d * sp * dt;
-        if (World.mistAt(w.x, w.y) < 0.3) { w.state = 'burn'; continue; }
+        if (World.mistAt(w.x, w.y) < 0.3) { if (d < 900) tut('firstBurn'); w.state = 'burn'; continue; }   // v3.51: the hunter that crosses the line is the burn the lesson is for (it set 'burn' here first, and the lesson's own check never saw it)
         if (d < 34 && !S.struggle && w.cd <= 0 && S.state === 'walk' && !S.inside && !S.room) beginStruggle(w);   // four walls hold — nothing made of grey follows you in
         if (d > 900) { w.state = 'drift'; w.alert = 0; }
       }
@@ -1410,14 +1416,16 @@ const Systems = (() => {
     S.struggle = { meter: T.grabStart, wraith: w };
     militiaCall();
     horseSpook(14);
-    { const n = NPC.companion(); if (n && !n.hungry) Render.say(n.x, n.y, 'Hold on — pull!'); }
+    { const n = NPC.companion(); if (n && !n.hungry) Render.say(n.cx !== undefined ? n.cx : n.x, (n.cy !== undefined ? n.cy : n.y) - 8, 'Hold on — pull!', undefined, n); }   // v3.51: over their own head, and it walks with them (read as x/y, it was said nowhere)
     S.qte = null; UI.showQTE(false);
     UI.showStruggle(true);
     Snd.sfx.grab();
   }
   function updateStruggle(dt) {
     const st = S.struggle;
-    st.meter -= T.grabDrain * dt;
+    /* v3.52: the press that fills the meter frees you, whatever the frame carries — the drain was taken first, so on a
+       frame of more than a twentieth of a second (a slow machine, a fast clock) no press could ever reach the top */
+    if (st.meter < 1) st.meter -= T.grabDrain * dt;
     UI.struggleProgress(st.meter);
     if (st.meter >= 1) { // escape
       S.struggle = null; UI.showStruggle(false);
@@ -1432,7 +1440,7 @@ const Systems = (() => {
       S.struggle = null; UI.showStruggle(false);
       const w = st.wraith;
       w.cd = 14; w.state = 'drift'; w.alert = 0;
-      const candidates = S.cargo.filter(c => c.cat !== 'tool');
+      const candidates = S.cargo.filter(c => c.cat !== 'tool' && !c.keepsake);   // v3.46: the grey takes a crate, never the kin's thanks
       if (candidates.length) {
         const item = candidates[Math.floor(rand() * candidates.length)];
         State.removeCargo(item.id);
@@ -1477,16 +1485,262 @@ const Systems = (() => {
   }
 
   /* =============== scrapper camps =============== */
+  /* ---------- v3.42 THE BOLT: a bowman's arrow stays in until somebody pulls it ----------
+     S.arrow = { t0, from } while it is in: the wind comes back at half pace (the regen line reads it),
+     the wound seeps. A medic walking with you pulls it in medicTime inside medicR; a lit town's hands
+     pull it at the terminal; your own hand pulls it standing still, for pullSelf health. */
+  function boltIn(campId) {
+    if (S.arrow) { S.arrow.n = (S.arrow.n || 1) + 1; return; }
+    S.arrow = { t0: S.time, from: campId, n: 1, pullT: 0, medT: 0 };
+    UI.toast('<b>An arrow, in.</b> Your wind comes back at half pace and the wound seeps until it is pulled — a medic beside you, a lit terminal, or your own hand standing still.', 'rust', 7000);
+    tut('firstArrow');
+  }
+  function pullBolt(how, who) {
+    if (!S.arrow) return false;
+    const A = T.arrow;
+    S.arrow = null;
+    S.scar = { t0: S.time, dressed: 0, dressT: 0, by: how };   // v3.43: the wound the medic dresses over a day
+    tut('firstScar');
+    if (how === 'self') { Porter.damage(A.pullSelf, 'the bolt', { bruise: true }); S.stagger = Math.max(S.stagger || 0, 0.8); Render.say(S.px, S.py - 18, 'Out. OUT—', '224,101,74'); }
+    else if (how === 'medic' && who) { Render.say(who.cx !== undefined ? who.cx : S.px, (who.cy !== undefined ? who.cy : S.py) - 16, U.pick(rand, ['Hold still. There.', 'Breathe out. Out.', 'Clean. You were lucky.']), '198,206,186'); NPC.svc(who).pulled = (NPC.svc(who).pulled || 0) + 1; NPC.svcNote(who, 'pulled a bolt out of your shoulder'); NPC.trainNpc(who, 'mend', 12, 'pulled a bolt clean'); }
+    else Render.say(S.px, S.py - 18, 'The hands at the door take the bolt out.', '198,206,186');
+    Render.burst(S.px, S.py - 8);
+    UI.toast(how === 'self' ? `<b>You pull the bolt yourself.</b> It costs ${A.pullSelf} — the wind comes back.` : how === 'medic' ? `<b>${who.name.split(' ')[0]} pulls the bolt.</b> A breath, a twist, done — the wind comes back.` : '<b>The bolt is out.</b> A lit town keeps hands for this.', how === 'self' ? 'rust' : 'gold', 6000);
+    Snd.sfx.escape && Snd.sfx.escape();
+    return true;
+  }
+  /* v3.43 THE SCAR — a pulled bolt's wound: the wind's ceiling lower until it is dressed, three times,
+     by a medic walking with you (every dressEvery inside medicR) or a lit town's hands once a visit;
+     dressed it closes in healDays, undressed it hangs on undressedDays */
+  function dressScar(how, who) {
+    const sc = S.scar, C = T.scar; if (!sc || sc.dressed >= C.dressings) return false;
+    sc.dressed++; sc.dressT = 0; sc.lastBy = how;
+    if (how === 'medic' && who) { Render.say(who.cx !== undefined ? who.cx : S.px, (who.cy !== undefined ? who.cy : S.py) - 16, U.pick(rand, ['Hold still. Clean.', 'Once more tomorrow.', 'That will close.']), '198,206,186'); NPC.svc(who).dressed = (NPC.svc(who).dressed || 0) + 1; NPC.svcNote(who, `dressed the bolt's wound (${sc.dressed}/${C.dressings})`); NPC.trainNpc(who, 'mend', 6, 'dressed a wound'); }
+    else if (how === 'town') Render.say(S.px, S.py - 18, 'The hands at the door change the dressing.', '198,206,186');
+    if (sc.dressed >= C.dressings) UI.toast('<b>The wound is dressed.</b> It closes in a day now — the wind comes back to its ceiling.', 'gold', 6000);
+    return true;
+  }
+  function tickScar(dt) {
+    const sc = S.scar; if (!sc) return;
+    const C = T.scar;
+    const dressed = sc.dressed >= C.dressings;
+    if (!dressed) {
+      S.stam = Math.min(S.stam, S.stamMax * C.stamMul);   // the ceiling, whatever fills the wind
+      const medic = NPC.party().find(n => n.cls === 'medic' && !n.hungry && !(n.shoveCd > 0) && n.cx !== undefined && U.dist(n.cx, n.cy, S.px, S.py) < C.medicR);
+      if (medic) { sc.dressT += dt; if (sc.dressT >= C.dressEvery) dressScar('medic', medic); }
+    }
+    if (S.time - sc.t0 >= (dressed ? C.healDays : C.undressedDays) * T.dayLen) {
+      /* v3.44 — the scar carried to the stone: who pulled the bolt, who dressed it, whether it closed late — written on the walk */
+      S.pStats = S.pStats || {}; S.pStats.scars = S.pStats.scars || [];
+      S.pStats.scars.push({ t: S.time, by: sc.by || 'self', dressed: sc.dressed || 0, dressedBy: sc.lastBy || null, late: !dressed });
+      S.scar = null;
+      UI.toast(dressed ? '<b>The scar closes.</b> Dressed and healed — the walk keeps the mark, not the wound; it goes to the stone with you.' : '<b>The scar closes, late.</b> Undressed, it took its time — the walk remembers, and so will the stone.', '', 6000);
+      tut('firstScarStone');
+    }
+  }
+  function tickBolt(dt) {
+    const a = S.arrow; if (!a) return;
+    const A = T.arrow;
+    Porter.damage(A.seep * dt, 'the bolt', { silent: true });
+    /* the medic answers: a medic walking with you, hands free, inside reach — a breath and it is out */
+    const medic = NPC.party().find(n => n.cls === 'medic' && !n.hungry && !(n.shoveCd > 0) && n.cx !== undefined && U.dist(n.cx, n.cy, S.px, S.py) < A.medicR);
+    if (medic) { a.medT += dt; if (a.medT >= A.medicTime) pullBolt('medic', medic); }
+    else a.medT = 0;
+    /* your own hand: the prompt's timer runs only while you stand still */
+    if (a.pulling) { if (S.speed > 5) { a.pulling = false; a.pullT = 0; } else { a.pullT += dt; if (a.pullT >= A.pullTime) pullBolt('self'); } }
+  }
+  /* v3.45 THE LINE AT THE RING — released when the Walker walks holdR from the line, plans a walk elsewhere, or the time runs */
+  function tickRingHold(dt) {
+    tickWatches(dt || 0);   // v3.47: the watches keep their own clock
+    const h = S.ringHold; if (!h) return;
+    const R = T.ring, cd = DATA.camps.find(c => c.id === h.camp);
+    /* v3.46 THE LINE'S ORDERS — HOLD: the backs keep the edge while you walk in alone; they fall in when you come back out
+       past them, or when the order's time runs. COME: the line forms on you and walks in; it breaks back into the wedge
+       once you are out past the ring's edge again */
+    if (h.order === 'hold') {
+      const back = U.dist(S.px, S.py, h.x, h.y);
+      if (back > 140) h.wentIn = true;
+      if (S.dead || S.room || S.time - h.orderT > R.holdLong || back > R.holdR * 3) { S.ringHold = null; UI.toast('<b>The line lifts</b> — your backs come to find you.', '', 4000); return; }
+      if (h.wentIn && back < 60) { S.ringHold = null; const n = NPC.party()[0]; if (n && n.cx !== undefined) Render.say(n.cx, n.cy - 12, U.pick(rand, ['With you.', 'We held it.', 'Back in the wedge.']), '198,206,186'); }
+      return;
+    }
+    if (h.order === 'come') {
+      h.x = S.px; h.y = S.py;
+      const dc = cd ? U.dist(S.px, S.py, cd.x, cd.y) : Infinity;
+      if (cd && dc < cd.r) h.cameIn = true;   // inside the ring once — walking back out past its edge breaks the line
+      if (S.dead || S.room || !cd || S.time - h.orderT > R.holdLong || (h.cameIn && dc > cd.r + 90) || dc > cd.r + 420) { S.ringHold = null; if (!S.dead) UI.toast('<b>The line breaks</b> — back into the wedge.', '', 3500); }
+      return;
+    }
+    if (U.dist(S.px, S.py, h.x, h.y) > R.holdR || S.time - h.t > R.holdMax || (S.moveTo && !S.moveTo.steer && !S.moveTo.ring)) S.ringHold = null;
+  }
+  /* ---------- v3.47 THE WATCH — the line left at a ring's edge for the night ----------
+     WATCH from a held line: the backs leave the wedge and keep the ring's edge (stepped up like HOLD) with a fire behind
+     them. At dark it is a watch — the camp stays in, and your charter runs cross its ring as at a truce. At dawn the backs
+     walk home to the nearest lit door, and fall in when you come by it (a full wedge sends them to that door's fire). */
+  const watches = () => (S.watches = S.watches || []);
+  const watchAt = cd => watches().find(w => w.camp === cd.id && !w.home) || null;
+  const watchDark = cd => { const w = watchAt(cd); return !!(w && w.dark); };
+  const watchers = w => S.npcs.filter(n => n.state === 'watch' && n.watchId === w.id);
+  function watchSlot(w, i) {
+    const px2 = -w.fy, py2 = w.fx, s2 = [-1, 1, -2, 2][i % 4] * T.ring.gap;
+    return { x: w.x + px2 * s2, y: w.y + py2 * s2 };
+  }
+  const watchFire = w => ({ x: Math.round(w.x - w.fx * 34), y: Math.round(w.y - w.fy * 34) });
+  function startWatch(h, cd) {
+    const pt = NPC.party(); if (!pt.length) return false;
+    const d = Math.max(1, U.dist(h.x, h.y, cd.x, cd.y)), R2 = cd.r - 24, x = d > R2 ? cd.x + (h.x - cd.x) / d * R2 : h.x, y = d > R2 ? cd.y + (h.y - cd.y) / d * R2 : h.y;
+    const ux = cd.x - x, uy = cd.y - y, ul = Math.max(1, Math.hypot(ux, uy));
+    const w = { id: 'w' + U.uid(), camp: cd.id, x, y, fx: ux / ul, fy: uy / ul, t: S.time, dark: false, home: null };
+    watches().push(w);
+    pt.forEach((n, i) => { n.state = 'watch'; n.watchId = w.id; n.watchSlot = i; n.holdDir = Math.atan2(uy, ux); if (i < 2) Render.say(n.cx, n.cy - 12, U.pick(rand, DATA.watchLines.order), '198,206,186'); NPC.svcNote(n, `kept the watch at ${cd.name}'s ring`); });
+    S.ringHold = null;
+    Systems.addMail(`The watch at ${cd.name}'s ring`, `${pt.map(n => n.name.split(' ')[0]).join(', ')} stayed at ${cd.name}'s ring with a fire behind them and the night ahead. From dark the camp stays in, and your charter runs cross its ring as if it held a truce. At dawn they walk home to the nearest lit door — come by it and they fall in.`);
+    UI.toast(`<b>The watch holds ${cd.name}'s ring till morning.</b> From dark the camp stays in; at dawn the line walks home to the nearest lit door.`, 'gold', 8000);
+    tut('firstWatch');
+    Snd.sfx.ui && Snd.sfx.ui();
+    return true;
+  }
+  function callWatchIn(w) {
+    const ns = watchers(w); if (!ns.length) return false;
+    for (const n of ns) { n.state = 'companion'; n.watchId = null; n.holdDir = undefined; }
+    w.home = { to: null, t: S.time, called: true };
+    watches().splice(watches().indexOf(w), 1);
+    Render.say(ns[0].cx, ns[0].cy - 12, 'With you, then.', '198,206,186');
+    UI.toast('<b>The watch falls in.</b> The line comes back into the wedge.', '', 4000);
+    return true;
+  }
+  function tickWatches(dt) {
+    const ph = Economy.dayPhase(), W = T.watch;
+    for (const w of watches().slice()) {
+      const cd = DATA.camps.find(c => c.id === w.camp), ns = watchers(w);
+      if (!cd || !ns.length) { watches().splice(watches().indexOf(w), 1); continue; }
+      if (!w.home) {
+        ns.forEach((n, i) => { const sl = watchSlot(w, i), d = U.dist(n.cx, n.cy, sl.x, sl.y); if (d > 2) { const sp = Math.min(d * 3, 90) * dt; n.cx += (sl.x - n.cx) / d * sp; n.cy += (sl.y - n.cy) / d * sp; } n.holdDir = Math.atan2(w.fy, w.fx); });
+        if (!w.dark && ph.night) {
+          w.dark = true; w.darkT = S.time;
+          Render.say(ns[0].cx, ns[0].cy - 12, U.pick(rand, DATA.watchLines.dark), '198,206,186');
+          if (U.dist(S.px, S.py, w.x, w.y) > 900) UI.toast(`<b>Dark at ${cd.name}'s ring.</b> The watch lights its fire — the camp stays in tonight.`, '', 6000);
+        } else if (w.dark && !ph.night && S.time - w.darkT > 30) {
+          /* v3.48 THE WATCH'S SIEGE — the night is counted; the last of the nights running brings the chief out under a white rag */
+          if (!w.counted) { w.counted = true; siegeCount(w, cd); }
+          if (w.siege && !w.siege.done) { tickSiege(w, cd, ns, dt); continue; }
+          /* dawn: home to the nearest lit door */
+          const to = DATA.stationOrder.filter(id => S.stations[id].connected).sort((a, b2) => U.dist(w.x, w.y, stations[a].x, stations[a].y) - U.dist(w.x, w.y, stations[b2].x, stations[b2].y))[0] || 'haven';
+          w.home = { to, t: S.time };
+          const dest = stations[to];
+          ns.forEach((n, i) => { const tx = dest.x - 58 + (i % 4) * 38, ty = dest.y + 124 + Math.floor(i / 4) * 18; n.walkHome = { pts: [[n.cx, n.cy], [tx, ty]], len: Math.max(1, U.dist(n.cx, n.cy, tx, ty)), d: 0 }; n.watchedT = S.time; n.holdDir = undefined; svc2(n).watches = (svc2(n).watches || 0) + 1; });
+          Render.say(ns[0].cx, ns[0].cy - 12, U.pick(rand, DATA.watchLines.dawn), '198,206,186');
+          addMail(`The watch comes home`, `${ns.map(n => n.name.split(' ')[0]).join(', ')} kept ${cd.name}'s ring through the night — the camp stayed in. They are walking home to ${dest.name}'s door; come by it and they fall in.`);
+          UI.toast(`<b>Morning at ${cd.name}'s ring.</b> The watch held — walking home to ${dest.name}.`, 'gold', 7000);
+        }
+        continue;
+      }
+      /* walking home, then waiting at the door */
+      for (const n of ns) {
+        const wh = n.walkHome; if (!wh) continue;
+        wh.d = Math.min(wh.len, wh.d + W.speed * dt);
+        const p = U.polyAt(wh.pts, wh.d); n._dir = Math.atan2(wh.pts[1][1] - wh.pts[0][1], wh.pts[1][0] - wh.pts[0][0]); n.cx = p.x; n.cy = p.y;
+        if (wh.d >= wh.len) { n.walkHome = null; n.state = 'waiting'; n.waitAt = w.home.to; n.waitT = S.time; n.watchId = null; }
+      }
+      if (!watchers(w).length) watches().splice(watches().indexOf(w), 1);
+    }
+    /* home from the watch: they fall in when you come by the door */
+    for (const n of S.npcs) {
+      if (n.state !== 'waiting' || !n.waitAt) continue;
+      const d = stations[n.waitAt]; if (!d || U.dist(S.px, S.py, d.x, d.y) > W.fallInR || S.dead || S.room) continue;
+      if ((NPC.hired ? NPC.hired() : NPC.party()).length < NPC.partyCap()) { n.state = 'companion'; Render.say(n.cx, n.cy - 12, U.pick(rand, DATA.watchLines.home), '198,206,186'); UI.toast(`<b>${n.name.split(' ')[0]} falls in</b> — home from the watch.`, 'gold', 5000); }
+      else { n.state = 'pool'; n.at = n.waitAt; n.feeWaived = true; UI.toast(`<b>${n.name.split(' ')[0]} is home from the watch</b> — your wedge is full; they wait at ${d.name}'s fire, no fee.`, '', 6000); }
+      n.waitAt = null;
+    }
+  }
+  const svc2 = n => (NPC.svc ? NPC.svc(n) : (n.svc = n.svc || {}));
+  /* ---------- v3.48 THE WATCH'S SIEGE ----------
+     Each night a watch holds a ring to dawn is counted on the camp: nights running (the night before, and the one before
+     that). At T.siege.nights the camp has not slept, and at that dawn its chief — or, at a fire with no chief, its eldest
+     knife — walks out to the line under a white rag and talks: a truce of T.siege.truceDays, no fight. Then he walks back,
+     and the watch walks home. */
+  function siegeCount(w, cd) {
+    const c = S.camps[cd.id]; if (!c) return;
+    const night = Math.floor(w.darkT / T.dayLen), wr = c.watchRun;
+    const n = wr && wr.last === night - 1 ? wr.n + 1 : wr && wr.last === night ? wr.n : 1;
+    c.watchRun = { n, last: night };
+    if (n < T.siege.nights || c.pacified || c.taken || (typeof Republic !== 'undefined' && Republic.truceAt && Republic.truceAt(cd))) return;
+    const chief = typeof Republic !== 'undefined' && Republic.chiefUp && Republic.chiefUp(cd);
+    const eldest = (cd.roll || []).find(k => k !== 'chief') || 'knife', CK = typeof FACT !== 'undefined' && FACT.CAMP_CLASSES[eldest];
+    const kit = chief ? Republic.chiefKit(cd) : (CK && CK.kit) || 'knife';
+    const fx = cd.x - 30, fy = cd.y + 18, tx = w.x + w.fx * 84, ty = w.y + w.fy * 84;   // he stops short of the line, face to face
+    w.siege = { t: 0, phase: 'out', x: fx, y: fy, x0: fx, y0: fy, tx, ty, kit, chief: !!chief, answered: false, done: false };
+    Render.say(fx, fy - 36, chief ? 'Enough. Get me a rag.' : 'The chief\'s not here. I\'ll go.', '224,101,74');
+    if (U.dist(S.px, S.py, w.x, w.y) > 900) UI.toast(`<b>${cd.name}'s ${chief ? 'chief' : 'eldest knife'} is walking out to your watch</b> under a white rag — ${n} nights, and the camp has not slept.`, 'gold', 8000);
+  }
+  function tickSiege(w, cd, ns, dt) {
+    const sg = w.siege, SG = T.siege, c = S.camps[cd.id];
+    ns.forEach((n, i) => { const sl = watchSlot(w, i), d = U.dist(n.cx, n.cy, sl.x, sl.y); if (d > 2) { const sp = Math.min(d * 3, 90) * dt; n.cx += (sl.x - n.cx) / d * sp; n.cy += (sl.y - n.cy) / d * sp; } n.holdDir = Math.atan2(w.fy, w.fx); });
+    sg.t += dt;
+    const walk = (tx, ty) => { const d = U.dist(sg.x, sg.y, tx, ty); if (d < 3) return true; const sp = Math.min(d, SG.speed * dt); sg.x += (tx - sg.x) / d * sp; sg.y += (ty - sg.y) / d * sp; return false; };
+    if (sg.phase === 'out') {
+      if (walk(sg.tx, sg.ty) || sg.t > 40) { sg.phase = 'talk'; sg.t = 0; sg.x = sg.tx; sg.y = sg.ty; Render.say(sg.x, sg.y - 34, U.pick(rand, DATA.siegeLines.chief), '224,101,74'); }   // said over the rag, not through it
+    } else if (sg.phase === 'talk') {
+      if (!sg.answered && sg.t > 1.8 && ns[0]) { sg.answered = true; Render.say(ns[0].cx, ns[0].cy - 12, U.pick(rand, DATA.siegeLines.line), '198,206,186'); }
+      if (sg.t >= SG.talk) {
+        c.lines = (c.lines || 0) + 1;   // v3.49: the times this camp came out to your line
+        if (c.lines >= T.given.lines && typeof Republic !== 'undefined' && Republic.giveRing && Republic.giveRing(cd, { x: w.x, y: w.y })) {   // the second time, the ring given
+          for (const n of ns) svc2(n).sieges = (svc2(n).sieges || 0) + 1;
+          sg.phase = 'back'; sg.t = 0; sg.given = true;
+          return;
+        }
+        c.siegeTruce = { t: S.time, nights: c.watchRun ? c.watchRun.n : SG.nights }; c.watchRun = null;
+        Render.burst && Render.burst(sg.x, sg.y - 8);
+        addMail(`${cd.name}: a truce at the line`, `${SG.nights} nights your watch held ${cd.name}'s ring and nobody in the camp slept. At dawn the ${sg.chief ? 'chief' : 'eldest knife'} walked out to the line with a white rag on a stick and talked: a truce, ${SG.truceDays} days — the runners let you walk, the road through the ring is open. Not a blade came out.`);
+        UI.toast(`<b>A truce at the line.</b> ${cd.name} tired after ${SG.nights} nights — ${SG.truceDays} days, no fight.`, 'gold', 9000);
+        for (const n of ns) svc2(n).sieges = (svc2(n).sieges || 0) + 1;
+        tut('firstSiege');
+        sg.phase = 'back'; sg.t = 0;
+      }
+    } else if (sg.phase === 'back') {
+      if (walk(sg.x0, sg.y0) || sg.t > 40) sg.done = true;
+    }
+  }
+  function lineOrder(order) {
+    const h = S.ringHold; if (!h || (order !== 'hold' && order !== 'come' && order !== 'watch') || !NPC.party().length) return false;
+    const cd = DATA.camps.find(c => c.id === h.camp);
+    if (order === 'watch') return startWatch(h, cd);   // v3.47
+    h.order = order; h.orderT = S.time; h.wentIn = false;
+    /* HOLD steps the line up to the ring's very edge — where a knife coming out after you has to pass it */
+    if (order === 'hold' && cd) { const d = Math.max(1, U.dist(h.x, h.y, cd.x, cd.y)), R2 = cd.r - 24; if (d > R2) { h.x = cd.x + (h.x - cd.x) / d * R2; h.y = cd.y + (h.y - cd.y) / d * R2; } h.t = S.time; }
+    const pt = NPC.party();
+    pt.forEach((n, i) => { if (n.cx !== undefined && i < 2) Render.say(n.cx, n.cy - 12, order === 'hold' ? U.pick(rand, ['We hold here.', 'Go on. We\'ve got the edge.', 'Nothing comes out past us.']) : U.pick(rand, ['With you.', 'Four abreast. Walk.', 'Together, then.']), '198,206,186'); });
+    UI.toast(order === 'hold' ? `<b>The line holds ${cd.name}'s edge.</b> Walk in alone — the knives that come out after you meet your backs.` : `<b>The line comes in.</b> Abreast, walking — the knives will not close on it; the bows still loose. No running.`, 'gold', 7000);
+    tut('firstLineOrders');
+    Snd.sfx.ui && Snd.sfx.ui();
+    return true;
+  }
+  /* ---------- v3.41 THE CAMPS' OWN: a runner's trade, read from the row ---------- */
+  const clsOf = r => (typeof FACT !== 'undefined' && FACT.CAMP_CLASSES[r && r.cls] ? FACT.CAMP_CLASSES[r.cls] : FACT.CAMP_CLASSES.knife).stats;
+  const roadRoll = cdef => { const roll = (cdef.roll || ['knife']).filter(k => FACT.CAMP_CLASSES[k] && FACT.CAMP_CLASSES[k].stats.road !== false); return roll.length ? roll : ['knife']; };
+  /* a blow landed on a runner who was just knocked (cd set by the intercept, the shove, the rifle or
+     a shield): a class with more knocks than one SHRUGS the first — up again in a second, staggered
+     back but not down. Returns true when the blow was absorbed. */
+  function absorbHit(r, how) {
+    const K = clsOf(r); if (!(K.knocks > 1)) { r.hits = 0; return false; }
+    r.hits = (r.hits || 0) + 1;
+    if (r.hits >= K.knocks) { r.hits = 0; return false; }
+    r.cd = 0.9;
+    Render.say(r.x, r.y - 12, U.pick(rand, ['He shrugs it.', 'The door took it.', 'Again. HARDER.']), '224,101,74', r);
+    tut('firstTrades');
+    return true;
+  }
   function updateCamps(dt) {
     for (const cdef of DATA.camps) {
       const c = S.camps[cdef.id];
       if (c.pacified) continue;
       if (!c.runners.length) {
         /* v3.34 — a camp the Reapers harvested walks one knife short for a day */
-        const nR = cdef.runners - ((c.culled && S.time - c.culled < T.dayLen) ? 1 : 0);
+        const nR = cdef.runners - ((c.culled && S.time - c.culled < T.dayLen) ? 1 : 0) - ((typeof Republic !== 'undefined' && Republic.chiefGone && Republic.chiefGone(cdef)) ? 1 : 0);   // v3.42: a camp short a chief walks one knife short
+        const road = roadRoll(cdef);   // v3.41: the camp's own, by trade — the chief keeps the fire
         for (let i = 0; i < nR; i++) {
           const a = rand() * Math.PI * 2;
-          c.runners.push({ x: cdef.x + Math.cos(a) * cdef.r * 0.5, y: cdef.y + Math.sin(a) * cdef.r * 0.5, wa: rand() * 7, state: 'patrol', cd: 0 });
+          c.runners.push({ x: cdef.x + Math.cos(a) * cdef.r * 0.5, y: cdef.y + Math.sin(a) * cdef.r * 0.5, wa: rand() * 7, state: 'patrol', cd: 0, cls: road[i % road.length] || 'knife' });
         }
       }
       const pd = U.dist(S.px, S.py, cdef.x, cdef.y);
@@ -1501,23 +1755,41 @@ const Systems = (() => {
       const truce = typeof Republic !== 'undefined' && Republic.truce();
       /* v3.34 — the reprisal season: after a taking, every camp that STANDS claims wider and runs quicker */
       const rep = typeof Republic !== 'undefined' ? Republic.reprisalMul() : { claim: 1, chase: 1 };
-      const effR = cdef.r * (armedBy ? T.armedCampMul : 1) * (roadsOwn ? 0.85 : 1) * (truce ? 0.4 : 1) * rep.claim;
-      const threat = !truce && pd < effR && hasCargo && S.state === 'walk' && !S.inside && !S.room;
+      const effR = cdef.r * (armedBy ? T.armedCampMul : 1) * (roadsOwn ? 0.85 : 1) * (truce ? 0.4 : 1) * rep.claim * (typeof Republic !== 'undefined' && Republic.sweptMul ? Republic.sweptMul(cdef) : 1);   // v3.40: a camp the Society counted keeps its runners near the fire
+      const campTruce = typeof Republic !== 'undefined' && Republic.truceAt && Republic.truceAt(cdef);   // v3.45: a truce granted at his fire — his runners let you walk
+      /* v3.47 THE ROAD KEPT — on the truce road inside an open ring the rag is up on your pack and the knives let you walk;
+         carrying the road's gift for this fire you walk the whole ring. THE WATCH — a ring watched at dark stays in. */
+      const onRoad = typeof Republic !== 'undefined' && Republic.onRoad && pd < cdef.r * 1.1 && Republic.onRoad(cdef), giftIn = S.cargo.some(cc => cc.gift === cdef.id);
+      const campIn = watchDark(cdef);
+      const stoneFriend = typeof Republic !== 'undefined' && Republic.onRoutes && Republic.onRoutes(cdef) === 'stone';   // v3.51 THE CAMPS ON THE ROUTES: the knives whose stone stands beside yours let you through
+      const threat = !truce && !campTruce && !onRoad && !giftIn && !campIn && !stoneFriend && pd < effR && hasCargo && S.state === 'walk' && !S.inside && !S.room;
+      if (stoneFriend && pd < cdef.r && hasCargo && (!c.stoneSaid || S.time - c.stoneSaid > 30)) { const rr = c.runners.find(x => U.dist(x.x, x.y, S.px, S.py) < 420); if (rr) { c.stoneSaid = S.time; Render.say(rr.x, rr.y - 14, U.pick(rand, DATA.routeLines.pass), '224,101,74', rr); tut('firstCampRoute'); } }
+      if ((onRoad || giftIn) && pd < cdef.r && hasCargo && (!c.roadSaid || S.time - c.roadSaid > 30)) { const rr = c.runners.find(x => U.dist(x.x, x.y, S.px, S.py) < 420); if (rr) { c.roadSaid = S.time; Render.say(rr.x, rr.y - 14, U.pick(rand, giftIn ? DATA.roadLines.gift : DATA.roadLines.walk), '224,101,74', rr); if (onRoad) tut('firstRoadKept'); } }
+      if (campIn && pd < cdef.r + 300 && (!c.insideSaid || S.time - c.insideSaid > 24)) { const rr = c.runners[0]; if (rr) { c.insideSaid = S.time; Render.say(rr.x, rr.y - 14, U.pick(rand, DATA.watchLines.inside), '224,101,74', rr); } }
       if (threat && pd < effR * 0.95) { tut('firstScrap'); bark('campNear'); }
       c.shoutCd = Math.max(0, (c.shoutCd || 0) - dt);
-      if (threat && c.shoutCd <= 0 && pd < effR * 0.9) { c.shoutCd = 14; const rr = c.runners[0]; if (rr) Render.say(rr.x, rr.y, U.pick(rand, roadsOwn ? ['Road\'s own. Eyes forward, boys.', 'Not that one. He knows people.', 'Let the grey hand pass.'] : DATA.scrapShouts), '224,101,74'); }
+      if (threat && c.shoutCd <= 0 && pd < effR * 0.9) { c.shoutCd = 14; const rr = c.runners[0]; if (rr) Render.say(rr.x, rr.y, U.pick(rand, roadsOwn ? ['Road\'s own. Eyes forward, boys.', 'Not that one. He knows people.', 'Let the grey hand pass.'] : DATA.scrapShouts), '224,101,74', rr); }
+      const standing = typeof Republic !== 'undefined' && Republic.standAt && Republic.standAt(cdef.id);   // v3.45: the Walker stands at his fire
+      const lineHold = S.ringHold && S.ringHold.camp === cdef.id && S.ringHold.order === 'hold', lineCome = S.ringHold && S.ringHold.camp === cdef.id && S.ringHold.order === 'come';   // v3.46
       for (const r of c.runners) {
         if (r.cd > 0) r.cd -= dt;
         if (r.postCd > 0) r.postCd -= dt;
+        /* v3.45 — THE STAND: his runners come in and look the Walker over, a ring at arm's length, and do not cut */
+        if (standing && !r.carry) {
+          const ri = c.runners.indexOf(r), nR = Math.max(1, c.runners.length), a = (ri / nR) * Math.PI * 2 + 0.4, gx = S.px + Math.cos(a) * 78, gy = S.py + Math.sin(a) * 58, gd = U.dist(r.x, r.y, gx, gy);
+          if (gd > 3) { r.x += (gx - r.x) / gd * Math.min(gd, 80 * dt); r.y += (gy - r.y) / gd * Math.min(gd, 80 * dt); }
+          r.watch = true; r.moving = gd > 3; continue;
+        }
+        r.watch = false;
         if (r.carry) { // haul to stash
           const d = U.dist(r.x, r.y, cdef.x, cdef.y);
-          if (d < 20) { c.stash.push(r.carry); r.carry = null; }
+          if (d < 20) { c.stash.push(r.carry); if (r.carry.parcel) Economy.grieve(r.carry, 'camp', cdef); r.carry = null; }   // v3.42: the town's own, carried into a camp
           else { r.x += (cdef.x - r.x) / d * 120 * dt; r.y += (cdef.y - r.y) / d * 120 * dt; }
           continue;
         }
         // a convoy's crates draw them first — the junior walker is the softer mark
         const cv = S.convoy;
-        if (cv && r.cd <= 0 && cv.crates > 0 && U.dist(cv.x, cv.y, cdef.x, cdef.y) < cdef.r) {
+        if (cv && r.cd <= 0 && cv.crates > 0 && !stoneFriend && U.dist(cv.x, cv.y, cdef.x, cdef.y) < cdef.r) {
           const dE = U.dist(r.x, r.y, cv.x, cv.y);
           if (!threat || dE < U.dist(r.x, r.y, S.px, S.py)) {
             r.x += (cv.x - r.x) / Math.max(1, dE) * T.scrapSpeed * dt;
@@ -1530,12 +1802,32 @@ const Systems = (() => {
           const d = U.dist(r.x, r.y, S.px, S.py);
           // v3.21: the network FIGHTS BACK — a horn tower calls them out and slows them,
           // and an armed post knocks a runner sprawling as it passes beneath
-          let spd = T.scrapSpeed * (armedBy ? T.armedChaseMul : 1) * rep.chase;
+          const CK = clsOf(r);
+          /* v3.46 THE LINE'S ORDERS — HOLD: a knife that comes out near the held line is turned back to its fire */
+          const wHere = watchAt(cdef);   // v3.47: the watch's line turns a knife at the edge like a held line
+          if (lineHold || wHere) {
+            const nb = [...(lineHold ? NPC.party() : []), ...(wHere ? watchers(wHere) : [])].find(n => n.cx !== undefined && !n.hungry && U.dist(n.cx, n.cy, r.x, r.y) < T.ring.turnR);
+            if (nb) {
+              r.cd = T.ring.turnCd; r.turnedT = S.time;
+              Render.say(nb.cx, nb.cy - 12, U.pick(rand, ['Not past us.', 'Back to your fire.', 'This is our edge.']), '198,206,186');
+              Render.say(r.x, r.y - 40, U.pick(rand, ['Hah— fine.', 'Not worth it.', 'Back. BACK.']), '224,101,74', r);   // said over the U of the way back, not through it
+              NPC.svc(nb).met++; NPC.svcNote(nb, 'turned a knife at the line');
+              continue;
+            }
+          }
+          /* COME: the line walks in abreast — a knife will not close on it (a bow still looses) */
+          if (lineCome && !CK.roadRange && d < T.ring.comeR) {
+            r.moving = false;
+            if (!r.heldSaid || S.time - r.heldSaid > 12) { r.heldSaid = S.time; Render.say(r.x, r.y - 14, U.pick(rand, ['Four abreast— wait.', 'Not into that.', 'Hold. HOLD.']), '224,101,74', r); }
+            if (d < T.ring.comeR * 0.8) { r.x += (r.x - S.px) / Math.max(1, d) * 40 * dt; r.y += (r.y - S.py) / Math.max(1, d) * 40 * dt; }   // they give ground
+            continue;
+          }
+          let spd = T.scrapSpeed * (armedBy ? T.armedChaseMul : 1) * rep.chase * CK.speed;   // v3.41: a ram is slow, a chief keeps the fire
           /* v3.31 — the chase obeys the WORLD, same as every walker:
              a mounted target is gone (the camps respect a horse — they do not sprint after one),
              slopes slow raider boots like they slow yours, cliffs are cliffs, leashes are real. */
           if (horseOn() && S.speed > spd) {
-            if (!r.gaveHorse) { r.gaveHorse = true; if (d < 500) Render.say(r.x, r.y - 10, U.pick(rand, ['A horse. Forget it.', 'Not on foot we don\'t.', 'Let him ride.']), '224,101,74'); }
+            if (!r.gaveHorse) { r.gaveHorse = true; if (d < 500) Render.say(r.x, r.y - 10, U.pick(rand, ['A horse. Forget it.', 'Not on foot we don\'t.', 'Let him ride.']), '224,101,74', r); }
             r.cd = Math.max(r.cd || 0, 10);
             continue;
           }
@@ -1543,7 +1835,7 @@ const Systems = (() => {
           /* v3.34 — the watchpost's ring is HELD ground: a chase that crosses into it is broken by the post */
           if (typeof Republic !== 'undefined' && Republic.watchpostAt(r.x, r.y)) {
             r.cd = Math.max(r.cd || 0, 12);
-            if (d < 500) Render.say(r.x, r.y - 10, U.pick(rand, ['Shields. Not worth it.', 'The post sees us. Back.', 'Farkeep ground. Leave it.']), '224,101,74');
+            if (d < 500) Render.say(r.x, r.y - 10, U.pick(rand, ['Shields. Not worth it.', 'The post sees us. Back.', 'Farkeep ground. Leave it.']), '224,101,74', r);
             continue;
           }
           const rTerr = World.terrainAt(r.x, r.y);
@@ -1567,13 +1859,32 @@ const Systems = (() => {
             else if (!World.terrainAt(r.x, nry).blocked) { r.y = nry; r.stallT = 0; }
             else { r.stallT = (r.stallT || 0) + dt; if (r.stallT > 2) { r.cd = 15; r.stallT = 0; } }
           }
-          if (d < 220 && NPC.intercept(r)) continue;   // your walking partner meets them first
+          /* v3.41 — a BOWMAN looses on the way in: an arrow that staggers, and cuts a little */
+          if (CK.roadRange && d < CK.roadRange && d > T.scrapCatch * 2 && !(r.shotCd > 0)) {
+            r.shotCd = CK.shotCd;
+            Render.arrow ? Render.arrow(r.x, r.y - 8, S.px, S.py - 10) : Render.tracer(r.x, r.y - 8, S.px, S.py - 10);
+            Render.say(r.x, r.y - 12, U.pick(rand, ['Loose!', 'Hold still—', 'Got him.']), '224,101,74', r);
+            S.stagger = Math.max(S.stagger || 0, CK.stagger);
+            S.hitBy = { camp: cdef.id, t: S.time };   // v3.45: whose knives — the score remembers
+            Porter.damage(CK.roadDmg, 'scrappers', { bruise: true });
+            boltIn(cdef.id);   // v3.42: the arrow stays IN until it is pulled
+            Snd.sfx.stumble && Snd.sfx.stumble();
+            tut('firstTrades');
+          }
+          if (r.shotCd > 0) r.shotCd -= dt;
+          if (d < 220 && NPC.intercept(r, cdef.id)) { absorbHit(r, 'met'); continue; }   // your walking partner meets them first — a ram shrugs the first (v3.45: the camp rides along — a score reaches farther)
           if (d < T.scrapCatch) {
-            if (NPC.tryShove()) { r.cd = 6; continue; }
+            if (NPC.tryShove()) { r.cd = 6; absorbHit(r, 'shoved'); continue; }
             r.cd = 3.5;
+            S.hitBy = { camp: cdef.id, t: S.time };   // v3.45
             Porter.damage(7, 'scrappers', { bleed: 0.3, bruise: true });
             if (!S.dead) { knockCargo(); militiaCall(); horseSpook(12); }
           }
+        } else if (campIn) {
+          /* v3.47 THE WATCH — the camp stays in: its knives keep close round their own fire till morning */
+          r.wa += dt * 0.5;
+          const tx = cdef.x + Math.cos(r.wa) * cdef.r * 0.16, ty = cdef.y + Math.sin(r.wa) * cdef.r * 0.12, d = Math.max(1, U.dist(r.x, r.y, tx, ty));
+          if (d > 4) { r.x += (tx - r.x) / d * Math.min(d, 90 * dt); r.y += (ty - r.y) / d * Math.min(d, 90 * dt); }
         } else {
           // patrol ring / collect ground drops in territory
           let target = null;
@@ -1594,7 +1905,7 @@ const Systems = (() => {
   }
   function knockCargo() {
     S.stagger = 0.9; Snd.sfx.stumble();
-    const candidates = S.cargo.filter(c => c.cat !== 'tool');
+    const candidates = S.cargo.filter(c => c.cat !== 'tool' && !c.keepsake);   // v3.46: a keepsake hangs on its own string — the crates tumble, it stays
     const n = Math.min(candidates.length, 1 + (rand() < 0.4 ? 1 : 0));
     for (let i = 0; i < n; i++) {
       const item = candidates[Math.floor(rand() * candidates.length)];
@@ -1602,6 +1913,7 @@ const Systems = (() => {
       State.removeCargo(item.id);
       item.cond = Math.max(0, item.cond - 8);
       S.drops.push({ id: U.uid(), item, x: S.px + (rand() - 0.5) * 50, y: S.py + (rand() - 0.5) * 50 });
+      if (item.parcel) Economy.grieve(item, 'ground');   // v3.42: a parcel on the road is the town's grievance
     }
     UI.toast(n > 0 ? 'Scrappers knocked cargo loose!' : 'Shoved by a scrapper!', 'rust');
   }
@@ -1611,6 +1923,7 @@ const Systems = (() => {
       if (c.pacified) continue;
       if (World.lightAt(cdef.x, cdef.y) > 0.35) {
         c.pacified = true;
+        if (typeof Republic !== 'undefined' && Republic.scorePaid) Republic.scorePaid(cdef, 'stood down');   // v3.45
         c.stash.push(State.makeItem('metal'), State.makeItem('metal'), State.makeItem('ceramic'));
         UI.toast(`${cdef.name} stood down — the light reached them. Their stash is yours; their fire is warm.`, 'gold');
         State.grantLikes(40);
@@ -1656,6 +1969,9 @@ const Systems = (() => {
       out.push({ key: 'E', label: (st && (st.tier || 1) >= 3) ? 'Step out — rested, mended, ready' : 'Step out', fn: exitShelter });
       return out;
     }
+    if (S.ringHold && NPC.party().length) { const cdQ = DATA.camps.find(c => c.id === S.ringHold.camp); out.push({ key: 'Q', label: S.ringHold.order ? `The line: <b>${S.ringHold.order === 'hold' ? 'HOLDING the edge' : 'COMING IN with you'}</b> — new orders` : `Orders to the line at <b>${cdQ ? cdQ.name : 'the ring'}</b> — HOLD, COME or WATCH`, cls: 'gold', fn: () => UI.lineOrders() }); }   // v3.46 (v3.47: WATCH)
+    else { const w = watches().find(w2 => !w2.home && U.dist(S.px, S.py, w2.x, w2.y) < 140); if (w) { const cdW = DATA.camps.find(c => c.id === w.camp); out.push({ key: 'Q', label: `The watch at <b>${cdW ? cdW.name : 'the ring'}</b> — call it in to the wedge`, fn: () => callWatchIn(w) }); } }   // v3.47
+    if (S.arrow && !S.arrow.pulling) out.push({ key: 'E', label: `Pull the bolt yourself — <b>${T.arrow.pullSelf} health</b>, standing still ${T.arrow.pullTime}s`, cls: 'rust', fn: () => { S.arrow.pulling = true; S.arrow.pullT = 0; UI.toast('Standing still. Breathe—', '', 2500); } });   // v3.42
     if (typeof Memorial !== 'undefined') out.push(...Memorial.interactions());   // v3.29: the ground that keeps the Order's own
     if (typeof Republic !== 'undefined') out.push(...Republic.interactions());   // v3.32: shrines, parleys, the sandbox's own doors
     const stId = nearStation(96);
@@ -1665,6 +1981,16 @@ const Systems = (() => {
         const nC = dels.reduce((a, o) => a + o.items.length, 0) + lost.length;
         out.push({ key: 'E', label: `DELIVER — <b>${nC} crate${nC > 1 ? 's' : ''}</b> to ${stations[stId].name}`, fn: () => beginHandover(stId), cls: 'deliver' });
       } else out.push({ key: 'E', label: `Terminal — <b>${stations[stId].name}</b>`, fn: () => UI.openStation(stId) });
+      /* v3.45 — the kin's lantern takes its flame at any lit waylight */
+      if (S.stations[stId].connected && S.cargo.some(c => c.defId === 'kinLantern' && !c.lit)) { const lt = S.cargo.find(c => c.defId === 'kinLantern' && !c.lit); out.unshift({ key: 'L', label: `Take the flame for <b>${lt.name}</b> at ${stations[stId].name}'s waylight`, cls: 'gold', fn: () => Republic.kinLight(stId) }); }
+      /* v3.44 — the Walker's word: the keeper at the door with an open grievance can be answered from the rail too */
+      if (S.stations[stId].connected && Economy.canWord) {
+        const ga = Economy.answerable(stId), gl = ga ? { g: ga } : null;   // v3.45: the newest grievance that can still be answered
+        if (gl && Economy.canWord(gl.g)) {
+          if (!out.some(o => o.key === 'P') && Economy.canPromise(gl.g)) out.push({ key: 'P', label: `Give your word — <b>${gl.g.name}</b> comes through in ${T.word.promiseDays} days`, cls: 'gold', fn: () => Economy.giveWord(gl.g.id, 'promise') });
+          if (!out.some(o => o.key === 'X')) out.push({ key: 'X', label: `Apologize — <b>${T.word.sorryCost} appreciation</b> now, the likes kept`, fn: () => Economy.giveWord(gl.g.id, 'sorry') });
+        }
+      }
     }
     // paver
     if (!stId) {
@@ -1685,7 +2011,7 @@ const Systems = (() => {
         tut('firstZip');
       }
     }
-    { const n = NPC.companion(); if (n && U.dist(S.px, S.py, n.x, n.y) < 80 && (S.cargo.length || n.carry.length)) out.push({ key: 'G', label: `Trade loads with <b>${n.name.split(' ')[0]}</b>`, fn: () => UI2.openTransfer() }); }
+    { const n = NPC.companion(), nx = n && (n.cx !== undefined ? n.cx : n.x), ny = n && (n.cy !== undefined ? n.cy : n.y); if (n && nx !== undefined && U.dist(S.px, S.py, nx, ny) < 80 && (S.cargo.length || n.carry.length)) out.push({ key: 'G', label: `Trade loads with <b>${n.name.split(' ')[0]}</b>`, fn: () => UI2.openTransfer() }); }
     // pickups
     const picks = nearbyPickups();
     if (picks.length) out.push({ key: 'E', label: `Pick up — <b>${picks[0].label}</b>${picks.length > 1 ? ` +${picks.length - 1} more` : ''}`, fn: () => pickupAll(picks) });
@@ -1816,6 +2142,7 @@ const Systems = (() => {
         const c = S.camps[cd.id];
         if (!c || c.pacified) continue;
         for (const r of c.runners || []) if (U.dist(r.x, r.y, S.px, S.py) < T.rifleWarnR * FACT.RIFLES[(S.gear.rifleTier) || 'c14'].warnMul) { rNear = true; break; }
+        if (!rNear && typeof Republic !== 'undefined' && Republic.stormKnives) for (const k of Republic.stormKnives()) if (k.r.cd <= 0 && U.dist(k.r.x, k.r.y, S.px, S.py) < T.rifleWarnR * FACT.RIFLES[(S.gear.rifleTier) || 'c14'].warnMul) { rNear = true; break; }
         if (rNear) break;
       }
       if (rNear) out.push({ key: 'Y', label: `The ${FACT.RIFLES[(S.gear.rifleTier) || 'c14'].name} — <b>${S.gear.ammo338 || 0}</b> &middot;338 in the pack`, fn: rifleFire });
@@ -2140,6 +2467,11 @@ const Systems = (() => {
   }
   function acceptOrder(def, premium) {
     const isPrio = !!def.title && !def.relight;
+    /* v3.51 THE SURPLUS ON THE BOARD — the bank pays for the freight's crates when the card is taken */
+    if (def.surplus) {
+      if (!State.canAfford(def.bank)) { UI.toast(`The bank no longer holds <b>${fmtCost(def.bank)}</b> past its reserve — the freight waits`, 'rust', 4200); Snd.sfx.denied(); return null; }
+      State.pay(def.bank); tut('firstSurplus');
+    }
     const from = stations[def.from], to = stations[def.to];
     const path = World.pathTime(from.x, from.y, to.x, to.y);
     let par = Math.max(T.parFloor, path.seconds * T.parPad);
@@ -2156,9 +2488,11 @@ const Systems = (() => {
       from: def.from, to: def.to, par, t0: S.time, premium: !!premium,
       express: !!def.express, deadline: def.express ? S.time + par * 1.15 + 12 : null,
       likesMul: def.likesMul || 1, matBonus: def.matBonus || null, items: [], item: def.item || null, n: def.n || 0,
-      service: !!def.service, tier: def.tier || 0, militia: def.militia || null,
+      service: !!def.service, tier: def.tier || 0, militia: def.militia || null, errand: def.errand || null, answered: !!def.answered, passed: !!def.passed,   // v3.45: the keeper's own letter (v3.47: on the wire's word; v3.49: at the end of three letters)
+      parcels: def.parcels ? def.parcels.map(p => ({ ...p })) : null,   // v3.41: the town's own, addressed
       circuit: !!def.circuit, legs: null, leg: 0, condAcc: [], kgTotal: 0,
       convoy: !!def.convoy, salvage: !!def.salvage, site: def.site || null, looted: false,
+      surplus: def.surplus || null, bank: def.bank ? { ...def.bank } : null,   // v3.51: the bank's surplus, packed as freight
       dist: path.dist,
     };
     if (def.circuit) {
@@ -2183,6 +2517,7 @@ const Systems = (() => {
           const it = State.makeItem(itemId, order.idNum);
           // TRUSTED boon: the town's children run your mailbags to the gate — letters from here weigh nothing
           if (itemId === 'letters' && Economy.apprLevel(def.from) >= 2) it.kg = 0;
+          if (itemId === 'parcel' && order.parcels && order.parcels[i]) { it.parcel = { ...order.parcels[i], from: def.from, id: U.uid() }; if (it.parcel.kind === 'sealed') { it.sealed = true; it.kg = 1; it.fragile = false; it.name = 'A sealed letter'; } }   // v3.42: the address rides the crate; v3.45: the keeper's seal
           State.addCargo(it);
           order.items.push(it.id);
         }
@@ -2208,6 +2543,7 @@ const Systems = (() => {
       S.sendoff = { st: nearStation(170) || def.from, t: S.time };
     }
     S.orders.active.push(order);
+    if (order.errand) Economy.errandAccepted(order);   // v3.45: your word goes with the keeper's letter
     if (State.weight() > State.cap()) { UI.toast(`<b>Overloaded</b> — ${U.fmtKg(State.weight())} of ${State.cap()} kg. You will be slow and you will wobble. A companion could carry some.`, 'rust', 6000); bark('overload'); }
     Snd.sfx.accept();
     UI.updateTray(); UI.updateObjective();
@@ -2220,7 +2556,7 @@ const Systems = (() => {
     if (!o) return false;
     S.orders.active.splice(S.orders.active.indexOf(o), 1);
     if (S.orders.focus === idNum) S.orders.focus = null;
-    for (const id of o.items) { const c = S.cargo.find(x => x.id === id); if (c) { c.lostTo = o.to; c.orderId = null; c.name = c.name.replace(' (lost)', '') + ' (lost)'; } }
+    for (const id of o.items) { const c = S.cargo.find(x => x.id === id); if (c) { c.lostTo = o.to; c.orderId = null; c.name = c.name.replace(' (lost)', '') + ' (lost)'; if (c.parcel) Economy.grieve(c, 'given'); } }   // v3.42: a parcel given up is the town's grievance
     if (o.circuit) for (let li = o.leg; li < o.legs.length; li++) for (const id of o.legs[li].items) { const c = S.cargo.find(x => x.id === id); if (c) { c.lostTo = o.legs[li].to; c.orderId = null; c.name = c.name.replace(' (lost)', '') + ' (lost)'; } }   // every remaining door's crates go lost toward their own door
     if (o.convoy && S.convoy && S.convoy.orderId === o.idNum) { UI.toast(`${S.convoy.n.name.split(' ')[0]} turns back for ${stations[o.from].name}, crates and all`, 'rust', 5000); S.convoy = null; }
     if (o.prio) { S.orders.prioAccepted = false; for (const id of o.items) { const i = S.cargo.findIndex(x => x.id === id && (x.defId === 'core' || x.defId === 'coreHeavy')); if (i >= 0) S.cargo.splice(i, 1); } }
@@ -2234,7 +2570,9 @@ const Systems = (() => {
   function deliverablesAt(stId) {
     // a convoy never hands crates over a counter (it completes when you BOTH arrive), and a salvage
     // run has nothing to hand over until the wreck has been searched
-    return S.orders.active.filter(o => !o.convoy && (!o.salvage || o.looted) && o.to === stId && o.items.every(id => S.cargo.some(c => c.id === id)));
+    if (S.stations[stId] && S.stations[stId].cut) return [];   // v3.49: the door is dark until the wire is spliced
+    const held = id => S.cargo.some(c => c.id === id) || NPC.party().some(n => n.carry.some(c => c.id === id));   // v3.51: a companion's load delivers with you
+    return S.orders.active.filter(o => !o.convoy && (!o.salvage || o.looted) && o.to === stId && o.items.every(held));
   }
   /* v3.24 THE RESCUE RIDE: the ledger's last mercy. When the last quarter of the pool is spent,
      the town that loves you most gets ONE chance to reach you — odds scale with appreciation,
@@ -2338,14 +2676,20 @@ const Systems = (() => {
         if (d < td) { td = d; tgt = { r, c }; }
       }
     }
+    /* v3.40 — the knives of a storm on the ground are runners to the rifle's eye */
+    if (typeof Republic !== 'undefined' && Republic.stormKnives) for (const k of Republic.stormKnives()) {
+      if (k.r.cd > 0) continue;
+      const d = U.dist(k.r.x, k.r.y, S.px, S.py);
+      if (d < td) { td = d; tgt = { r: k.r, c: k.c }; }
+    }
     if (tgt) {
       const { r, c } = tgt;
       Render.tracer(S.px, S.py - 14, r.x, r.y - 8);
       const d = Math.max(1, U.dist(r.x, r.y, S.px, S.py));
       r.x += (r.x - S.px) / d * 60; r.y += (r.y - S.py) / d * 60;
-      r.cd = T.rifleDropCd * RD.dropCdMul;
+      r.cd = T.rifleDropCd * RD.dropCdMul; r.felledBy = 'walker';   // v3.44: a round is your own hand
       Render.burst(r.x, r.y);
-      Render.say(r.x, r.y - 12, U.pick(rand, ['DOWN! MAN DOWN!', 'LAMPLIGHTER! COVER!', 'He brought a RIFLE—']), '224,101,74');
+      if (!absorbHit(r, 'shot')) Render.say(r.x, r.y - 12, U.pick(rand, ['DOWN! MAN DOWN!', 'LAMPLIGHTER! COVER!', 'He brought a RIFLE—']), '224,101,74', r);   // v3.41: a ram takes two rounds
       for (const r2 of c.runners) if (r2 !== r && U.dist(r2.x, r2.y, r.x, r.y) < 320) r2.cd = Math.max(r2.cd, 8);   // the rest dive
       addRenegade(T.rifleRenegade);
       let hs = null, hd = 1e9;
@@ -2357,7 +2701,7 @@ const Systems = (() => {
       for (const cd of DATA.camps) {
         const c = S.camps[cd.id];
         if (!c || c.pacified) continue;
-        for (const r of c.runners || []) if (U.dist(r.x, r.y, S.px, S.py) < T.rifleWarnR) { r.cd = Math.max(r.cd, 12); n++; }
+        for (const r of c.runners || []) if (U.dist(r.x, r.y, S.px, S.py) < T.rifleWarnR * RD.warnMul) { r.cd = Math.max(r.cd, 12); n++; }   // v3.51: the rifle's own warning radius (its row's warnMul had gone unread — a C20's crack warned no farther than the Timberwolf's)
       }
       UI.toast(n ? `The crack rolls off the hills — ${n === 1 ? 'a scrapper dives' : n + ' scrappers dive'} for cover. Nothing on the ledger but a round.` : 'The crack rolls off the hills. The march heard it.', '', 4200);
     }
@@ -2385,6 +2729,7 @@ const Systems = (() => {
   function beginHandover(stId) {
     const dels = deliverablesAt(stId), lost = lostForStation(stId);
     if (!dels.length && !lost.length) return false;
+    for (const o of dels) for (const id of o.items) if (!S.cargo.some(c => c.id === id)) NPC.take(id);   // the companion's crates come to the Walker's hands first: they leave the pack one by one with the rest
     const ids = [...new Set([...dels.flatMap(o => o.items), ...lost.map(c => c.id)])];
     const looks = ids.map(id => { const c = S.cargo.find(x => x.id === id); return c ? { kg: c.kg, cat: c.lostTo ? 'lost' : c.cat } : null; }).filter(Boolean);
     const { results, connect } = handleDelivery(stId);       // the ledger settles now; the hands catch up
@@ -2419,7 +2764,7 @@ const Systems = (() => {
       else if (h.results.length) UI.queueResults(h.results, h.stId);   // slips first, then the board — you are standing right there
     }
   }
-  function lostForStation(stId) { return S.cargo.filter(c => c.lostTo === stId); }
+  function lostForStation(stId) { if (S.stations[stId] && S.stations[stId].cut) return []; return S.cargo.filter(c => c.lostTo === stId); }   // v3.49: nothing handed over at a dark door
 
   function gradeOrder(o) {
     const elapsed = S.time - o.t0;
@@ -2447,16 +2792,19 @@ const Systems = (() => {
     if (o.to === 'green' && S.stations.green.stars >= 3) likes *= 1.15;
     if (o.express && o.to === 'relay' && S.stations.relay.stars >= 4) likes *= 1.2;
     likes *= Porter.eff().likesMul;
+    const standing = o.service || o.convoy ? null : Economy.standing(o.to);   // v3.51 THE STANDINGS IN THE PAY — the town's book and whoever holds its door
+    if (standing) likes *= standing.mul;
     likes = Math.round(likes);
-    return { grade, likes, cond, elapsed, r, kg, late, ptsT, ptsC };
+    return { grade, likes, cond, elapsed, r, kg, late, ptsT, ptsC, standing };
   }
 
   function completeOrder(o, stId) {
+    const before = Economy.snap(stId);   // v3.51 WHAT IT MOVED — the valley as it stood before this delivery
     const g = gradeOrder(o);
     stampTraffic(o.from, stId);   // v3.20: a done delivery means TRAFFIC — the line between the towns wears in
     // what it was worth to the people opening it
     let need = { mul: 1, mood: null };
-    if (o.item && !o.prio && o.item !== 'letters' && o.item !== 'core') need = Economy.onDeliver(stId, o.item, o.n || o.items.length);
+    if (o.item && !o.prio && o.item !== 'letters' && o.item !== 'parcel' && o.item !== 'core') need = Economy.onDeliver(stId, o.item, o.n || o.items.length);
     else if (o.prio) { const pd = DATA.priority.find(p => p.id === o.id); if (pd) for (const [it, n] of pd.items) if (it !== 'core' && it !== 'coreHeavy') { const r = Economy.onDeliver(stId, it, n); if (r.mood) need = r; } }
     const chain = Economy.chainStep();
     { const c = DATA.dispatch.chain[Math.min(S.trip.n, DATA.dispatch.chain.length - 1)]; if (S.trip.n >= 2 && c) { Render.announce(c); Snd.sfx.grade(S.trip.n >= 4 ? 'S' : 'A'); } }   // chains stay mid-tier — the big voice is not for streaks
@@ -2485,6 +2833,15 @@ const Systems = (() => {
     }
     g.needMul = need.mul; g.needMood = need.mood; g.chain = chain; g.chainN = S.trip.n; g.likes = likes;
     if (o.item === 'letters') g.letter = Economy.letterLine();
+    if (o.item === 'parcel' && o.parcels && o.parcels.length) g.parcels = o.parcels.map(p => Economy.parcelLine({ ...p, from: p.from || o.from }, stId));   // v3.41: opened at the terminal, read aloud (v3.45: the sender named)
+    if (o.item === 'parcel') for (const id of o.items) { const c = S.cargo.find(x => x.id === id); if (c && c.parcel) { const made = Economy.strikeGrievance(c.parcel, stId); if (made) (g.made = g.made || []).push(made); } }   // v3.42: a grievance made right
+    if (o.errand) g.errand = Economy.errandDone(o, stId);   // v3.45: the keeper's errand, kept or late
+    { const seen = Economy.doneRight ? Economy.doneRight(stId, g.grade) : null; if (seen) g.seen = seen; }   // v3.47: a door shut by hearsay sees you do right
+    /* v3.48 THE WORD GONE AHEAD — the first delivery through a door a keeper's letter reached before you pays the letter's likes */
+    { const st0 = S.stations[stId]; if (st0.ahead && !st0.ahead.paid) { st0.ahead.paid = S.time; State.grantLikes(T.ahead.firstLikes); g.ahead = { who: st0.ahead.who, town: stations[st0.ahead.from] ? stations[st0.ahead.from].name : 'a lit door', likes: T.ahead.firstLikes }; } }
+    /* v3.46 THE KIN'S THANKS — the town sees what hangs under your pack */
+    { const ks = typeof Republic !== 'undefined' && Republic.keepsakesAt ? Republic.keepsakesAt(stId) : [];
+      if (ks.length) { const kl = T.kin.keepsakeLikes * ks.length; S.stations[stId].likesTo = Math.min(100, S.stations[stId].likesTo + kl); g.keepsake = { names: ks.map(c => c.name), likes: kl, thing: ks[0].keepsake.thing, kin: ks[0].keepsake.kin }; } }
     if (need.mood === 'critical') bark('lifesaver');
     for (const id of o.items) State.removeCargo(id);
     S.orders.active.splice(S.orders.active.indexOf(o), 1);
@@ -2499,6 +2856,7 @@ const Systems = (() => {
     if (stId === 'green') donate.ceramic += 3 + st.stars * 3;
     if (stId === 'elm') donate.ceramic += 2 + st.stars;
     if (stId === 'foundry') donate.lumen += 2 + st.stars;
+    if (stations[stId].post) donate.metal += 3 + st.stars * 3;   // v3.48: the knives share their salvage
     if (S.stations.haven.stars >= 1 && stId === 'haven') donate.metal += 6;
     if (stId === 'elm') S.banked.provisions += 3 + st.stars;
     if (stId === 'green') S.banked.provisions += 2 + st.stars;
@@ -2511,7 +2869,9 @@ const Systems = (() => {
     const starRes = o.service ? null : addStationLikes(stId, likes);
     if (!o.service) State.grantLikes(likes);
     if (g.letter) addMail(`A letter arrives at ${stations[stId].name}`, g.letter);
-    return { ...g, order: o, donate, starRes };
+    const moved = Economy.movedLines(before, Economy.snap(stId), o, stId, need);   // v3.51: and as it stands after — the slip says the difference
+    if (moved.length) tut('firstMoved');
+    return { ...g, order: o, donate, starRes, moved };
   }
 
   function addStationLikes(stId, likes) {
@@ -2545,6 +2905,7 @@ const Systems = (() => {
     let likes = 0;
     for (const it of lost) {
       likes += Math.round(28 + it.cond * 0.25);
+      if (it.parcel) Economy.strikeGrievance(it.parcel, stId);   // v3.42
       State.removeCargo(it.id);
     }
     if (likes) {
@@ -2569,6 +2930,8 @@ const Systems = (() => {
       res.prioDef = prioDef;
       results.push(res);
       if (o.relight) { if (S.quiet) delete S.quiet[o.relight]; S.stations[o.relight].relitAt = S.time; connectPrio = { connect: o.relight }; bark('relight'); }
+      const lights = o.relight || (prioDef && prioDef.connect);   // v3.51: the slip says the light it put up
+      if (lights && stations[lights]) res.moved.push({ mark: 'mv_wire', head: `${stations[lights].name} comes on the wire`, text: `its light goes up now — the wire brings it what its neighbours make, and the waylight covers more of the valley (${Math.round((S.cov || 0) * 100)}% before it)` });
       if (prioDef) {
         if (prioDef.id === 'p4' && S.horse && S.horse.loaner) {
           S.horse.loaner = false;
@@ -2583,7 +2946,16 @@ const Systems = (() => {
     }
     const lostRes = deliverLost(stId);
     if (lostRes.count) results.push({ lost: true, ...lostRes });
-    // relics find their people
+    visitTerminal(stId);
+    S.stations[stId].met = true;
+    if (results.length) State.save();
+    return { results, connect: connectPrio ? connectPrio.connect : null };
+  }
+
+  /* v3.51: what a terminal does for the Walker at every visit, a crate handed over or not (the rebuilt character suite found
+     these said only on a delivery): relics find their people, the Courier's second wind, the town's hands on a bleed, a
+     bolt and a scar, the journal transcribed, Haven's crews at four stars */
+  function visitTerminal(stId) {
     for (const c of [...S.cargo]) {
       const d = items[c.defId];
       if (d && d.cat === 'relic') {
@@ -2597,15 +2969,14 @@ const Systems = (() => {
     }
     if (S.pClass === 'courier') S.stam = Math.min(S.stamMax, S.stam + S.stamMax * 0.25);
     if (S.bleeding) { S.bleeding = false; Porter.heal(6); UI.toast(`${stations[stId].name}'s hands patch you up`); }
+    if (S.arrow) pullBolt('town');   // v3.42
+    if (S.scar && S.scar.dressed < T.scar.dressings && S.stations[stId].dressedAt !== Math.floor(S.time / 60)) { S.stations[stId].dressedAt = Math.floor(S.time / 60); dressScar('town'); }   // v3.43: once a visit
     Porter.transcribe();
     if (stId === 'haven' && S.stations.haven.stars >= 4) {
       let healed = 0;
       for (const c of S.cargo) if (c.cat !== 'tool' && c.cond < 100) { c.cond = 100; healed++; }
       if (healed) UI.toast(`Haven's crews restored ${healed} container${healed > 1 ? 's' : ''}`, 'gold');
     }
-    S.stations[stId].met = true;
-    if (results.length) State.save();
-    return { results, connect: connectPrio ? connectPrio.connect : null };
   }
 
   function igniteStation(stId) {
@@ -2848,6 +3219,7 @@ const Systems = (() => {
   function stampTraffic(a, b) {
     if (!a || !b || a === b || !stations[a] || !stations[b]) return;
     const key = a < b ? a + ':' + b : b + ':' + a;
+    S.traffic = S.traffic || {}; S.traffic[key] = (S.traffic[key] || 0) + 1;   // v3.41: the count the parcels follow
     let c = trafCache[key];
     if (!c || S.time - c.t > 300) {
       const A = stations[a], B = stations[b];
@@ -2901,10 +3273,16 @@ const Systems = (() => {
     awayLikes, addMail, fmtCost,
     rainAt, inAura, nearStation, militiaCall, militiaScene: () => mScene, horseOn, horseAvail,
     beginPlace, cancelPlace, confirmPlace, snowAt, beginMove, dismantleStruct,
-    stampTraffic, layPaveHere, tut,
+    stampTraffic, layPaveHere, tut, absorbHit, clsOf, boltIn, dressScar, lineOrder,   // v3.46: the line's orders
+    watches, watchAt, watchDark, watchers, watchSlot, watchFire,   // v3.47: the watch
+    siegeCount,   // v3.48: the nights counted — the siege
     upgradeStruct, enterShelter, exitShelter, armWalker, auraOf, poboxStash, poboxTake, poboxDonate, towerOver,
     renegadeTier, addRenegade, heatAt, addHeat, offerSmuggle, smuggleRisk, passContraband, palmSkim, settleHeat, fkIntro,
     deliverableCounts, rescueAttempt, rifleFire,
     workSiteOk, workInfo, workState, sawcampNear,
+    paverCost,   // v3.51: the slip reads a road's next stretch
+    visitTerminal,   // v3.51: a terminal's care at every visit
   };
 })();
+
+

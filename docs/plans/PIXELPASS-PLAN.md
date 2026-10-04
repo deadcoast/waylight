@@ -602,3 +602,397 @@ with signed values in ok/rust), the work stripe per job, WORKING ORDERS in the f
 marks pane with numbered mark plates and the trail line; the freight list as a named row of
 goods. Every figure at whole texels; no scaling that breaks the grid.
 Verified: tests/workorders.mjs 16; battery 650 green across forty-one suites; shop audit CLEAN.
+
+v3.38 — THE POSTED ORDERS (the working world on the survey · 2026-09-14)
+===================================================================
+REVIEW: the survey sheet never showed a field hand — the roll said IN THE FIELD and the map said
+nothing; the wedge lived on the HUD card and the muster only.
+PLAN → SHIPPED: field hands on the survey as 6px green pips (rust when unpaid) with JOB — NAME in
+the sheet's mono at 8.5px; a presser's marks as a pole + gold pennant in the mark glyph's colours
+with MARK n under each and the walked line dotted 3/5 in gold at 0.75; THE WEDGE at the marker at
+0.55 screen px per world unit (the slot rects at 8×4, the live dots 5×5 in the band's colour, the
+names at 7.5px, the facing tick, the hold ring dashed) — screen-constant so it reads at every zoom;
+three legend swatches; the wheel zooming toward the pointer. On the roll: the post stripe and the
+three post rows on the same pressed plates.
+Verified: tests/postorders.mjs 9; battery 659 green across forty-two suites; shop audit CLEAN.
+
+v3.39 — THE LOSABLE HOLDINGS (held ground, seen holding and seen fallen · 2026-09-14)
+===================================================================
+REVIEW: a taken camp drew two shields, always; a town could only be quelled — the garrison the
+founding promised had no figure on the ground; a lost post had no picture at all.
+PLAN → SHIPPED: the watchpost draws as many shields as it STANDS — the third and fourth at the
+pennant's foot on the idle row, every other guard flipped; a GARRISONED town flanks its yard with
+two shields at ±76 and hangs the grey pennant beside the beacon, GARRISONED — THE REPUBLIC in the
+field label register; a post that FELL lays the pennant in the ring — the FALLEN glyph (18×4
+texel rows: the pole across, the cloth flat at its end, PENNANT_PAL) with THE POST FELL under it
+for the fallen season. On the sheet: THE STORMING beside the quell, GARRISONED with RELEASE,
+SHIELDS n/4 with STAND THE POST, the fallen price in rust, RAIDED / HUSHED plates on the larders,
+the two seasons' banners. No sub-texel speck; every figure at whole texels.
+Verified: tests/holdings2.mjs 8; battery 667 green across forty-three suites; shop audit CLEAN.
+
+v3.40 — THE STANDING GROUND (the storm on the ground, the rear rail, the stencil · 2026-09-27)
+===================================================================
+REVIEW: the storm was a roll even with the walker in the ring — nothing to see; the compass's
+first draft put the backs at their bearing and the frame said no (a wedge walks BEHIND you, so
+every pip sat clamped at the masked rim, invisible); a knocked knife stood upright under a DOWN
+label; a counted camp had no mark.
+PLAN → SHIPPED: THE STORM, SEEN — three knives in the scrappers' own palette walk for the fire on
+the walk rows, THE STORM — Ns TO HOLD in the field label register in rust over the fire; a
+knocked knife LIES where it fell through `blitWalkerDown`: the rig's own idle sprite turned a
+quarter (a rotation of exactly π/2 at an integer buffer origin maps every source pixel onto one
+k×k block — texel-exact, no new rows), head the way it faced, a wider shadow, DOWN under it. THE
+REAR RAIL — `.cBack` pips under the compass strip at top 34 (the strip grown to 50), straight
+behind at the centre, mirrored like a glass over the shoulder; a back ahead on the marks' row
+(`.fore`); the pip a 5×5 square in the mood band's colour with the first name at 7.5px mono, .5
+in the slot and full out of it. THE STENCIL — an 8×12 texel glyph (concrete slab `C/c`, the
+raised tongue in the bunker's leaf-green `G`, a post `Y`) at the camp's post with COUNTED — THE
+SOCIETY in leaf-green. A garrison draws as many shields as the square stands (to four, the third
+and fourth at ±96, 22). On the sheet: REINFORCE THE GARRISON, THE SQUARE IS RESTLESS in rust, THE
+KNIVES ARE AT THE FIRE, COUNTED BY THE SOCIETY · Ns. On the roll: the parcels tally on the post
+stripe, THE LETTERS tree with its three kinds. Frames re-staged until they stood (the storm at
+night with every knife in view, the stencil at zoom 1.6 at the eye's height).
+Verified: tests/standing.mjs 8; battery 675 green across forty-four suites; shop audit CLEAN.
+
+v3.41 — THE CAMPS' OWN (custom pixel art by directive · 2026-09-27)
+===================================================================
+REVIEW: every raider was the same 12×18 rig in PAL_SCRAP; a garrison was grey only; a bought
+count had no mark; a parcel wore the mail's glyph.
+PLAN → SHIPPED (hand-drawn, the v3.33 verdict standing — no generator fits a person to this grid):
+four 14×22 figures in the kit's grammar, three frames each — BOWMAN (a deep hood, a short bow `Y`
+on the near side hip to shoulder, a hide quiver `T`), RAM (the Pugugly's width under a raider's
+hood, a plank door `P` with rivets `W` on the left arm, a beam `Y` over the right shoulder past the
+hood), CHIEF (the red rag `R` across the brow, a pale hide cloak `F` with a stitch `T` over the
+left shoulder, the long knife `W/w` at the right hip), and the TOWN'S OWN (a cap `H`, a leather
+coat, a ROUND wooden shield — `Y` rim, `T` face, `W` boss — and a staff with a fork `W`). Two
+palettes on the shared alphabet — `RAID_PAL` (rust coats, dark hoods, hide and scrap; `P` the plank,
+added to the alphabet) and `TOWN_PAL` (leather, oak, bone) — so `blitKit` takes a palette and needs
+no new branch; `blitKitDown` lays a 14×22 figure by the same texel-exact quarter turn. Contact sheet
+at 6× eyeballed before wiring (co_kitsheet.png). On the ground: CHIEF · BOWMAN · RAM under the
+walkers in the field register, THE CHIEF beside a live camp's fire, THE CHIEF — DOWN in gold. THE
+STENCIL, SOLD — the slab with the raised tongue over the Order's lamp (`L` housing, `D` flame), an
+8×14 texel glyph. THE PARCEL — an 8×5 cargo glyph: brown paper `X`, the string crossed `l`, a tag
+`W` at the corner; the gold band law still overwrites its second-last row when bound. The garrison
+label split in two lines (GARRISONED — THE REPUBLIC / N OF THE TOWN'S OWN in bone) after a frame
+showed it colliding with a cottage's label; the sold stencil moved to x+60, y−36 with its label at
+y−52 after a frame showed the label over the slab.
+Verified: tests/campsown.mjs 9; tests/assets.mjs extended (eight classes, every letter in both
+palettes); battery 684 green across forty-five suites; shop audit CLEAN.
+
+v3.42 — THE REMEMBERING (the marks of what is remembered · 2026-09-27)
+===================================================================
+REVIEW: the survey drew a camp as a ring and a name; a fallen chief left no mark; a bowman's shot
+was a vector line; a grievance had no face on paper; the town's own had no plate.
+PLAN → SHIPPED (hand-drawn, eyeballed at 8× on rm_marks.png before wiring): THE RAG ON A STAKE —
+7×13 (`R/r` the rag, `Y/y` the stake), beside the reapers' hooded stake in height and grammar,
+blitted at 2.5 with a shadow where the chief stood; SEVEN SURVEY MARKS at 7×7 in one palette
+(`MARK_PAL`) — blade, bow, plank door, rag, fire (gold with a soft halo), tongue, the rag gone to a
+stake — drawn on the sheet by `mapGlyph` at 3 screen px a texel, screen-constant; THE BOLT — in
+flight, texels laid along the shot's line (each a k×k block on the buffer grid, so the doctrine
+holds at any angle), a `pixShadow` under it and a 9-unit arc; in the shoulder, a 5×5 overlay on the
+rig (rows 5..9, the back columns, mirrored by facing), fletching out, head at the coat; THE TORN
+PARCEL — `CG.parcelTorn` on the pack and the ground (the string snapped, a corner gone) and the
+UI's `parcel`/`parcelTorn` 12×10 icons in a new rust `grief` mode; THE TOWN'S OWN on the roll's
+plate at 42×66 through the same rig-URL door. Re-staged: the survey's marks from 2.2 to 3 px a
+texel and the line to 9 px after the first frame read too small.
+Verified: tests/remembering.mjs 8 (the survey read by its pixels); battery 692 green across
+forty-six suites; shop audit CLEAN.
+
+v3.43 — THE FACE AT THE DOOR (the keepers' faces, the scar, the stones' shield · 2026-09-28)
+==========================================================================================
+REVIEW: a keeper's words came as text alone; a pulled bolt left nothing on the coat; the pole where
+the rag hung had no bare state; the town's own had no ground of their own to lie in; an overlay on
+the rig (the snow cap, the bolt) was drawn in world units under the walker's transform and could
+land a half-texel off the coat.
+PLAN → SHIPPED (hand-drawn, eyeballed at 8× on fc_faces.png before wiring): EIGHT FACES — 16×16
+busts on one alphabet (O outline · H/h hair · S/s skin · e eye · m mouth · C/c coat · W white ·
+R accent · K/k cap · G glass · B beard) in eight palettes of their own (`SPRITES.FACES`): Mara
+Voss's cropped hair and bone collar, Wren's straw hat and red kerchief, Bo's shaved head under a
+red band and a grin with teeth, Callas's wild grey hair and round glasses, Marsh's headscarf and the
+scar through one brow, Finch's peaked cap and thin moustache, Brand's soot and the goggles pushed
+up, Aster's long pale hair and sea-blue shawl — served by `Render.faceURL` as cached portraits (4×
+on the terminal beside every keeper's words, 4× on the door plate); THE BARE STAKE — 7×13 in the
+rag's palette, the pole alone, drawn where the rag stood; THE SCAR — a 3×3 cross (`D/d`) on the
+rig's rows 7..9, columns 3..5 (mirrored by facing), and THE DRESSING — a 4×3 white patch (`W/w`)
+over it once wound; THE FIELD STONES — the town design's own ground (sand-and-stone palette, the
+round shield cut in for the accent, names staggered on two lines); THE RIG STAMP — one stamp for
+every overlay on the walker (bolt, scar, dressing, snow cap), snapped to the rig sprite's own
+buffer origin so each texel lands on whole pixels with the coat.
+Re-staged: the dressing read soft at 8× on the first frame (half-texel offsets under the walker's
+1.22 transform) — the whole overlay family moved onto `rigStamp`; the chief stood on top of the
+stake in the first return frame — the stake moved to one place beside the fire for gone, return and
+bare; the chief's third line wrapped into his head — shortened to one say-width; the scar frames
+moved out of the approach ring (the HUD fades there) and off the light's edge contour; the pinned
+roll plate moved beside the marks after the first frame put a lid over them.
+Verified: tests/faces.mjs 8 (the registries' geometry and palettes, the portraits served);
+battery 700 green across forty-seven suites; shop audit CLEAN.
+
+v3.44 — THE WORD AT THE DOOR (the Walker's face, the kin, the new chief, the marks · 2026-09-28)
+================================================================================================
+REVIEW: the Walker answered a keeper's face with no face of their own (a vector portrait on the death slip
+and the skills sheet); a parcel on the ground was a generic crate; the fallen own left no one behind; a
+camp's second chief was the first man again; the lantern in hand was drawn at fractional texel widths.
+PLAN → SHIPPED (hand-drawn, eyeballed at 8× on wd_sheet.png before wiring): THE WALKER'S FACE — 16×16 on
+the keepers' alphabet (K/k hood · S/s skin · e · m · C/c coat · R the trim · O), the hood up and the face in
+its shadow, the palette bound at draw time to the coat they cut (`Render.walkerFaceURL(scale, look?)`; a
+legacy row keeps the look, so a stone's card wears its own coat); SIX SURVEY MARKS at 7×7 in `MARK_PAL`
+(S skin and D/d the scar's reds added) — the knotted string (promise), the open hand (sorry), the field
+stone with the shield, the rag with a blade through it (grudge, with a rust halo on the sheet), the scar's
+cross, the road to a pin; THE KIN — 14×22 in TOWN_PAL, a grey mourning shawl (the pale shawl read against
+the skin at 8× and was turned grey), a dark dress, a lantern held low, idle only, their lanterns punched
+into the night layer; THE NEW CHIEF — three frames in RAID_PAL, a beard at the jaw, a hide vest, a long
+spear on the road-side, the rag on the brow, alternating with the first by the camp's chief generation;
+THE RING PIN — 7×11 in the stake's palette, a rust pennant, planted on the sheet where a planned walk meets
+the ring; THE SWORN PARCEL — the pack's parcel with a rust knot on top and the string down the paper
+(`CG.parcelSworn`; the gold band still replaces the bound row by the law), the UI's `sworn` icon mode; A
+PARCEL ON THE GROUND drawn as a parcel (`worldParcel`, the pack's own glyph at 2.5); THE LANTERN IN HAND
+on the rig stamp (a handle, a 2×2 glass, whole texels).
+Re-staged: the plate's marks came up at the keeper-face size (a rule sized them to 16 px); the two answers
+wrapped until the plate widened to 760 and the labels shortened; the parcel on the ground read as a crate
+until the ground drew the parcel's own glyph, and the sworn string read thin until the knot went on top;
+the kin stood on the stones until they stood on the centre path turned to the newest; the kin's frame
+carried the storming's title until the frame drained it before the hold; the chief's line sat on his head
+until it rose; the pinned plate covered the grudge's line until it stood 128 px clear.
+Verified: tests/word.mjs 11 (the registries' geometry and palettes; the kin's shawl and the stone's
+notches sampled from the game canvas; the ring pin from the sheet); battery 711 green across forty-eight
+suites; shop audit CLEAN.
+
+v3.45 — THE WORD KEPT (the hands' faces, the chiefs' faces, nine marks, the kin's things · 2026-09-28)
+====================================================================================================
+REVIEW: the hands still wore vector portraits on the cards, the muster plates and the passage slots; the
+sheet's global border-box was shrinking every framed portrait off its grid (a 32-pixel face shown at 28);
+the chief at his fire had no face for a parley; the kin's errand had no things to carry; the Walker's lamp in
+the dark laid its corona OVER the Walker — a pale-blue disc on the navy coat and the tan pack blown to gold;
+the compass wrote labels over labels when marks shared a bearing; a line of names on the ground ran together
+into one word.
+PLAN → SHIPPED (hand-drawn, eyeballed at 8× on kp_sheet.png before wiring): THE HANDS' LAYERS — one 16×16
+alphabet (O · S/s skin · m mouth · e eye · H/h hair · B/b beard · W/w white · G/g glass · C/c coat · K/k and R
+the trade's own) composed base → jaw → hair (stopped at the trade's brim row) → beard → eyes → trade, six
+skins and seven hairs as palette pairs, eleven trades as overlays in their own colours (the courier's cap
+#3d5a74, the medic's cross #4a8a5a, the lamplighter's clasp #ffd98f read off the served images' own
+texels by the suite); THE CHIEFS' FACES — the first (the red rag with its tails, a scar down the cheek, the
+fur collar) and the new man (the same rag, a brother's beard and brows, the hide vest) in one palette; NINE
+MARKS at 7×7 in MARK_PAL (bone K added) — kept, broken, shut, errand, gift, stand, score, lantern, home; THE
+KIN'S THINGS — the round shield lying face-up (9×5), the lantern lit and dark (5×8), the small lantern
+hung on the pack's back (3×5, stamped on the rig's own grid), the cargo glyphs (the shield, the lantern lit
+and cold, the sealed letter: paper and a red seal).
+THE LAMP LAW: every corona the Walker carries is laid BEHIND the pack and the coat, centred on the lamp's
+own glass (`rigAt`: a point on the rig's grid in the walker's local frame, so the 1.22 scale no longer
+throws a glow a texel and more off its lamp); over the sprite only the glass glints; the rim light writes
+the lit side of the coat. Measured on the same frame: pale-blue wash pixels at the chest 1485 → 0 (kp_lamp.png,
+before above, after below).
+THE CROWDED STRIP and THE LABEL LAW: the compass measures each mark's words — a mark that would write over
+a placed label keeps its pin bare at its bearing with its words on hover; a ground label that would land on
+a label steps down a row (up to three).
+Re-staged: the rope coil on the mountaineer read as a red blob until it went tan and ringed; the
+hearthkeeper's polka-dot kerchief read as a mushroom until it went plum; the glasses read as a white bar
+until they thinned to rims; a bun grew through the hats until every trade named its brim; the terminal's
+hire faces came up at 28 px until the whole-pixel law; the book line wrapped until it took two rows; the
+errand card said Parcels · 4 kg until it said A sealed letter · 1 kg; the kin's lantern rode hidden in the
+duffel until it hung on the pack; the compass pin overlapped the rear rail until it went inline at 14×14;
+the line frame named two hands WREN until no two hands could share a first name; PETRAHALLA ran together
+until the label law; the stand frame cropped the chief until it re-aimed; the flame HUD frame sat over a
+2.6× world until it was taken at the walking zoom; the fire frames carried the guide's card until it was
+put away for them; the new walker's bust scrolled out of its frame when the swatches were cut until the
+sheet scrolled back to the name.
+Verified: tests/kept.mjs 12 (the registries' geometry and palettes; faces read texel by texel; the whole-
+pixel law measured; the kin's lamp, the score's mark and the ring pin sampled from the game canvas; the
+lamp law's wash counted; the compass strip and the ground labels measured for overlap); battery 723 green
+across forty-nine suites; shop audit CLEAN.
+
+v3.46 — THE WORD CARRIED (fourteen marks, the letter on the wire, the truce stake, the settled stones, the runner's bundle, six keepsakes · 2026-09-28)
+====================================================================================================
+REVIEW: a word kept at one door had no body to travel in; the kin's thanks had no thing to give; a truce had
+no mark on the ground where it opened a road; a settled score left nothing where it was said; the line at the
+ring had no orders and no rope. Found in the looking: the wire's pulses had never drawn (the route's length
+NaN from object points); the first companion's small lamp had never lit (it read a position the backs never
+carry); a keepsake rode the pack's tower over the head as a smeared crate, and the kin's lantern made a
+duffel it did not need; a spoken line longer than a row hung down over the speaker's face; a knife's
+headlamp thrown up-screen washed his own body.
+PLAN → SHIPPED (hand-drawn, eyeballed at 8× on wc_sheet.png before wiring): FOURTEEN MARKS at 7×7 in MARK_PAL
+— heard (the bell), keepsake (the pendant on its string), relight (the cold lantern with a flame asked), truce
+(the white rag on its pole), settled (the stones with the red thread), hold (the roped line), come (three under
+the arrow), turned (the U of the way back), and one for each keepsake (whetstone, brass button, carved bird,
+tin whistle, pressed flower, iron ring); THE LETTER ON THE WIRE — 7×5 paper, a gold seal kept and a rust seal
+broken, blitted at 2.5 on the world's grid with a tail of its seal's colour; THE TRUCE STAKE — 7×13, the pole
+and the white rag; THE SETTLED STONES — 8×7, a cairn with a red thread; THE CHIEF'S RUNNER — the bundle
+(bone cloth, twine crossed) and the white rag in hand as sixteen cells on the rig's own grid, mirrored with
+his facing; SIX KEEPSAKE TOKENS — 2×3 each on the rig's grid under the pack, two at most.
+THE PACK: `hung` things (a keepsake, the kin's lantern) leave the tower and the duffel — the string is their
+only draw. THE HAND'S LAMP: the party's first back (and the one walking out to settle) punch a 55-unit hole
+in the night on the terrain's texel grid. THE SPOKEN LINE: a wrapped line's last row sits where a one-row
+line would, the rest climbing above it. THE KNIFE'S HEADLAMP: a fan thrown away from the eye is drawn before
+the body. THE ORDER'S WORDS: `plabel(…, { first: true })` places a standing order's ground label ahead of the
+queue. THE STRIP'S NAMES: each compass rail keeps its own placed names; a name that would land on one gives
+its words to the hover.
+Re-staged: the likes' diamonds hung frozen in three frames until the frames let them go; the keepsake rode the
+tower as a smeared crate until the pack hung it on its string; the rag on the survey sheet stood on FOUNDRY's
+name, and stepped inward it stood on the camp's marks, until a rag at a door was left to the door; the heard
+line ran off the header until it took its own row; the settling was shot in the dark with its line over the
+speaker's face until the Walker walked it with them and the line climbed; the HOLD frame lost the Walker off
+its top until it was framed at 1.3×; the compass came back black under a town's first-sight letterbox until
+the scene was spent; the turned knife's U sat on his face and his headlamp washed him until the U went over
+the hood and the fan behind; the line's words lost their place to the settled stone's until standing orders
+placed first; VANN and SORREL ran together on the rear rail; the chief's runner stood in a clump with a route
+runner and a knife until he was taken out of the ring, alone; the line's plate stacked three faces two and
+one until three sat in a row; the Walker stood on THE FIELD STONES' label until he stood clear of it.
+Verified: tests/carried.mjs 10 (the registries' geometry and palettes; the letter sampled on the canvas and the
+sheet; the token under the pack against the same frame without it; the cold lantern, the rags, the runner's
+bundle, the stones' red thread, the rope and the U sampled from the game canvas); battery 733 green across
+fifty suites; shop audit CLEAN.
+
+v3.47 — THE WORD ANSWERED (seven marks, the keepsakes set down, the stake kept and stripped, the rag in the dirt, the stones kicked over, the watch fire, the rag on its switch · 2026-09-29)
+====================================================================================================
+REVIEW: several things had no picture. A door that heard your word on the wire had no mark for answering it
+or shutting on it. A keepsake had no way to lie at a stone. A truce road had no sign that it had been kept or
+torn down. A settled cairn had no fallen form. A line left for the night had no fire.
+
+Found in the looking:
+
+- the road's gift was first lashed on the pack with a red cord, and red on pale cloth read as a medic's
+  cross;
+- the white rag tied at the pack's corner vanished into anything lashed beside it;
+- a knife's spoken line stayed where he said it while he walked on;
+- the camp's pinned roll squeezed to a strip at the sheet's right edge, and a hover tip there did the same.
+
+PLAN → SHIPPED (hand-drawn, eyeballed at 8× on wa_sheet.png before wiring):
+
+- SEVEN MARKS at 7×7 in MARK_PAL, with `k` added as the scrap's grey:
+  - answered: the wire's two lines coming down gold onto a letter with a gold seal;
+  - hearsay: the same lines in rust onto a letter struck through;
+  - setdown: the stone in grey, the thing hung gold at its face;
+  - roadkept: the pole and its rag with the gold knot;
+  - ragsdown: the bare pole and the rag in the dirt;
+  - kicked: the stones scattered, a red thread loose;
+  - watch: a gold crescent over the line's posts, roped hand to hand.
+- THE KEEPSAKES SET DOWN: six things as they lie, each 7 wide and 6–7 tall on TOKEN_PAL (whetstone, brass
+  button, carved bird, tin whistle, pressed flower, iron ring). They are drawn at the foot of the fallen's
+  stone at the stone's own scale.
+- THE STAKE KEPT and THE STAKE STRIPPED: 7×13 each on TRUCE_KEPT_PAL. The kept stake has a gold knot band
+  under the rag; the stripped stake keeps a scrap on its nail. THE RAG IN THE DIRT is 8×4.
+- THE STONES KICKED OVER: 10×5 on SETTLE_PAL, the cairn low and scattered, the thread gone from its top.
+- THE WATCH FIRE: two 9×8 frames on WATCHFIRE_PAL, laid by day as the ring of stones and the wood alone,
+  lit at dark with the flame and the glow shells.
+- THE RAG ON ITS SWITCH: thirteen cells on the rig's own grid, mirrored with facing. A dark switch stands
+  upright in the pack's back corner, one texel clear of the head, with the white rag tied at its top
+  streaming back.
+- THE ROAD'S GIFT: on the pack (the runner's bundle cells, pale cloth on twine) and as a tower glyph (8×6,
+  tan cloth, twine crossed, the knot lighter where it crosses).
+
+THE RUNNER'S WORDS: `Render.say(x, y, text, color, who)` keeps the speaker. The line is drawn at the
+speaker's current place plus the offset it was said at, so the knives', bows' and rams' twelve barks walk
+with them.
+
+THE SHEET'S TIPS: a hover tip is measured at left 0 and then placed on whichever side of the cursor it fits.
+The pinned roll is measured unsqueezed before it chooses its side.
+
+Re-staged:
+
+- the gift at the fire had the chief's name over the Walker's head and the chief's runner crowding the
+  right, until the Walker stood clear and the runner was spent;
+- the road frame lost the knife's words off its top, then off its side, until the knife stood nearer and
+  the frame took him in;
+- the kick was shot while the knife was still walking out, until it took the moment the stones went over,
+  with his line and the dust;
+- the watch home stood on FOUNDRY's plate, until it waited below it, and then its words were cut at the
+  frame's foot, until the frame came down;
+- the doors' sheet frame cut both towns, until each had its own clip;
+- the rags-down mark sat on FOUNDRY, until it left the door alone;
+- the runner's words sat over the camp's rows at home, until they gave way;
+- the rags-down frames stood the Walker under the ground's words, until he stood clear of them;
+- the sheet's labels ran into each other, until they were spaced.
+
+Verified: tests/answered.mjs 8. It covers:
+
+- the registries' geometry and palettes;
+- the thing at the stone's foot, sampled against the same frame without it;
+- the rag at the pack, sampled on the road and off it;
+- the gold knot, sampled against the plain stake;
+- the bare poles and the rags in the dirt;
+- the kicked stones, with the red thread gone and the stones low;
+- the watch fire, laid and lit, sampled from the game canvas.
+
+battery 741 green across fifty-one suites; shop audit CLEAN.
+
+v3.48 — THE WORD GONE AHEAD (eight marks, the letter in teal, the relay mast lit and dark, the knives' board, the relay kit on the pack, the rag on its stick, the cairn set twice, the kin's candles, the town's ribbon · 2026-09-29)
+====================================================================================================
+REVIEW: five new things had no picture. A letter written ahead looked like any word on the wire. A camp that
+became a door had no mast, no lamp and no board. A chief walking out to the line had nothing in his hand to
+say why. A cairn set a second time looked like the first. A stone's day had no candles, and a hand the town
+lent looked like any hire.
+
+Found in the looking:
+
+- the twice cairn was not drawn at all at first (its second thread sampled nothing on the world);
+- the chief at the post stood over the knives' board;
+- the kin's candles were hidden behind the kin;
+- a hand's spoken line was placed nowhere, so the hand's words never showed;
+- the world's 3×5 face drew M and W three wide, and each read as an H: SETTLED TWICE read SETTLED THICE;
+- the contact sheet drew the relay kit as cells on the rig, but the pack carries the kit on its tower, so
+  the cells were art that never reached the game.
+
+PLAN → SHIPPED (hand-drawn, eyeballed at 8× on wg_sheet.png before wiring):
+
+- EIGHT MARKS at 7×7 in MARK_PAL, with the waylight's teal `A`/`a` added:
+  - ahead: a letter running forward, the teal arrow on it and its wake behind;
+  - asks: the mast standing dark, the camp's red rag knotted on it;
+  - wired: the same mast lit, its light thrown;
+  - tired: the moon over a fire burned to embers;
+  - talk: the white rag held up on a stick;
+  - twice: the cairn with its second red thread;
+  - kinday: two candles lit at the stone's foot;
+  - sent: the town's ribbon, a rosette and its tails.
+- THE LETTER GONE AHEAD: `WORDNOTE.ahead`, 7×5 on WORD_PAL with the teal added — the letter with the teal
+  arrow across it. It walks the wire's route in teal, not a kept word's gold.
+- THE RELAY MAST: 9×24 on RELAY_PAL. Two poles lashed into one, the camp's red rag knotted at the neck, an
+  iron cage with the lamp in it, splayed legs and a footing of stones. The dark frame is derived from the
+  lit one (the flame's F/f to the cage's grey), so the two can never drift apart. At dark the lamp throws
+  its glow.
+- THE KNIVES' BOARD: 12×10 on RELAY_PAL, planks with notices pinned and the camp's red mark, on two legs.
+- THE RELAY KIT ON THE PACK: its own glyph on the pack's tower, 8×6 at the heavy texel (16 kg), on the
+  tower's own palette — the lamp head (grey cage, a gold glint) up on its poles over the Walker's shoulder,
+  the wire coiled beside it. The rig cells drawn for it on the first sheet never reached the game and are
+  gone; the sheet now shows the glyph the pack wears.
+- THE RAG ON ITS STICK: 5×16, from the chief's fist to a hand over his head, the white rag flying at the top.
+- THE CAIRN SET TWICE: 8×9 on SETTLE_PAL, a stone higher than the first cairn, with the second red thread.
+- THE KIN'S CANDLES: 3×5 on KINDAY_PAL in two frames of flame, set as a pair at the stone's two sides,
+  clear of the shield, the keepsake and the lantern at its foot.
+- THE TOWN'S RIBBON: eight cells on the rig's grid on HELPER_PAL, a gold sash across the chest from the
+  shoulder to the hip.
+
+THE WORLD'S M AND W: five texels wide on their own rows (M: the two legs and the peak between; W: the
+legs and the two strokes rising), advancing six where every other glyph advances four. `ptextW` measures
+with the same advance, so labels centre and step round each other as before.
+
+THE WORDS WITH WHO SAID THEM: `Render.say(…, who)` now reads a hand's place from where the hand walks
+(cx/cy) as well as a runner's (x/y), and a line with no finite place falls back to where it was said.
+
+Re-staged:
+
+- the chief at the post stood over the board, until he stood beside it;
+- three knives at home read as a crowd round one spot, until two stood by the fire;
+- the candles were hidden behind the kin, until one burned at each side of the stone;
+- the post's words on the sheet stacked over the camp's name and the truce road's, until ON THE WIRE stood
+  alone under the ring and the truce road's label gave way;
+- the raise's title was cut at the frame's foot, until the frame was taller and taken later in the scene;
+- the siege walk-out was taken with the chief already at the line, until it was taken as he set out, and
+  the siege's words stood a size up as the moment's words;
+- the fade and the announcement banner lay across several frames, until each was taken clear of them;
+- the post's sheet frame was off-centre, until the Walker stood at the post.
+
+Verified: tests/ahead.mjs 9. It covers:
+
+- the registries' geometry and palettes;
+- the teal letter on the world, sampled from the game canvas;
+- the kit on the pack, sampled against the same frame without it;
+- the mast's lamp lit, the board and its notices, the knives at home;
+- the rag on its stick, sampled against the same frame with the scene carried off;
+- the cairn's two threads and its stones;
+- the candles and the kin, sampled against the same frame on a day that is not its day;
+- the ribbon, sampled against the same frame with the loan lifted.
+
+Corrected in answered.mjs (v3.47's suite): the rag was sampled at the pack's middle, where it has not flown
+since it got its switch, and passed only on the chief's cloth behind the Walker. It is now counted as pale
+cloth where it flies. The gold knot and the cairns standing and kicked are measured against the same frame
+without them, so a tinted sky cannot fake gold or hide it. ahead.mjs's twice cairn is measured the same way.
+
+battery 750 green across fifty-two suites; shop audit CLEAN.

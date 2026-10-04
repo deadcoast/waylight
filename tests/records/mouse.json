@@ -1,0 +1,46 @@
+{
+  "suite": "mouse",
+  "version": "v3.0",
+  "record": {
+      "doc": "DESIGN.md",
+      "where": "Controls: one hand for travel, two for trouble · Verification — the mouse-only run, named by its subject",
+      "count": 18,
+      "count_text": "the mouse-only run (18)"
+  },
+  "clauses": [
+    {"id": "u1", "text": "one hand for travel"},
+    {"id": "u2", "text": "the mouse-only run"},
+    {"id": "u3", "text": "M1 tap on the ground — walk there along a route feet can actually take"},
+    {"id": "u4", "text": "deep water and cliffs avoided"},
+    {"id": "u5", "text": "crossings used"},
+    {"id": "u6", "text": "camps skirted while loaded"},
+    {"id": "u7", "text": "a tap across an uncrossable river is refused with \"No way through on foot — a ladder or bridge would change that\""},
+    {"id": "u8", "text": "M1 tap on a terminal, ruin, crate, cairn, paver, pylon or event — walk there and use it"},
+    {"id": "u9", "text": "Hold M1 — steer at the cursor"},
+    {"id": "u10", "text": "Hold M1 + M2 — sprint"},
+    {"id": "u11", "text": "M1 on the valley map — travel there"},
+    {"id": "u12", "text": "If feet stop advancing or six seconds of walking go nowhere, the ground ahead is marked impassable", "figure": {"record": "six seconds", "asserted": "unpinned", "note": "the Walker is wedged so the feet stop advancing; six seconds of walking that go nowhere are not tried"}},
+    {"id": "u13", "text": "the route re-plans (up to three times) before an honest \"The ground stops you here\"", "figure": {"record": "up to three times", "asserted": "exact", "note": "three re-plans, the marked ground growing, then the walk dropped"}}
+  ],
+  "checks": [
+    {"title": "ONE HAND — THE TERMINAL BY A TAP", "clauses": ["u1", "u2", "u8"], "kind": "record"},
+    {"title": "ONE HAND — THE WAY BY TAPS", "clauses": ["u1", "u2", "u3"], "kind": "record"},
+    {"title": "ONE HAND — THE HAND-OVER BY A TAP", "clauses": ["u1", "u2", "u8"], "kind": "record"},
+    {"title": "THE ROUTE AROUND", "clauses": ["u3", "u4"], "kind": "record"},
+    {"title": "THE REFUSAL", "clauses": ["u7"], "kind": "record"},
+    {"title": "CROSSINGS USED", "clauses": ["u4", "u5"], "kind": "record"},
+    {"title": "CAMPS SKIRTED WHILE LOADED", "clauses": ["u6"], "kind": "record"},
+    {"title": "TAP TO USE — A RUIN", "clauses": ["u8"], "kind": "record"},
+    {"title": "TAP TO USE — A CRATE", "clauses": ["u8"], "kind": "record"},
+    {"title": "TAP TO USE — A CAIRN", "clauses": ["u8"], "kind": "record"},
+    {"title": "TAP TO USE — A PAVER", "clauses": ["u8"], "kind": "record"},
+    {"title": "TAP TO USE — A PYLON", "clauses": ["u8"], "kind": "record"},
+    {"title": "TAP TO USE — AN EVENT", "clauses": ["u8"], "kind": "record"},
+    {"title": "HOLD M1 — STEER", "clauses": ["u9"], "kind": "record"},
+    {"title": "HOLD M1 + M2 — SPRINT", "clauses": ["u10"], "kind": "record"},
+    {"title": "M1 ON THE VALLEY MAP — TRAVEL THERE", "clauses": ["u11"], "kind": "record"},
+    {"title": "THE HONEST STALL", "clauses": ["u12", "u13"], "kind": "record"},
+    {"title": "ONE HAND, THE WHOLE RUN", "clauses": ["u1", "u2"], "kind": "record"}
+  ],
+  "design": []
+}

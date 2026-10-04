@@ -68,6 +68,8 @@ const Ledger = (() => {
           { id: 'relics', name: 'Relics' },
           { id: 'junk', name: 'Junk', line: 'nothing the old world left is junk twice — scrap feeds the bank' },
           { id: 'contraband', name: 'Contraband', line: 'the road\'s other economy, in paper wraps' },
+          { id: 'keepsakes', name: 'Keepsakes', line: 'what the fallen left in the square — a shield, a lantern — carried to the kin, never sold' },   // v3.45
+          { id: 'gifts', name: 'Gifts', line: 'the road\'s gift — sent from the bank to a camp\'s fire to keep its truce road, never sold' },   // v3.47
         ],
       },
     ],
@@ -98,6 +100,8 @@ const Ledger = (() => {
     if (d.cat === 'core') return 'station';
     if (d.cat === 'weapon') return 'weapon';
     if (d.cat === 'goods') return d.service ? 'post' : 'trade';
+    if (d.cat === 'kin') return 'keepsakes';   // v3.45 — the kin's errand
+    if (d.cat === 'gift') return 'gifts';       // v3.47 — the road's gift
     return null;
   }
   function coverage() {
@@ -207,7 +211,7 @@ const Ledger = (() => {
       const st = S.stations[stId];
       for (let i = S.cargo.length - 1; i >= 0; i--) {
         const c = S.cargo[i];
-        if (c.orderId || c.lostTo || c.tool) continue;
+        if (c.orderId || c.lostTo || c.tool || c.kin || c.keepsake || c.gift || c.relay) continue;   // v3.48: nor the relay kit   // v3.45: what rides to the kin, never into a locker (v3.46: nor the kin's thanks; v3.47: nor the road's gift)
         if (effective(c.defId, 'store')) { S.cargo.splice(i, 1); st.storage.push(c); slip.stored++; }
       }
       if (slip.stored) UI.refreshCargo();
@@ -273,3 +277,5 @@ const Ledger = (() => {
 
   return { TAXO, CHAIN, VERBS, DEFAULTS, led, classify, coverage, itemsUnder, effective, setMark, markState, effectiveIn, setMarkIn, markStateIn, seedStore, searchItems, runDossier, autoArrive };
 })();
+
+

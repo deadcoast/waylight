@@ -1,0 +1,472 @@
+{
+  "suite": "shapes",
+  "version": "v3.18",
+  "record": {
+    "doc": "DESIGN.md",
+    "where": "v3.18 — THE SHAPES OF WORK (the same walk, different questions)",
+    "count": 19,
+    "count_text": "Verification: `tests/shapes.mjs` (19 checks"
+  },
+  "clauses": [
+    {
+      "id": "c1",
+      "text": "the lock before the Greenhouse"
+    },
+    {
+      "id": "c2",
+      "text": "the unlock mail"
+    },
+    {
+      "id": "c3",
+      "text": "announced with NEW SHAPES OF WORK, explained in a mail"
+    },
+    {
+      "id": "c4",
+      "text": "circuit posting"
+    },
+    {
+      "id": "c5",
+      "text": "A ★★ station with three known neighbours posts a 2-3 leg chain through the towns that want what it makes, nearest-neighbour ordered",
+      "figure": {
+        "record": "2-3 leg",
+        "asserted": "exact",
+        "note": "the posted chain has two or three legs"
+      }
+    },
+    {
+      "id": "c6",
+      "text": "each is a distinct card with its own tag on the board"
+    },
+    {
+      "id": "c7",
+      "text": "all-crates-at-accept"
+    },
+    {
+      "id": "c8",
+      "text": "the tray reads door 1 of 3"
+    },
+    {
+      "id": "c9",
+      "text": "in-order doors"
+    },
+    {
+      "id": "c10",
+      "text": "a middle door takes its crates with the full hand-over ceremony, fills the town's stock, toasts LEG n/N — ONWARD and hands you no slip — the ledger waits"
+    },
+    {
+      "id": "c11",
+      "text": "middle-door-no-slip"
+    },
+    {
+      "id": "c12",
+      "text": "final ×1.35",
+      "figure": {
+        "record": "×1.35",
+        "asserted": "exact",
+        "note": "the last door's result carries paymul 1.35, and the slip's row reads ×1.35"
+      }
+    },
+    {
+      "id": "c12b",
+      "text": "The last door grades the whole contract: par over the summed chain, condition averaged across every door"
+    },
+    {
+      "id": "c13",
+      "text": "total kg carried"
+    },
+    {
+      "id": "c14",
+      "text": "the slip's route line names every door"
+    },
+    {
+      "id": "c15",
+      "text": "abandon-per-door"
+    },
+    {
+      "id": "c16",
+      "text": "Abandoning a circuit turns each remaining leg's crates into lost cargo bound for its own door"
+    },
+    {
+      "id": "c17",
+      "text": "convoy posting"
+    },
+    {
+      "id": "c18",
+      "text": "A junior walker of the Order (generated, named, skills capped at 2 — that is the point) needs the road walked to a connected town the pathfinder can actually find",
+      "figure": {
+        "record": "capped at 2",
+        "asserted": "exact",
+        "note": "the junior's highest skill is at most 2"
+      }
+    },
+    {
+      "id": "c19",
+      "text": "follow"
+    },
+    {
+      "id": "c20",
+      "text": "lag-stop"
+    },
+    {
+      "id": "c21",
+      "text": "drift past 220 units and they stop and call out",
+      "figure": {
+        "record": "220 units",
+        "asserted": "threshold",
+        "note": "the Walker is set 420 off, past the line, and the junior waits and calls out; the line at 220 itself is not sampled"
+      }
+    },
+    {
+      "id": "c22",
+      "text": "knock-drop"
+    },
+    {
+      "id": "c23",
+      "text": "hand-back"
+    },
+    {
+      "id": "c24",
+      "text": "Scrappers inside camp ground go for their crates first (the softer mark): a catch knocks a gold crate loose that you recover off the ground and hand back at their side"
+    },
+    {
+      "id": "c25",
+      "text": "freeze-unfreeze"
+    },
+    {
+      "id": "c26",
+      "text": "A wraith within 260 of them in mist freezes them mid-stride",
+      "figure": {
+        "record": "within 260",
+        "asserted": "threshold",
+        "note": "the wraith is set about 161 off, inside the radius; the radius's edge is not sampled"
+      }
+    },
+    {
+      "id": "c27",
+      "text": "until your lantern stands within 60",
+      "figure": {
+        "record": "within 60",
+        "asserted": "threshold",
+        "note": "the Walker stands 40 off and the junior is freed; the reach's edge is not sampled"
+      }
+    },
+    {
+      "id": "c28",
+      "text": "the Guide arbitrates: a frozen or left-behind convoy outranks the arrow's usual habits"
+    },
+    {
+      "id": "c29",
+      "text": "arrive-together"
+    },
+    {
+      "id": "c30",
+      "text": "Arrival counts only when you BOTH stand at the gate"
+    },
+    {
+      "id": "c31",
+      "text": "+10 appreciation to the town that asked",
+      "figure": {
+        "record": "+10 appreciation",
+        "asserted": "exact",
+        "note": "the asking town's appreciation rises by exactly 10"
+      }
+    },
+    {
+      "id": "c32",
+      "text": "CONVOY THROUGH from the Dispatch"
+    },
+    {
+      "id": "c33",
+      "text": "the walker joins the destination's fire pool, hireable, already road-trained (+26 Footwork)",
+      "figure": {
+        "record": "+26 Footwork",
+        "asserted": "threshold",
+        "note": "the walker's Footwork training is at least 26, or already a level"
+      }
+    },
+    {
+      "id": "c34",
+      "text": "salvage naming"
+    },
+    {
+      "id": "c35",
+      "text": "A town short of something (worst stock under 70) posts its top shortage by name",
+      "figure": {
+        "record": "under 70",
+        "asserted": "threshold",
+        "note": "a town at 22 seeds posts the wreck run, a town with every stock at 90 posts none; the line at 70 itself is not sampled"
+      }
+    },
+    {
+      "id": "c36",
+      "text": "site-in- the-grey"
+    },
+    {
+      "id": "c37",
+      "text": "stands 900-1400 units out",
+      "figure": {
+        "record": "900-1400 units",
+        "asserted": "exact",
+        "note": "the site's distance from the town lies in 900..1400"
+      }
+    },
+    {
+      "id": "c38",
+      "text": "where mistBase exceeds 0.5, drawn while the run holds it, labeled THE WRECK",
+      "figure": {
+        "record": "exceeds 0.5",
+        "asserted": "exact",
+        "note": "the site's mistBase is over 0.5"
+      }
+    },
+    {
+      "id": "c39",
+      "text": "Walk out empty (the Guide aims at the site)"
+    },
+    {
+      "id": "c40",
+      "text": "battered-gold-loot"
+    },
+    {
+      "id": "c41",
+      "text": "E loads 2-3 Salvaged crates",
+      "figure": {
+        "record": "2-3",
+        "asserted": "exact",
+        "note": "two or three crates"
+      }
+    },
+    {
+      "id": "c42",
+      "text": "11-17 kg each",
+      "figure": {
+        "record": "11-17 kg",
+        "asserted": "exact",
+        "note": "every crate weighs 11..17 kg"
+      }
+    },
+    {
+      "id": "c43",
+      "text": "55-80% condition, honest about their history",
+      "figure": {
+        "record": "55-80%",
+        "asserted": "exact",
+        "note": "every crate's condition lies in 55..80"
+      }
+    },
+    {
+      "id": "c44",
+      "text": "×1.6-against-the-wreck",
+      "figure": {
+        "record": "×1.6",
+        "asserted": "exact",
+        "note": "the result's paymul is 1.6 and the slip's row reads ×1.6"
+      }
+    },
+    {
+      "id": "c45",
+      "text": "on top of the shortage multiplier, and condition grades against what the wreck gave, not the factory: bring them back no worse and the stars are full"
+    },
+    {
+      "id": "c46",
+      "text": "save/reload mid-shape"
+    },
+    {
+      "id": "c47",
+      "text": "a circuit at door 2, a convoy at 2/3 crates"
+    },
+    {
+      "id": "c48",
+      "text": "zero page errors"
+    }
+  ],
+  "checks": [
+    {
+      "title": "THE LOCK",
+      "clauses": [
+        "c1"
+      ],
+      "kind": "record"
+    },
+    {
+      "title": "THE UNLOCK",
+      "clauses": [
+        "c2",
+        "c3"
+      ],
+      "kind": "record"
+    },
+    {
+      "title": "THE CIRCUIT, POSTED",
+      "clauses": [
+        "c4",
+        "c5",
+        "c6"
+      ],
+      "kind": "record"
+    },
+    {
+      "title": "EVERY LEG AT ACCEPT",
+      "clauses": [
+        "c7",
+        "c8"
+      ],
+      "kind": "record"
+    },
+    {
+      "title": "THE DOORS IN ORDER",
+      "clauses": [
+        "c9",
+        "c10"
+      ],
+      "kind": "record"
+    },
+    {
+      "title": "THE MIDDLE DOOR",
+      "clauses": [
+        "c10",
+        "c11"
+      ],
+      "kind": "record"
+    },
+    {
+      "title": "THE LAST DOOR",
+      "clauses": [
+        "c12",
+        "c12b",
+        "c13",
+        "c14"
+      ],
+      "kind": "record"
+    },
+    {
+      "title": "THE CIRCUIT GIVEN UP",
+      "clauses": [
+        "c15",
+        "c16"
+      ],
+      "kind": "record"
+    },
+    {
+      "title": "THE CONVOY, POSTED",
+      "clauses": [
+        "c6",
+        "c17",
+        "c18"
+      ],
+      "kind": "record"
+    },
+    {
+      "title": "THE FOLLOW",
+      "clauses": [
+        "c19"
+      ],
+      "kind": "record"
+    },
+    {
+      "title": "THE LAG (v3.31, the fairness pass",
+      "clauses": [
+        "c20",
+        "c21",
+        "c28"
+      ],
+      "kind": "record"
+    },
+    {
+      "title": "THE KNOCK AND THE HAND-BACK",
+      "clauses": [
+        "c22",
+        "c23",
+        "c24"
+      ],
+      "kind": "record"
+    },
+    {
+      "title": "THE FREEZE",
+      "clauses": [
+        "c25",
+        "c26",
+        "c27",
+        "c28"
+      ],
+      "kind": "record"
+    },
+    {
+      "title": "ARRIVING TOGETHER",
+      "clauses": [
+        "c29",
+        "c30",
+        "c31",
+        "c32",
+        "c33"
+      ],
+      "kind": "record"
+    },
+    {
+      "title": "THE SALVAGE, NAMED",
+      "clauses": [
+        "c6",
+        "c34",
+        "c35"
+      ],
+      "kind": "record"
+    },
+    {
+      "title": "THE SITE IN THE GREY",
+      "clauses": [
+        "c36",
+        "c37",
+        "c38",
+        "c39"
+      ],
+      "kind": "record"
+    },
+    {
+      "title": "THE WRECK'S LOAD",
+      "clauses": [
+        "c40",
+        "c41",
+        "c42",
+        "c43"
+      ],
+      "kind": "record"
+    },
+    {
+      "title": "×1.6 AGAINST THE WRECK",
+      "clauses": [
+        "c44",
+        "c45"
+      ],
+      "kind": "record"
+    },
+    {
+      "title": "THE SAVE, MID-SHAPE",
+      "clauses": [
+        "c46",
+        "c47"
+      ],
+      "kind": "record"
+    }
+  ],
+  "design": [
+    {
+      "clause": "c20",
+      "version": "v3.31",
+      "what": "the fairness pass deleted the stop: a junior left behind past the line calls out and trudges on at half pace, stride by stride, never frozen and never warped to your back"
+    },
+    {
+      "clause": "c21",
+      "version": "v3.31",
+      "what": "past 220 the junior still calls out, but no longer stops — they trudge on at half pace (DESIGN.md, the fairness pass §4)"
+    }
+  ],
+  "finish": {
+    "clauses": [
+      "c48"
+    ]
+  },
+  "unplaced": {
+    "n": 1,
+    "why": "the record's 19 counted zero page errors among them; the rebuild proves it in the harness's own check and makes 19 of its own, and nothing records which two of the record's items the original proved in one check"
+  }
+}

@@ -36,6 +36,14 @@ const Memorial = (() => {
       pal: { O: '#12151a', S: '#8d979c', s: '#6e7a82', D: '#4a565e', E: '#323c44', L: '#b8c2c8', l: '#8d979c', A: '#5a6a7a' },
       accent: 'ring',       // a cold iron ring set in the monolith — no flame, by doctrine
     },
+    /* v3.43 — the town's own who fell standing a square: buried at the field's edge, a round shield on the stone */
+    town: {
+      ground: 'THE FIELD STONES', people: 'the town\'s own',
+      line: 'A town buries its own at the edge of the field they worked. The shield goes on the stone; the fork goes back to the barn.',
+      epitaph: 'stood the square', stampWord: 'HOME',
+      pal: { O: '#17130b', S: '#c9b98a', s: '#a08050', D: '#6e5a42', E: '#4a3a2a', L: '#ffd98f', l: '#e0a05e', A: '#8a6534' },
+      accent: 'shield',     // a round wooden shield set on the crown — the one they stood with
+    },
     diefenbunker: {
       ground: 'THE BRASS WALL', people: 'Bunker-born',
       line: 'Name, number, assignment. The Society files its dead the way it filed its living — completely.',
@@ -90,11 +98,18 @@ const Memorial = (() => {
       Systems.addMail('THE HOODED ROW', design('lamplighters').line + ' The guide marked its ground on your sheet before the gate closed — a trust the Nomads extend exactly once.');
       return m.sites[fact];
     }
+    if (fact === 'town') {
+      /* v3.43 — THE FIELD STONES at the edge of Haven's fields, between the town and Elm: the valley's own ground */
+      const hv = DATA.stations.haven;
+      m.sites[fact] = findOpen({ x: hv.x + 560, y: hv.y - 260 }, { x: hv.x + 400, y: hv.y - 160 });
+      Systems.addMail('THE FIELD STONES', design('town').line + ' The ground is at the edge of the fields between Haven and Elm Farm, where the town\'s own worked — the map marks it.');
+      return m.sites[fact];
+    }
     if (fact === 'farkeep') {
       /* v3.32 — THE STANDING TEETH stand where the road home begins: hard against the eastern
          edge, facing the mountain, so every stone looks toward Farkeep */
       m.sites[fact] = findOpen({ x: DATA.W * 0.9, y: DATA.H * 0.46 }, { x: DATA.W * 0.82, y: DATA.H * 0.55 });
-      Systems.addMail('THE STANDING TEETH', design('farkeep').line + ' The mountain buries its own where the road home begins — the eastern edge of the survey, every stone faced toward Farkeep.');
+      Systems.addMail('THE STANDING TEETH', design('farkeep').line + ' The mountain buries its own where the road home begins — the eastern edge of the map, every stone faced toward Farkeep.');
       return m.sites[fact];
     }
     return null;
@@ -176,19 +191,25 @@ const Memorial = (() => {
     const d = design(fact);                                        // the ground the player stands on picks the voice
     const list = rows(fact);
     const head = document.getElementById('memHead');
-    if (head) head.innerHTML = `<h2>${d.ground.toLowerCase().replace(/\b\w/g, c => c.toUpperCase())}</h2>
-      <div class="tag">${d.people} · ${list.length} remembered · ${STAGE_NAMES[stage(fact)]}</div>
+    const groundName = d.ground.toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+    if (head) head.innerHTML = '<h2>Memorial</h2>' +   // v3.49: the window says what it is; the ground's own name rides in the line under it
+      `<div class="tag">${groundName} · ${d.people} · ${list.length} remembered · ${STAGE_NAMES[stage(fact)]}</div>
       <div class="memLine">${d.line}</div>`;
     const body = document.getElementById('memBody');
     if (!body) return;
     body.innerHTML = list.slice().reverse().map(r => {
       const dr = design(r.fact);
       return `<div class="memCard ${r.tier}${r.raised ? '' : ' unraised'}">
-        <div class="memPortrait filePhoto"><img src="${Porter.portrait(r.seed, 56)}" width="56" height="56" alt=""></div>
+        <div class="memPortrait filePhoto"><img src="${r.kit && Render.npcRigURL ? Render.npcRigURL({ kit: r.kit, seed: r.seed }, 3) : r.look && Render.walkerFaceURL ? Render.walkerFaceURL(4, r.look) : r.fact === 'farkeep' && Render.handFaceURL ? Render.handFaceURL({ seed: r.seed, fk: true }, 4) : Porter.portrait(r.seed, 56)}" width="${r.kit ? Render.npcRigSize({ kit: r.kit }, 3)[0] : r.look || r.fact === 'farkeep' ? 64 : 56}" height="${r.kit ? Render.npcRigSize({ kit: r.kit }, 3)[1] : r.look || r.fact === 'farkeep' ? 64 : 56}" alt=""></div>
         <div class="memName">${r.name}${r.cheated ? ' <span class="memCheat">WALKED WITH HELP</span>' : ''}</div>
         <div class="memCls">${r.cls} · ${dr.epitaph}</div>
         <div class="memNums num">${r.deliveries} deliveries · ${r.km} km · ${r.likes} ◆</div>
         <div class="memFate">${r.fate}</div>
+        ${r.home || r.lit || r.cold || r.kept ? `<div class="memKin">${r.home ? `<img src="${UI.markURL('home')}" width="14" height="14" alt=""><span>the shield brought home</span>` : ''}${r.kept ? `<img src="${UI.markURL('lantern')}" width="14" height="14" alt=""><span>the lantern kept lit — the kin keep it now</span>` : r.lit ? `<img src="${UI.markURL('lantern')}" width="14" height="14" alt=""><span>the lantern kept lit${r.relit ? ` · relit ${r.relit}×` : ''}</span>` : r.cold ? `<img src="${UI.markURL('relight')}" width="14" height="14" alt=""><span>the lantern out — the kin asks for its flame</span>` : ''}</div>` : ''}
+        ${r.keepsake && SPRITES.KEEPSAKES[r.keepsake] ? `<div class="memKin"><img src="${UI.markURL(SPRITES.KEEPSAKES[r.keepsake].mark)}" width="14" height="14" alt=""><span>the ${SPRITES.KEEPSAKES[r.keepsake].name} at the stone — you set it down</span></div>` : ''}
+        ${r.keepsake && r.keepsakeT !== undefined && r.fact === 'town' ? (() => { const DL = DATA.T.dayLen, E = DATA.T.kinDay.every, d = Math.floor(S.time / DL) - Math.floor(r.keepsakeT / DL), left = d > 0 && d % E === 0 ? 0 : E - (d % E); return `<div class="memKin"><img src="${UI.markURL('kinday')}" width="14" height="14" alt=""><span>${left === 0 ? `its day today — the kin at the stone from dusk` : `its day in ${left} day${left > 1 ? 's' : ''} — every seventh, the kin stand here at dusk`}</span></div>`; })() : ''}
+        ${r.keepsakes && r.keepsakes.length ? `<div class="memKin">${r.keepsakes.map(k => `<img src="${UI.markURL((SPRITES.KEEPSAKES[k.thing] || SPRITES.KEEPSAKES.button).mark)}" width="14" height="14" alt="">`).join('')}<span>carried ${r.keepsakes.map(k => k.name).join(', ')} — the kin's thanks</span></div>` : ''}
+        ${r.scars ? `<div class="memScars">${Array(Math.min(3, r.scars)).fill(`<img src="${UI.markURL('scar')}" width="14" height="14" alt="">`).join('')}${r.scars > 3 ? `<b>+${r.scars - 3}</b>` : ''}<span>${r.scars} scar${r.scars > 1 ? 's' : ''} carried to the stone</span></div>` : ''}
         <div class="memStamp">${r.raised ? dr.stampWord : 'STONE UNRAISED — the ground waits'}</div>
       </div>`;
     }).join('') || '<p class="desc">The ground is kept, and empty. May it stay so a long while.</p>';
@@ -198,3 +219,5 @@ const Memorial = (() => {
 
   return { DESIGNS, design, site, grounds, revealGround, rows, stage, slotFor, nextUnraised, raise, interactions, open, close };
 })();
+
+

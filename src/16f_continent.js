@@ -479,15 +479,20 @@ const Continent = (() => {
         <div class="fdLine dim">Per cycle: <b>${reach.yieldLine}</b>. ${fr.guard ? 'The mountain walks beside every haul — the escort eats ' + T.contractCost + ' provisions a cycle.' : 'The caravans walk the dark roads ALONE — raiders roll their dice on every haul.'}</div>
         <button class="fdBtn ${fr.guard ? 'on' : ''}" data-act="guard">${fr.guard ? 'ESCORT CONTRACT · ON — let it lapse' : `FUND THE FARKEEPER ESCORT — ${T.contractCost} provisions / cycle`}</button>`;
     }
-    el.innerHTML = `<div class="fdHead"><span>[ ${fr.phase === 'outpost' ? reach.outpost : reach.name} ]</span><button class="fdX" data-act="close">✕</button></div>${body}`;
+    const html = `<div class="fdHead"><span>[ ${fr.phase === 'outpost' ? reach.outpost : reach.name} ]</span><button class="fdX" data-act="close">✕</button></div>${body}`;
+    if (el._html !== html) { el._html = html; el.innerHTML = html; }   // v3.51: the half-second refresh rewrites only what changed
     wireDesk(el);
   }
   function wireDesk(el) {
     if (el._wired) return;
     el._wired = true;
-    el.addEventListener('click', e => {
-      const act = e.target.getAttribute && e.target.getAttribute('data-act');
-      if (!act) return;
+    /* v3.51: a press is its button's, whatever the refresh did to the element under it — the act is taken at the press and
+       worked at the release on the same act (a press held across a rewrite funds its contract); a keyboard's click works at once */
+    const actOf = t => { const a = t && t.closest ? t.closest('[data-act]') : null; return a ? a.getAttribute('data-act') : null; };
+    el.addEventListener('mousedown', e => { el._press = actOf(e.target); });
+    el.addEventListener('mouseup', e => { const act = actOf(e.target), p = el._press; el._press = null; if (act && act === p) work(act); });
+    el.addEventListener('click', e => { if (e.detail === 0) { const act = actOf(e.target); if (act) work(act); } });
+    function work(act) {
       if (act === 'close') { closeDesk(); return; }
       if (act === 'recon') Frontier.fundRecon(deskId);
       else if (act === 'outpost') Frontier.fundOutpost(deskId);
@@ -495,7 +500,7 @@ const Continent = (() => {
       else if (act.startsWith('rep_') && typeof RepublicUI !== 'undefined') RepublicUI.deskAct(act, deskId);   // v3.32: the Republic's verbs
       else if (typeof Exile !== 'undefined') Exile.deskAct(act, deskId);   // v3.30: the exile desk's own verbs
       renderDesk();
-    });
+    }
   }
   function openDesk(id) { deskId = id; deskT = 0; renderDesk(); const el = deskEl(); if (el) el.classList.remove('hidden'); Snd.sfx.ui && Snd.sfx.ui(); }
   function closeDesk() { deskId = null; const el = deskEl(); if (el) el.classList.add('hidden'); }
@@ -549,3 +554,5 @@ const Continent = (() => {
 
   return { open, close, bake, get isOpen() { return st.open; }, _st: st, gmRect, get win() { return win; }, openDesk, closeDesk };
 })();
+
+

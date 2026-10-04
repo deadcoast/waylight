@@ -6,7 +6,10 @@
    engine only — a new faction row renders here with zero new UI code.
    v3.34 THE HOLDINGS: every place carries its OWNER on the plate (towns, camps, larders, bowls,
    reaches, the exile city, the door), the camps take the TAKING, THE WORLD ASKS ages its
-   questions under the holdings, and THE WORLD'S OWN WARS reads the relations ledger. */
+   questions under the holdings, and THE WORLD'S OWN WARS reads the relations ledger.
+   v3.39 THE LOSABLE HOLDINGS: a risen town takes THE STORMING beside the quell and reads GARRISONED
+   with RELEASE; a watchpost shows its shields with STAND THE POST and the storm's warning in the
+   reprisal season, a fallen post its price; a larder reads RAIDED or HUSHED. */
 
 const RepublicUI = (() => {
   const $ = id => document.getElementById(id);
@@ -55,37 +58,62 @@ const RepublicUI = (() => {
     /* the towns: the light as a political fact, and who holds it */
     for (const id of DATA.stationOrder) {
       const st = S.stations[id], def = DATA.stations[id];
-      const unlit = Republic.isUnlit(id), quiet = !!(S.quiet && S.quiet[id]) && !unlit, courted = ct && ct.id === id;
-      const own = unlit ? owner('THE UNLIT', RUST) : st.connected ? owner(courted ? 'THE ORDER — COURTED' : 'THE ORDER', courted ? '#e0a05e' : GOLD) : owner('NOBODY — DARK', DIM);
+      const unlit = Republic.isUnlit(id), quiet = !!(S.quiet && S.quiet[id]) && !unlit, courted = ct && ct.id === id, held = Republic.isHeld(id);
+      const own = unlit ? owner('THE UNLIT', RUST) : held ? owner('THE REPUBLIC — GARRISONED', GREY) : st.connected ? owner(courted ? 'THE ORDER — COURTED' : 'THE ORDER', courted ? '#e0a05e' : GOLD) : owner('NOBODY — DARK', DIM);
       const state = unlit ? '<span class="rpPlate" style="color:var(--rust);border-color:var(--rust)">UNLIT — BY CHOICE</span>'
         : quiet ? '<span class="rpPlate" style="color:var(--bone-faint);border-color:var(--line2)">QUIET — STARVED</span>'
         : st.connected ? '<span class="rpPlate" style="color:var(--gold);border-color:var(--gold)">LIT</span>'
         : '<span class="rpPlate" style="color:var(--bone-faint);border-color:var(--line2)">DARK</span>';
       let act = '';
       if (unlit) {
-        if (q && q.kind === 'quell' && q.target === id) act = `<span class="rpGate">THE COLUMN MARCHES — ${Math.round(q.t / q.dur * 100)}%</span>`;
-        else act = `<button class="miniBtn rpAct" data-quell="${id}" ${q ? 'disabled' : ''}>${REP.DOCTRINE.quell.name} — ${cost(REP.DOCTRINE.quell.cost)}</button>
-          <span class="rpGate">or WALK there: the parley wants ${REP.DOCTRINE.parley.needLikes} likes at their door + ${cost(REP.DOCTRINE.parley.gift)}</span>`;
+        if (q && (q.kind === 'quell' || q.kind === 'storm') && q.target === id) act = `<span class="rpGate">${q.kind === 'storm' ? 'THE COLUMN MARCHES ON THE DOOR' : 'THE COLUMN MARCHES'} — ${Math.round(q.t / q.dur * 100)}%</span>`;
+        else {
+          const SD = REP.DOCTRINE.storm, cs = Republic.canStorm(id);
+          act = `<button class="miniBtn rpAct" data-quell="${id}" ${q ? 'disabled' : ''}>${REP.DOCTRINE.quell.name} — ${cost(REP.DOCTRINE.quell.cost)}</button>
+          <button class="miniBtn rpAct" data-storm="${id}" ${(q || !cs.ok) ? 'disabled' : ''} title="${SD.line}">${SD.name} — ${cost(SD.cost)}</button>
+          <span class="rpGate">or WALK there: the parley wants ${REP.DOCTRINE.parley.needLikes} likes at their door + ${cost(REP.DOCTRINE.parley.gift)}${cs.ok ? ` · or TAKE the town: ${SD.line}` : ` · the storming waits on the mountain road`}</span>`;
+        }
+      } else if (held) {
+        const SD = REP.DOCTRINE.storm, h = Republic.held()[id], sh = h.shields || SD.garrison, restless = Republic.squareRestless(id);
+        act = `<button class="miniBtn rpAct" data-release="${id}">RELEASE THE GARRISON</button>
+          <button class="miniBtn rpAct" data-reinforce="${id}" ${sh >= SD.rise.garrisonMax ? 'disabled' : ''}>REINFORCE THE GARRISON — +1 shield · ${cost(SD.rise.reinforceCost)}</button>
+          <span class="rpGate">held since day ${Math.floor(h.t0 / DATA.T.dayLen) + 1} · <b>${sh}/${SD.rise.garrisonMax}</b> shields under the pennant${h.own ? ` · <b style="color:var(--gold-hot)">${h.own} of the town's own</b> beside them (no tithe) — <b>${Republic.standingOwn(id)}</b> in the square this hour by THE HOURS they keep (the muster roll, AT THE SQUARES)` : st.likesTo >= SD.rise.recruitAt ? ` · <span style="color:var(--gold-hot)">the town loves the Order enough to stand its own — one walks in every ${Math.round((Republic.recruitEvery ? Republic.recruitEvery(id) : SD.rise.recruitEvery) / 60)} minutes${Republic.stonesOf && Republic.stonesOf(id) ? ` (slower by the ${Republic.stonesOf(id)} stone${Republic.stonesOf(id) > 1 ? 's' : ''} at the field's edge)` : ''}</span>` : ` · at ${SD.rise.recruitAt} likes the town stands its own`}${Republic.stonesOf && Republic.stonesOf(id) ? ` · <span style="color:var(--rust)">${Republic.stonesOf(id)} of its own at THE FIELD STONES${Republic.kinAt && Republic.kinAt(id) ? ' — their kin keep the place in the square' : ''}</span>` : ''} · the garrison has eaten ${h.ate || 0} rations off the shelf · the town's love: ${Math.round(st.likesTo)} likes${restless ? ` · <span style="color:var(--rust)">THE SQUARE IS RESTLESS — ${SD.rise.line}</span>` : ` · it holds while the shields stand and the town's love stays above ${SD.rise.likesAt}`}; released, it gives back ${SD.releaseLikes} likes and its own choice</span>`;
       } else if (courted) {
         const E = REP.EVENTS.unlitCourting;
         act = `<button class="miniBtn rpAct" data-hear="1">HEAR THEM OUT — ${cost(E.hearGift)}</button>
           <span class="rpGate">a half-flown shutter beside the door — the rising's warning. Hearing them out wants ${E.hearLikes} likes at their door; ignored, the rising takes this town first</span>`;
       }
+      /* v3.44 — the stones a town has cut for its own, held or not: the kin keep the place, and the next one comes slower */
+      const stonesN = Republic.stonesOf ? Republic.stonesOf(id) : 0;
+      if (stonesN && !held) act += `<span class="rpGate" style="color:var(--rust)">${stonesN} of its own at THE FIELD STONES${Republic.kinAt && Republic.kinAt(id) ? ' — their kin keep the place in the square' : ''}; garrisoned again, it would stand its own ${Math.round(Math.min(REP.DOCTRINE.storm.rise.kin.maxStones, stonesN) * REP.DOCTRINE.storm.rise.kin.slowPerStone / 60)} minutes slower for the stones</span>`;
       htm += `<div class="rpHold"><span class="rpName">${def.name}</span>${own}${state}${act ? `<div class="rpCtl">${act}</div>` : ''}</div>`;
     }
     /* the camps: the raiders' ground, the light's, or the Republic's */
     const D = REP.DOCTRINE.take, mtOpen = Republic.mountain().phase === 'open';
     for (const cd of DATA.camps) {
       const c = S.camps[cd.id]; if (!c) continue;
-      const own = c.taken ? owner('THE REPUBLIC — WATCHPOST', GREY) : c.pacified ? owner('STOOD DOWN — THE LIGHT\'S', GOLD) : owner('THE RAIDERS', RUST);
+      const own = c.taken ? owner('THE REPUBLIC — WATCHPOST', GREY) : c.wired ? owner('ON THE WIRE — THE CHIEF KEEPS THE DOOR', GOLD) : c.pacified ? owner('STOOD DOWN — THE LIGHT\'S', GOLD) : owner('THE RAIDERS', RUST);   // v3.48
       const culled = c.culled && S.time - c.culled < DATA.T.dayLen;
       let act = '';
-      if (c.taken) act = `<span class="rpGate">held since day ${Math.floor(c.taken.t0 / DATA.T.dayLen) + 1} · shields stand the fire · salvage tithe ${c.stash.length}/${REP.WATCHPOST.titheCap} by the post</span>`;
+      const SW = REP.WATCHPOST.storm, rp = Republic.reprisal();
+      const swept = c.swept && S.time - c.swept < REP.EVENTS.bunkerSweep.sweptDur;
+      const roll = (cd.roll || ['knife']).map(k => FACT.CAMP_CLASSES[k] ? FACT.CAMP_CLASSES[k].name.toLowerCase() : k);   // v3.41: the camp's own, by trade
+      if (c.taken) {
+        const sh = c.taken.shields || REP.WATCHPOST.shields;
+        act = `<button class="miniBtn rpAct" data-stand="${cd.id}" ${sh >= SW.shieldsMax ? 'disabled' : ''}>STAND THE POST — +1 shield · ${cost(SW.reinforceCost)}</button>
+          <span class="rpGate">${c.storm ? `<span style="color:var(--rust)">THE KNIVES ARE AT THE FIRE — ${Math.max(0, Math.round(c.storm.dur - c.storm.t))}s to hold; you stand the post</span> · ` : ''}held since day ${Math.floor(c.taken.t0 / DATA.T.dayLen) + 1} · <b>${sh}/${SW.shieldsMax}</b> shields stand the fire · salvage tithe ${c.stash.length}/${REP.WATCHPOST.titheCap} by the post${rp && !c.storm ? ` · <span style="color:var(--rust)">the camps may STORM it by night this season — ${SW.knives} knives; the post holds when its shields, and the walker standing it, match them — stand it yourself and the storm is fought in the open</span>` : ''}</span>`;
+      }
+      else if (c.wired) act = `<span class="rpGate">a lit door since day ${Math.floor(c.wired.t / DATA.T.dayLen) + 1} — the relay at the fire, the chief at the board, the rags up for good</span>`;   // v3.48
       else if (c.pacified) act = '<span class="rpGate">the light reached them and they stood down by themselves — a rest stop on the road, and a gift once given</span>';
       else if (q && q.kind === 'take' && q.camp === cd.id) act = `<span class="rpGate">THE COLUMN MARCHES — ${Math.round(q.t / q.dur * 100)}%</span>`;
-      else act = `<button class="miniBtn rpAct" data-take="${cd.id}" ${(q || !mtOpen) ? 'disabled' : ''}>${D.name} — ${cost(D.cost)}</button>
-        <span class="rpGate">${mtOpen ? D.line : 'the mountain road is not cut — Farkeep takes no ground it cannot reach'}${culled ? ' · a hooded stake stands in the ring: the Reapers took a runner last night' : ''}</span>`;
-      htm += `<div class="rpHold"><span class="rpName">${cd.name}</span>${own}<div class="rpCtl">${act}</div></div>`;
+      else {
+        const tc = Republic.takeCost(cd.id), SL = REP.EVENTS.bunkerSweep.sell, buy = Republic.canBuyCount(cd.id);
+        act = `${swept ? `<button class="miniBtn rpAct" data-buy="${cd.id}" ${buy.ok ? '' : 'disabled'} title="${buy.ok ? SL.line : buy.line}">BUY THE COUNT — ${cost(SL.cost)}</button>` : ''}<button class="miniBtn rpAct" data-take="${cd.id}" ${(q || !mtOpen) ? 'disabled' : ''}>${D.name} — ${cost(tc)}</button>
+        <span class="rpGate">the camp's own: <b>${roll.join(', ')}</b>${(cd.roll || []).includes('chief') ? (Republic.chiefGone(cd) ? ` · <span style="color:var(--rust)">SHORT A CHIEF — the rag on a stake, the road one knife short, the fire courting the Unlit</span>` : Republic.chiefUp(cd) ? (Republic.grudgeOf && Republic.grudgeOf(cd) ? ` · <span style="color:var(--rust)">THE CHIEF HOLDS A GRUDGE — you put his brother down; ${Republic.grudgeTarget(cd) ? Republic.grudgeTarget(cd).name : 'your nearest post'} is his first storm, the next night</span>` : ' · the chief keeps the fire') : '') : ''}${swept ? ` · <span style="color:#8fb08a">${buy.ok ? SL.line : buy.line}</span>` : ''}</span>
+        <span class="rpGate">${c.lost ? `<span style="color:var(--rust)">the post here FELL on day ${Math.floor(c.lost.t / DATA.T.dayLen) + 1}${c.lost.n > 1 ? ` (${c.lost.n} times)` : ''} — the camps expect the column: the taking costs ×${Math.pow(SW.retakeMul, c.lost.n).toFixed(1)}</span> · ` : ''}${mtOpen ? D.line : 'the mountain road is not cut — Farkeep takes no ground it cannot reach'}${culled ? ' · a hooded stake stands in the ring: the Reapers took a runner last night' : ''}</span>`;
+      }
+      const sweptPlate = c.sold ? `<span class="rpPlate" style="color:#8fb08a;border-color:#8fb08a">SOLD BY THE SOCIETY · day ${Math.floor(c.sold / DATA.T.dayLen) + 1}</span>` : swept ? `<span class="rpPlate" style="color:#8fb08a;border-color:#8fb08a">COUNTED BY THE SOCIETY · ${Math.round(REP.EVENTS.bunkerSweep.sweptDur - (S.time - c.swept))}s</span>` : '';
+      htm += `<div class="rpHold"><span class="rpName">${cd.name}</span>${own}${sweptPlate}<div class="rpCtl">${act}</div></div>`;
     }
     /* the presences the doctrine answers: larders and bowls */
     const all = (S.rep && S.rep.sites) || [];
@@ -93,7 +121,9 @@ const RepublicUI = (() => {
       if (s2.p === 'hollowfire') {
         if (s2.cleared) { htm += `<div class="rpHold"><span class="rpName">A HOLLOW FIRE</span>${owner('CLEARED — THE MOUNTAIN', GREY)}</div>`; return; }
         const marching = q && q.kind === 'burn' && q.site === i;
-        htm += `<div class="rpHold"><span class="rpName">A HOLLOW FIRE</span>${owner('THE HOLLOW FIRES', '#c25038')}
+        const low = s2.raided && S.time - s2.raided < REP.EVENTS.larderRaid.lowDur, hushed = s2.hushed > S.time;
+        const plate2 = hushed ? `<span class="rpPlate" style="color:#9aa4ff;border-color:#9aa4ff">HUSHED — THE FILE PASSED · ${Math.round(s2.hushed - S.time)}s</span>` : low ? `<span class="rpPlate" style="color:var(--rust);border-color:var(--rust)">RAIDED — BURNS LOW · ${Math.round(REP.EVENTS.larderRaid.lowDur - (S.time - s2.raided))}s</span>` : '';
+        htm += `<div class="rpHold"><span class="rpName">A HOLLOW FIRE</span>${owner('THE HOLLOW FIRES', '#c25038')}${plate2}
           <div class="rpCtl">${marching ? `<span class="rpGate">THE STRIKE MARCHES — ${Math.round(q.t / q.dur * 100)}%</span>` : `<button class="miniBtn rpAct" data-burn="${i}" ${q ? 'disabled' : ''}>${REP.DOCTRINE.burn.name} — ${cost(REP.DOCTRINE.burn.cost)}</button>`}</div></div>`;
       } else if (s2.p === 'flameshrine') {
         const fed = s2.fedUntil > S.time, doused = s2.doused && S.time - s2.doused < REP.EVENTS.shrineRaid.dousedDur;
@@ -163,7 +193,8 @@ const RepublicUI = (() => {
         <div class="railHead" style="margin-top:14px">THE WORLD'S OWN WARS — HOW THE BANNERS STAND TO EACH OTHER</div>${relationRows()}</div>
       <div class="rpCol"><div class="railHead">THE HOLDINGS — EVERY PLACE, AND WHO HOLDS IT</div>
         ${t ? '<div class="rpGate" style="margin-bottom:8px">A RAIDER TRUCE STANDS — the camps hold, and the horns hold WITH them</div>' : ''}
-        ${rp ? `<div class="rpGate" style="margin-bottom:8px;color:var(--rust)">THE CAMPS' SEASON OF REPRISAL — ${Math.round(rp.t)}s: every camp that stands claims wider and runs quicker</div>` : ''}
+        ${rp ? `<div class="rpGate" style="margin-bottom:8px;color:var(--rust)">THE CAMPS' SEASON OF REPRISAL — ${Math.round(rp.t)}s: every camp that stands claims wider and runs quicker, and a held post may be STORMED by night</div>` : ''}
+        ${Republic.unlitReprisal() ? `<div class="rpGate" style="margin-bottom:8px;color:var(--rust)">THE STORY OF THE STORMING — ${Math.round(Republic.unlitReprisal().t)}s: the Unlit's drum beats ×${REP.EVENTS.unlitReprisal.pressureMul} in every town with a lamp to douse</div>` : ''}
         ${holdingsRows()}${mountainRow()}
         <div class="railHead" style="margin-top:14px">THE WORLD ASKS</div>${asksRows()}
         <div class="docFoot">THE REPUBLIC OF CONNECTION · <b>WAYLIGHT CARRIES THE LIGHT · FARKEEP CARRIES THE WEIGHT</b></div></div></div>`;
@@ -196,7 +227,7 @@ const RepublicUI = (() => {
       for (const [cls, row] of Object.entries(REP.KIT)) { const def = FACT.FK_CLASSES[cls]; kit += `<button class="fdBtn" data-act="rep_hire_${cls}">${def.name.toUpperCase()} — ${Systems.fmtCost(row.fee)}${row.req === 'horse' ? ' · WANTS A HORSE' : ''}</button>`; }
       bodyH = `<div class="fdLine">The Republic's muscle, at home. Stone rows up the pass, shield-doors, and the long practice yards where the kit is made.</div>
         <div class="fdLine dim">Longbowman — the wall of Farkeep, carried on a shoulder. Rifle Rider — a breech and a horse. Berserker — a pistol, a claymore, and no argument.</div>
-        ${bankRow}${kit}<button class="fdBtn" data-act="rep_hall">WALK THE LONG HALL — the shield wall, the hearth, the yard</button><button class="fdBtn" data-act="rep_sheet">OPEN THE BANNER SHEET</button>`;
+        ${bankRow}${kit}<button class="fdBtn" data-act="rep_hall">WALK THE LONG HALL — the shield wall, the hearth, the yard</button><button class="fdBtn" data-act="rep_sheet">OPEN FACTIONS</button>`;
     }
     el.innerHTML = `<div class="fdHead"><span>${head}</span><button class="fdX" data-act="close">✕</button></div>${bodyH}`;
   }
@@ -223,6 +254,11 @@ const RepublicUI = (() => {
       else if (t.dataset.hire) { Republic.hireKit(t.dataset.hire); render(); }
       else if (t.dataset.take) { Republic.fundTake(t.dataset.take); render(); }      // v3.34
       else if (t.dataset.hear) { Republic.hearOut(); render(); }
+      else if (t.dataset.storm) { Republic.fundStorm(t.dataset.storm); render(); }   // v3.39
+      else if (t.dataset.release) { Republic.release(t.dataset.release); render(); }
+      else if (t.dataset.stand) { Republic.standPost(t.dataset.stand); render(); }
+      else if (t.dataset.reinforce) { Republic.reinforce(t.dataset.reinforce); render(); }   // v3.40
+      else if (t.dataset.buy) { Republic.buyCount(t.dataset.buy); render(); }   // v3.41
     });
     const rb = $('railRepublicBtn');
     if (rb) rb.addEventListener('click', () => { UI.toggleMap(false); open(); });
@@ -231,3 +267,5 @@ const RepublicUI = (() => {
 
   return { open, close, render, renderDesk, deskAct };
 })();
+
+

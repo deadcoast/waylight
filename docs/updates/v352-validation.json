@@ -1,0 +1,1176 @@
+{
+  "platform": "Windows; Node v25.8.1; Python 3.14.3; Playwright 1.62.1; local Chromium 1228",
+  "results_are_latest_per_suite": true,
+  "checks_passed": 944,
+  "checks_total": 950,
+  "suites_passed": 51,
+  "suites_total": 57,
+  "latest_results": [
+    {
+      "suite": "ahead",
+      "code": 0,
+      "passed": 9,
+      "total": 9,
+      "timedOut": false,
+      "success": true,
+      "run": "battery"
+    },
+    {
+      "suite": "answered",
+      "code": 0,
+      "passed": 8,
+      "total": 8,
+      "timedOut": false,
+      "success": true,
+      "run": "battery"
+    },
+    {
+      "suite": "assets",
+      "code": 0,
+      "passed": 14,
+      "total": 14,
+      "timedOut": false,
+      "success": true,
+      "run": "serial-recheck"
+    },
+    {
+      "suite": "body",
+      "code": 0,
+      "passed": 31,
+      "total": 31,
+      "timedOut": false,
+      "success": true,
+      "run": "battery"
+    },
+    {
+      "suite": "builds",
+      "code": 0,
+      "passed": 13,
+      "total": 13,
+      "timedOut": false,
+      "success": true,
+      "run": "battery"
+    },
+    {
+      "suite": "campsown",
+      "code": 0,
+      "passed": 9,
+      "total": 9,
+      "timedOut": false,
+      "success": true,
+      "run": "battery"
+    },
+    {
+      "suite": "carried",
+      "code": 0,
+      "passed": 10,
+      "total": 10,
+      "timedOut": false,
+      "success": true,
+      "run": "serial-recheck"
+    },
+    {
+      "suite": "character",
+      "code": 0,
+      "passed": 36,
+      "total": 36,
+      "timedOut": false,
+      "success": true,
+      "run": "battery"
+    },
+    {
+      "suite": "continent",
+      "code": 0,
+      "passed": 10,
+      "total": 10,
+      "timedOut": false,
+      "success": true,
+      "run": "battery"
+    },
+    {
+      "suite": "courier",
+      "code": 0,
+      "passed": 10,
+      "total": 10,
+      "timedOut": false,
+      "success": true,
+      "run": "repository"
+    },
+    {
+      "suite": "deadboot",
+      "code": 0,
+      "passed": 20,
+      "total": 20,
+      "timedOut": false,
+      "success": true,
+      "run": "battery"
+    },
+    {
+      "suite": "economy",
+      "code": 0,
+      "passed": 25,
+      "total": 25,
+      "timedOut": false,
+      "success": true,
+      "run": "battery"
+    },
+    {
+      "suite": "ecosystem",
+      "code": 0,
+      "passed": 15,
+      "total": 15,
+      "timedOut": false,
+      "success": true,
+      "run": "battery"
+    },
+    {
+      "suite": "exileroads",
+      "code": 0,
+      "passed": 23,
+      "total": 23,
+      "timedOut": false,
+      "success": true,
+      "run": "battery"
+    },
+    {
+      "suite": "exiles",
+      "code": 0,
+      "passed": 21,
+      "total": 21,
+      "timedOut": false,
+      "success": true,
+      "run": "battery"
+    },
+    {
+      "suite": "faces",
+      "code": 0,
+      "passed": 8,
+      "total": 8,
+      "timedOut": false,
+      "success": true,
+      "run": "battery"
+    },
+    {
+      "suite": "fairness",
+      "code": 0,
+      "passed": 11,
+      "total": 11,
+      "timedOut": false,
+      "success": true,
+      "run": "battery"
+    },
+    {
+      "suite": "feel",
+      "code": 0,
+      "passed": 32,
+      "total": 32,
+      "timedOut": false,
+      "success": true,
+      "run": "serial-recheck"
+    },
+    {
+      "suite": "firstwalk",
+      "code": 0,
+      "passed": 25,
+      "total": 25,
+      "timedOut": false,
+      "success": true,
+      "run": "battery"
+    },
+    {
+      "suite": "frontier",
+      "code": 1,
+      "passed": 24,
+      "total": 25,
+      "timedOut": false,
+      "success": false,
+      "run": "serial-recheck"
+    },
+    {
+      "suite": "glowpass",
+      "code": 0,
+      "passed": 11,
+      "total": 11,
+      "timedOut": false,
+      "success": true,
+      "run": "portability"
+    },
+    {
+      "suite": "ground",
+      "code": 1,
+      "passed": 15,
+      "total": 16,
+      "timedOut": false,
+      "success": false,
+      "run": "serial-recheck"
+    },
+    {
+      "suite": "holdings",
+      "code": 0,
+      "passed": 20,
+      "total": 20,
+      "timedOut": false,
+      "success": true,
+      "run": "battery"
+    },
+    {
+      "suite": "holdings2",
+      "code": 0,
+      "passed": 8,
+      "total": 8,
+      "timedOut": false,
+      "success": true,
+      "run": "battery"
+    },
+    {
+      "suite": "inputs",
+      "code": 1,
+      "passed": 16,
+      "total": 17,
+      "timedOut": false,
+      "success": false,
+      "run": "serial-recheck"
+    },
+    {
+      "suite": "karma",
+      "code": 0,
+      "passed": 22,
+      "total": 22,
+      "timedOut": false,
+      "success": true,
+      "run": "serial-recheck"
+    },
+    {
+      "suite": "kept",
+      "code": 0,
+      "passed": 12,
+      "total": 12,
+      "timedOut": false,
+      "success": true,
+      "run": "battery"
+    },
+    {
+      "suite": "keys",
+      "code": 1,
+      "passed": 31,
+      "total": 32,
+      "timedOut": false,
+      "success": false,
+      "run": "serial-recheck"
+    },
+    {
+      "suite": "lamps",
+      "code": 0,
+      "passed": 10,
+      "total": 10,
+      "timedOut": false,
+      "success": true,
+      "run": "battery"
+    },
+    {
+      "suite": "ledger",
+      "code": 0,
+      "passed": 13,
+      "total": 13,
+      "timedOut": false,
+      "success": true,
+      "run": "battery"
+    },
+    {
+      "suite": "ledgers",
+      "code": 0,
+      "passed": 17,
+      "total": 17,
+      "timedOut": false,
+      "success": true,
+      "run": "battery"
+    },
+    {
+      "suite": "light",
+      "code": 0,
+      "passed": 11,
+      "total": 11,
+      "timedOut": false,
+      "success": true,
+      "run": "battery"
+    },
+    {
+      "suite": "loop",
+      "code": 0,
+      "passed": 34,
+      "total": 34,
+      "timedOut": false,
+      "success": true,
+      "run": "battery"
+    },
+    {
+      "suite": "manual",
+      "code": 0,
+      "passed": 20,
+      "total": 20,
+      "timedOut": false,
+      "success": true,
+      "run": "battery"
+    },
+    {
+      "suite": "memorial",
+      "code": 0,
+      "passed": 21,
+      "total": 21,
+      "timedOut": false,
+      "success": true,
+      "run": "battery"
+    },
+    {
+      "suite": "mouse",
+      "code": 0,
+      "passed": 19,
+      "total": 19,
+      "timedOut": false,
+      "success": true,
+      "run": "battery"
+    },
+    {
+      "suite": "moved",
+      "code": 0,
+      "passed": 11,
+      "total": 11,
+      "timedOut": false,
+      "success": true,
+      "run": "repository"
+    },
+    {
+      "suite": "muster",
+      "code": 0,
+      "passed": 14,
+      "total": 14,
+      "timedOut": false,
+      "success": true,
+      "run": "battery"
+    },
+    {
+      "suite": "myth",
+      "code": 1,
+      "passed": 19,
+      "total": 20,
+      "timedOut": false,
+      "success": false,
+      "run": "serial-recheck"
+    },
+    {
+      "suite": "passed",
+      "code": 0,
+      "passed": 15,
+      "total": 15,
+      "timedOut": false,
+      "success": true,
+      "run": "battery"
+    },
+    {
+      "suite": "paths",
+      "code": 0,
+      "passed": 10,
+      "total": 10,
+      "timedOut": false,
+      "success": true,
+      "run": "battery"
+    },
+    {
+      "suite": "pixelpass",
+      "code": 0,
+      "passed": 22,
+      "total": 22,
+      "timedOut": false,
+      "success": true,
+      "run": "battery"
+    },
+    {
+      "suite": "post",
+      "code": 0,
+      "passed": 19,
+      "total": 19,
+      "timedOut": false,
+      "success": true,
+      "run": "battery"
+    },
+    {
+      "suite": "postorders",
+      "code": 0,
+      "passed": 10,
+      "total": 10,
+      "timedOut": false,
+      "success": true,
+      "run": "battery"
+    },
+    {
+      "suite": "progression",
+      "code": 1,
+      "passed": 18,
+      "total": 19,
+      "timedOut": false,
+      "success": false,
+      "run": "serial-recheck"
+    },
+    {
+      "suite": "reach",
+      "code": 0,
+      "passed": 13,
+      "total": 13,
+      "timedOut": false,
+      "success": true,
+      "run": "repository"
+    },
+    {
+      "suite": "remembering",
+      "code": 0,
+      "passed": 8,
+      "total": 8,
+      "timedOut": false,
+      "success": true,
+      "run": "battery"
+    },
+    {
+      "suite": "republic",
+      "code": 0,
+      "passed": 20,
+      "total": 20,
+      "timedOut": false,
+      "success": true,
+      "run": "battery"
+    },
+    {
+      "suite": "rules",
+      "code": 0,
+      "passed": 15,
+      "total": 15,
+      "timedOut": false,
+      "success": true,
+      "run": "battery"
+    },
+    {
+      "suite": "session",
+      "code": 0,
+      "passed": 9,
+      "total": 9,
+      "timedOut": false,
+      "success": true,
+      "run": "battery"
+    },
+    {
+      "suite": "shapes",
+      "code": 0,
+      "passed": 20,
+      "total": 20,
+      "timedOut": false,
+      "success": true,
+      "run": "battery"
+    },
+    {
+      "suite": "shopaudit",
+      "code": 0,
+      "passed": 5,
+      "total": 5,
+      "timedOut": false,
+      "success": true,
+      "run": "battery"
+    },
+    {
+      "suite": "standing",
+      "code": 0,
+      "passed": 8,
+      "total": 8,
+      "timedOut": false,
+      "success": true,
+      "run": "battery"
+    },
+    {
+      "suite": "wider",
+      "code": 0,
+      "passed": 28,
+      "total": 28,
+      "timedOut": false,
+      "success": true,
+      "run": "battery"
+    },
+    {
+      "suite": "word",
+      "code": 0,
+      "passed": 11,
+      "total": 11,
+      "timedOut": false,
+      "success": true,
+      "run": "battery"
+    },
+    {
+      "suite": "working",
+      "code": 0,
+      "passed": 18,
+      "total": 18,
+      "timedOut": false,
+      "success": true,
+      "run": "battery"
+    },
+    {
+      "suite": "workorders",
+      "code": 0,
+      "passed": 17,
+      "total": 17,
+      "timedOut": false,
+      "success": true,
+      "run": "battery"
+    }
+  ],
+  "failures": [
+    {
+      "suite": "frontier",
+      "assertions": [
+        "FAIL  THE CARAVAN DOT: as the cycle closes the caravan is a dot walking home across the table along the survey line — at 90% of the cycle it stands halfway home (the same point bare at 50% of the cycle, and bare where the start of the walk would be)  — {\"early\":0,\"late\":4,\"wrong\":0}"
+      ]
+    },
+    {
+      "suite": "ground",
+      "assertions": [
+        "FAIL  THE LETTER AND THE REGARD: every crate is counted aloud (\"one more good pair of hands armed (n/10)\" — nine times), and the tenth is said out loud — \"THE ROADS AROUND HAVEN ARE SAFER\", \"Ten walkers at Haven carry your tools…\", a letter (Haven walks armed), Haven's regard +6, the desk reading 10/10 — and the ARMED WATCH walks the yard's edge with lamps, drawn under its label against the same frame at nine  — {\"counted\":[1,2,3,4,5,6,7,8,9,10],\"t8\":{\"armed\":10,\"tab\":true,\"aloud\":9,\"ann\":\"WATCHTOWER — ARMED POST\",\"ten\":true,\"mail\":\"Ten waylighters carry tools you gave them. The camps near town have gone quiet-eyed and careful. People say your name when they say why.\",\"appr\":6,\"watch\":true,\"drawn\":4092,\"lamp\":252}}"
+      ]
+    },
+    {
+      "suite": "inputs",
+      "assertions": [
+        "FAIL  THE STILLNESS LAW (v3.30; measured on a SETTLED frame, v3.35's correction): bleeding — damage landing every frame — the walker stopped and the camera come to rest, the ground holds still to the pixel across four frames and across fourteen: no shake — and the HUD's hearts, drawn twice at one moment, carry no jitter  — {\"settled\":false,\"bleeding\":true,\"hurt\":0.01,\"d1\":0,\"d2\":0,\"hearts\":0,\"heartsDrawn\":true,\"cam\":[0.029158267910133873,0.06946390820849047]}"
+      ]
+    },
+    {
+      "suite": "keys",
+      "assertions": [
+        "FAIL  E PICKS UP: a bandage dropped by a click in the pack lies on the ground, the rail offering \"E Pick up — Bandage\"; E puts it back on the pack  — {\"dropped\":{\"ground\":true,\"rail\":[]},\"picked\":{\"ground\":false,\"pack\":true}}"
+      ]
+    },
+    {
+      "suite": "myth",
+      "assertions": [
+        "FAIL  THE MICRO-CINE, CAPPED: a micro-cine asked for nine seconds is held to 2.2 — letterboxed throughout, ONE slow zoom pushing in and never back, the first line spoken half a second in, and the sim never pausing underneath (the world's clock ran with it, the time scale never touched)  — {\"began\":true,\"dur\":2.2,\"frames\":790,\"lastT\":2.2,\"zStart\":1.6,\"zEnd\":1.497,\"zMono\":false,\"lbAll\":true,\"tsAll\":true,\"real\":2.2,\"simRan\":2.2,\"saidAt\":181,\"released\":true}"
+      ]
+    },
+    {
+      "suite": "progression",
+      "assertions": [
+        "FAIL  THE HORSE'S OWN LEGS: on rough scree, overloaded, the walking Walker spends their own breath and the ground rings the steadying ring; ridden the same ground, the horse spends its own legs — not a point of stamina — and carries the wobble: no ring at all  — {\"scree\":[3860,5760],\"walk\":{\"stam\":0,\"secs\":0,\"ring\":true,\"mounted\":false,\"load\":3.93},\"ride\":{\"stam\":0,\"secs\":0.71,\"ring\":false,\"mounted\":true,\"load\":3.93}}"
+      ]
+    }
+  ],
+  "runs": [
+    {
+      "name": "battery",
+      "suites": [
+        {
+          "suite": "assets",
+          "code": 1,
+          "passed": 13,
+          "total": 14,
+          "timedOut": false,
+          "success": false
+        },
+        {
+          "suite": "ahead",
+          "code": 0,
+          "passed": 9,
+          "total": 9,
+          "timedOut": false,
+          "success": true
+        },
+        {
+          "suite": "answered",
+          "code": 0,
+          "passed": 8,
+          "total": 8,
+          "timedOut": false,
+          "success": true
+        },
+        {
+          "suite": "campsown",
+          "code": 0,
+          "passed": 9,
+          "total": 9,
+          "timedOut": false,
+          "success": true
+        },
+        {
+          "suite": "builds",
+          "code": 0,
+          "passed": 13,
+          "total": 13,
+          "timedOut": false,
+          "success": true
+        },
+        {
+          "suite": "carried",
+          "code": 1,
+          "passed": 9,
+          "total": 10,
+          "timedOut": false,
+          "success": false
+        },
+        {
+          "suite": "continent",
+          "code": 0,
+          "passed": 10,
+          "total": 10,
+          "timedOut": false,
+          "success": true
+        },
+        {
+          "suite": "body",
+          "code": 0,
+          "passed": 31,
+          "total": 31,
+          "timedOut": false,
+          "success": true
+        },
+        {
+          "suite": "character",
+          "code": 0,
+          "passed": 36,
+          "total": 36,
+          "timedOut": false,
+          "success": true
+        },
+        {
+          "suite": "economy",
+          "code": 0,
+          "passed": 25,
+          "total": 25,
+          "timedOut": false,
+          "success": true
+        },
+        {
+          "suite": "courier",
+          "code": 0,
+          "passed": 10,
+          "total": 10,
+          "timedOut": false,
+          "success": true
+        },
+        {
+          "suite": "deadboot",
+          "code": 0,
+          "passed": 20,
+          "total": 20,
+          "timedOut": false,
+          "success": true
+        },
+        {
+          "suite": "ecosystem",
+          "code": 0,
+          "passed": 15,
+          "total": 15,
+          "timedOut": false,
+          "success": true
+        },
+        {
+          "suite": "exiles",
+          "code": 0,
+          "passed": 21,
+          "total": 21,
+          "timedOut": false,
+          "success": true
+        },
+        {
+          "suite": "exileroads",
+          "code": 0,
+          "passed": 23,
+          "total": 23,
+          "timedOut": false,
+          "success": true
+        },
+        {
+          "suite": "fairness",
+          "code": 0,
+          "passed": 11,
+          "total": 11,
+          "timedOut": false,
+          "success": true
+        },
+        {
+          "suite": "faces",
+          "code": 0,
+          "passed": 8,
+          "total": 8,
+          "timedOut": false,
+          "success": true
+        },
+        {
+          "suite": "frontier",
+          "code": 1,
+          "passed": 24,
+          "total": 25,
+          "timedOut": false,
+          "success": false
+        },
+        {
+          "suite": "glowpass",
+          "code": 1,
+          "passed": 0,
+          "total": 0,
+          "timedOut": false,
+          "success": false
+        },
+        {
+          "suite": "ground",
+          "code": 1,
+          "passed": 15,
+          "total": 16,
+          "timedOut": false,
+          "success": false
+        },
+        {
+          "suite": "holdings",
+          "code": 0,
+          "passed": 20,
+          "total": 20,
+          "timedOut": false,
+          "success": true
+        },
+        {
+          "suite": "firstwalk",
+          "code": 0,
+          "passed": 25,
+          "total": 25,
+          "timedOut": false,
+          "success": true
+        },
+        {
+          "suite": "holdings2",
+          "code": 0,
+          "passed": 8,
+          "total": 8,
+          "timedOut": false,
+          "success": true
+        },
+        {
+          "suite": "karma",
+          "code": 1,
+          "passed": 21,
+          "total": 22,
+          "timedOut": false,
+          "success": false
+        },
+        {
+          "suite": "feel",
+          "code": 1,
+          "passed": 30,
+          "total": 32,
+          "timedOut": false,
+          "success": false
+        },
+        {
+          "suite": "kept",
+          "code": 0,
+          "passed": 12,
+          "total": 12,
+          "timedOut": false,
+          "success": true
+        },
+        {
+          "suite": "inputs",
+          "code": 1,
+          "passed": 16,
+          "total": 17,
+          "timedOut": false,
+          "success": false
+        },
+        {
+          "suite": "lamps",
+          "code": 0,
+          "passed": 10,
+          "total": 10,
+          "timedOut": false,
+          "success": true
+        },
+        {
+          "suite": "ledger",
+          "code": 0,
+          "passed": 13,
+          "total": 13,
+          "timedOut": false,
+          "success": true
+        },
+        {
+          "suite": "ledgers",
+          "code": 0,
+          "passed": 17,
+          "total": 17,
+          "timedOut": false,
+          "success": true
+        },
+        {
+          "suite": "light",
+          "code": 0,
+          "passed": 11,
+          "total": 11,
+          "timedOut": false,
+          "success": true
+        },
+        {
+          "suite": "loop",
+          "code": 0,
+          "passed": 34,
+          "total": 34,
+          "timedOut": false,
+          "success": true
+        },
+        {
+          "suite": "manual",
+          "code": 0,
+          "passed": 20,
+          "total": 20,
+          "timedOut": false,
+          "success": true
+        },
+        {
+          "suite": "keys",
+          "code": 1,
+          "passed": 31,
+          "total": 32,
+          "timedOut": false,
+          "success": false
+        },
+        {
+          "suite": "memorial",
+          "code": 0,
+          "passed": 21,
+          "total": 21,
+          "timedOut": false,
+          "success": true
+        },
+        {
+          "suite": "moved",
+          "code": 0,
+          "passed": 11,
+          "total": 11,
+          "timedOut": false,
+          "success": true
+        },
+        {
+          "suite": "muster",
+          "code": 0,
+          "passed": 14,
+          "total": 14,
+          "timedOut": false,
+          "success": true
+        },
+        {
+          "suite": "myth",
+          "code": 1,
+          "passed": 19,
+          "total": 20,
+          "timedOut": false,
+          "success": false
+        },
+        {
+          "suite": "passed",
+          "code": 0,
+          "passed": 15,
+          "total": 15,
+          "timedOut": false,
+          "success": true
+        },
+        {
+          "suite": "paths",
+          "code": 0,
+          "passed": 10,
+          "total": 10,
+          "timedOut": false,
+          "success": true
+        },
+        {
+          "suite": "pixelpass",
+          "code": 0,
+          "passed": 22,
+          "total": 22,
+          "timedOut": false,
+          "success": true
+        },
+        {
+          "suite": "postorders",
+          "code": 0,
+          "passed": 10,
+          "total": 10,
+          "timedOut": false,
+          "success": true
+        },
+        {
+          "suite": "post",
+          "code": 0,
+          "passed": 19,
+          "total": 19,
+          "timedOut": false,
+          "success": true
+        },
+        {
+          "suite": "mouse",
+          "code": 0,
+          "passed": 19,
+          "total": 19,
+          "timedOut": false,
+          "success": true
+        },
+        {
+          "suite": "progression",
+          "code": 1,
+          "passed": 18,
+          "total": 19,
+          "timedOut": false,
+          "success": false
+        },
+        {
+          "suite": "remembering",
+          "code": 0,
+          "passed": 8,
+          "total": 8,
+          "timedOut": false,
+          "success": true
+        },
+        {
+          "suite": "reach",
+          "code": 1,
+          "passed": 12,
+          "total": 13,
+          "timedOut": false,
+          "success": false
+        },
+        {
+          "suite": "rules",
+          "code": 0,
+          "passed": 15,
+          "total": 15,
+          "timedOut": false,
+          "success": true
+        },
+        {
+          "suite": "republic",
+          "code": 0,
+          "passed": 20,
+          "total": 20,
+          "timedOut": false,
+          "success": true
+        },
+        {
+          "suite": "shapes",
+          "code": 0,
+          "passed": 20,
+          "total": 20,
+          "timedOut": false,
+          "success": true
+        },
+        {
+          "suite": "standing",
+          "code": 0,
+          "passed": 8,
+          "total": 8,
+          "timedOut": false,
+          "success": true
+        },
+        {
+          "suite": "wider",
+          "code": 0,
+          "passed": 28,
+          "total": 28,
+          "timedOut": false,
+          "success": true
+        },
+        {
+          "suite": "word",
+          "code": 0,
+          "passed": 11,
+          "total": 11,
+          "timedOut": false,
+          "success": true
+        },
+        {
+          "suite": "shopaudit",
+          "code": 0,
+          "passed": 5,
+          "total": 5,
+          "timedOut": false,
+          "success": true
+        },
+        {
+          "suite": "workorders",
+          "code": 0,
+          "passed": 17,
+          "total": 17,
+          "timedOut": false,
+          "success": true
+        },
+        {
+          "suite": "working",
+          "code": 0,
+          "passed": 18,
+          "total": 18,
+          "timedOut": false,
+          "success": true
+        },
+        {
+          "suite": "session",
+          "code": 0,
+          "passed": 9,
+          "total": 9,
+          "timedOut": false,
+          "success": true
+        }
+      ]
+    },
+    {
+      "name": "portability",
+      "suites": [
+        {
+          "suite": "glowpass",
+          "code": 0,
+          "passed": 11,
+          "total": 11,
+          "timedOut": false,
+          "success": true
+        }
+      ]
+    },
+    {
+      "name": "serial-recheck",
+      "suites": [
+        {
+          "suite": "assets",
+          "code": 0,
+          "passed": 14,
+          "total": 14,
+          "timedOut": false,
+          "success": true
+        },
+        {
+          "suite": "carried",
+          "code": 0,
+          "passed": 10,
+          "total": 10,
+          "timedOut": false,
+          "success": true
+        },
+        {
+          "suite": "frontier",
+          "code": 1,
+          "passed": 24,
+          "total": 25,
+          "timedOut": false,
+          "success": false
+        },
+        {
+          "suite": "ground",
+          "code": 1,
+          "passed": 15,
+          "total": 16,
+          "timedOut": false,
+          "success": false
+        },
+        {
+          "suite": "karma",
+          "code": 0,
+          "passed": 22,
+          "total": 22,
+          "timedOut": false,
+          "success": true
+        },
+        {
+          "suite": "feel",
+          "code": 0,
+          "passed": 32,
+          "total": 32,
+          "timedOut": false,
+          "success": true
+        },
+        {
+          "suite": "inputs",
+          "code": 1,
+          "passed": 16,
+          "total": 17,
+          "timedOut": false,
+          "success": false
+        },
+        {
+          "suite": "keys",
+          "code": 1,
+          "passed": 31,
+          "total": 32,
+          "timedOut": false,
+          "success": false
+        },
+        {
+          "suite": "myth",
+          "code": 1,
+          "passed": 19,
+          "total": 20,
+          "timedOut": false,
+          "success": false
+        },
+        {
+          "suite": "progression",
+          "code": 1,
+          "passed": 18,
+          "total": 19,
+          "timedOut": false,
+          "success": false
+        },
+        {
+          "suite": "reach",
+          "code": 0,
+          "passed": 13,
+          "total": 13,
+          "timedOut": false,
+          "success": true
+        }
+      ]
+    },
+    {
+      "name": "repository",
+      "suites": [
+        {
+          "suite": "courier",
+          "code": 0,
+          "passed": 10,
+          "total": 10,
+          "timedOut": false,
+          "success": true
+        },
+        {
+          "suite": "moved",
+          "code": 0,
+          "passed": 11,
+          "total": 11,
+          "timedOut": false,
+          "success": true
+        },
+        {
+          "suite": "reach",
+          "code": 0,
+          "passed": 13,
+          "total": 13,
+          "timedOut": false,
+          "success": true
+        }
+      ]
+    }
+  ],
+  "other_checks": {
+    "zip_crc": "13 inspected archives passed (11 updates plus v337/v339 history)",
+    "packaged_pngs": "247 passed Pillow verification",
+    "javascript_syntax": "33 passed",
+    "python_compilation": "23 passed",
+    "build": "passed in isolated and requested repositories; generated pages exactly match v352 package",
+    "source_integrity": "all 35 source files exactly match their latest supplied package",
+    "audit": "CLEAN",
+    "records": "CLEAN: 52 suites, 851 checks, 1549 clauses",
+    "screenshots": "12 captured; narrow HUD, 600-high delivery slip and 600-high intro visually inspected; no page errors"
+  },
+  "not_run": [
+    "Historical suites outside tests/suites.json",
+    "Historical screenshot probes other than probe_reach.mjs",
+    "Firefox/WebKit and mobile touch devices",
+    "Art-generation benches (shipped rows and PNGs were verified instead)"
+  ]
+}

@@ -1,0 +1,57 @@
+{
+  "suite": "keys",
+  "version": "v2.1",
+  "record": {
+      "doc": "DESIGN.md",
+      "where": "Three lessons, all kept (v2.0 → v2.1) · Controls · Verification — the keys-and-clicks player-fidelity run, named by its subject",
+      "count": 31,
+      "count_text": "the keys-and-clicks player-fidelity run (31)"
+  },
+  "clauses": [
+    {"id": "y1", "text": "the keys-and-clicks player-fidelity run"},
+    {"id": "y2", "text": "Implemented and unreachable is the same as scaffolding."},
+    {"id": "y3", "text": "Every feature must be encountered, unprompted, inside the first ten minutes", "figure": {"record": "the first ten minutes", "asserted": "exact", "note": "every feature of the character layer first met under 600 s of the game's clock, and the whole run under 600 s"}},
+    {"id": "y4", "text": "verified by a keys-and-clicks-only bot"},
+    {"id": "y5", "text": "W A S D overrides"},
+    {"id": "y6", "text": "Shift sprints"},
+    {"id": "y7", "text": "Space steadies"},
+    {"id": "y8", "text": "E interacts"}
+  ],
+  "checks": [
+    {"title": "THE PLAYER'S CHAIR", "clauses": ["y1", "y4"], "kind": "record"},
+    {"title": "THE CALLING, CLICKED", "clauses": ["y4"], "kind": "record"},
+    {"title": "THE BUDGET'S LAW, CLICKED", "clauses": ["y4"], "kind": "record"},
+    {"title": "THE NAME", "clauses": ["y4"], "kind": "record"},
+    {"title": "THE WALKER ENLISTED", "clauses": ["y4"], "kind": "record"},
+    {"title": "THE HUD FROM THE CHAIR", "clauses": ["y4"], "kind": "record"},
+    {"title": "THE ARROWS (v3.35", "clauses": ["y4", "y5"], "kind": "record"},
+    {"title": "I — CARGO & EQUIPMENT", "clauses": ["y4"], "kind": "record"},
+    {"title": "THE MANUAL", "clauses": ["y4"], "kind": "record"},
+    {"title": "C — A MEAL AT THE FIRE (v3.35", "clauses": ["y4"], "kind": "record"},
+    {"title": "H — EAT FROM THE PACK", "clauses": ["y4"], "kind": "record"},
+    {"title": "K — SKILLS AND THE EQUIPMENT SHEET (v3.23", "clauses": ["y4"], "kind": "record"},
+    {"title": "M AND TAB — THE MAP (v3.35", "clauses": ["y4"], "kind": "record"},
+    {"title": "F1 — THE MANUAL (v3.35", "clauses": ["y4"], "kind": "record"},
+    {"title": "O — THE CREW (v3.36", "clauses": ["y4"], "kind": "record"},
+    {"title": "ESC — THE PAUSE SHEET FROM THE CHAIR (v3.35", "clauses": ["y4"], "kind": "record"},
+    {"title": "F AND Y — THE HANDS' KEYS A NEW WALKER CANNOT USE YET (v3.25", "clauses": ["y4"], "kind": "record"},
+    {"title": "B — THE BUILD MENU", "clauses": ["y4"], "kind": "record"},
+    {"title": "E — THE TERMINAL AND ITS TABS (v3.49", "clauses": ["y4", "y8"], "kind": "record"},
+    {"title": "THE HIRE BOARD", "clauses": ["y4"], "kind": "record"},
+    {"title": "THE PACK'S WEIGHT", "clauses": ["y4"], "kind": "record"},
+    {"title": "SHIFT AND SPACE — THE PACE (v3.35", "clauses": ["y4", "y6", "y7"], "kind": "record"},
+    {"title": "THE RUIN THE COMPASS MARKED", "clauses": ["y4", "y8"], "kind": "record"},
+    {"title": "E PICKS UP", "clauses": ["y4", "y8"], "kind": "record"},
+    {"title": "THE CREEK", "clauses": ["y4", "y5"], "kind": "record"},
+    {"title": "E DELIVERS, ENTER TURNS THE SLIP", "clauses": ["y4", "y8"], "kind": "record"},
+    {"title": "THE JOURNAL", "clauses": ["y4", "y6"], "kind": "record"},
+    {"title": "THE DIGIT AND E — A BLUEPRINT SET", "clauses": ["y4", "y8"], "kind": "record"},
+    {"title": "CLIMBING FROM THE RUNGS", "clauses": ["y4", "y5", "y8"], "kind": "record"},
+    {"title": "THE HAND HIRED", "clauses": ["y4"], "kind": "record"},
+    {"title": "TEN MINUTES FROM THE CHAIR", "clauses": ["y2", "y3", "y4"], "kind": "record"}
+  ],
+  "design": [
+    {"clause": "y5", "version": "v3.35", "what": "the keys registry gives each walking key a second cap — the arrows beside W A S D"},
+    {"clause": "y6", "version": "v3.35", "what": "the registry's sprint is Shift on either side (ShiftLeft, ShiftRight)"}
+  ]
+}

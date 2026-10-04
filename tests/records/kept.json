@@ -1,0 +1,70 @@
+{
+  "suite": "kept",
+  "version": "v3.45",
+  "record": {
+      "doc": "DESIGN.md",
+      "where": "The word kept (v3.45 — the hands' faces, a word remembered, the kin's errand, the grudge answered, the line at the ring) · Proof",
+      "count": 12,
+      "count_text": "kept.mjs, 12 checks"
+  },
+  "clauses": [
+    {"id": "k1", "text": "the registries (eleven trades × forty seeds in palette", "figure": {"record": "eleven trades × forty seeds", "asserted": "exact", "note": "eleven trades, forty seeds each, every face 16×16 in its own palette"}},
+    {"id": "k2", "text": "the trade read off each face's own texels, two chiefs, nine marks, the kin's things", "figure": {"record": "two chiefs, nine marks", "asserted": "exact", "note": "CHIEF_FACES chief and chief2, distinct; nine 7×7 marks, distinct"}},
+    {"id": "k3", "text": "a skin from six pairs", "figure": {"record": "six", "asserted": "exact", "note": "HAND_SKINS holds six"}},
+    {"id": "k4", "text": "a hair from seven (cropped, long, a bun, curls, buzzed, swept, a braid — and the old go bald)", "figure": {"record": "seven", "asserted": "threshold", "note": "HAND_HAIRS holds at least seven"}},
+    {"id": "k5", "text": "The same seed and trade is the same face every time; forty seeds in every trade compose in palette and nearly all distinct.", "figure": {"record": "nearly all distinct", "asserted": "threshold", "note": "at least 400 of the 440 faces distinct"}},
+    {"id": "k6", "text": "twenty-six causes, sixty-six lessons", "figure": {"record": "twenty-six causes, sixty-six lessons", "asserted": "changed", "note": "later versions add causes and lessons: the check pins the 31 causes of v3.49 and holds the v3.49 manual's floor (93 pages)"}},
+    {"id": "k7", "text": "the faces worn (the sheet, the cards, the muster, the passage, the whole-pixel law measured)"},
+    {"id": "k8", "text": "the terminal's hire cards (2×)", "figure": {"record": "2×", "asserted": "exact", "note": "the hire card's face drawn and shown at 32 px"}},
+    {"id": "k9", "text": "the muster plates beside the figure (3×), the memorial's Farkeeper rows (4×)", "figure": {"record": "3×, 4×", "asserted": "exact", "note": "drawn and shown at 48 px and 64 px"}},
+    {"id": "k10", "text": "every face URL is asked for at exactly the size it is shown (the terminal's keeper at 3×, 48 pixels", "figure": {"record": "48 pixels", "asserted": "exact", "note": "the keeper's face natural and client width 48, as every framed face is measured"}},
+    {"id": "k11", "text": "the book and the errand end to end"},
+    {"id": "k12", "text": "at two the keeper posts THE KEEPER'S ERRAND on the board — a sealed letter (paper, red seal) for the farthest lit door, two days", "figure": {"record": "at two; two days", "asserted": "exact", "note": "word.errandAt 2 and errandDays 2; the errand posts at a credit of two, for the farthest lit door"}},
+    {"id": "k13", "text": "T.word {errandAt 2, errandDays 2, errandAppr 20, errandLikes 3, errandDest 6}", "doc": "FEATURES.md", "figure": {"record": "errandAppr 20, errandLikes 3, errandDest 6", "asserted": "exact", "note": "the row in the registries; kept, the home door +20 appreciation and +3 likes, the far door +6 over the run's own"}},
+    {"id": "k14", "text": "broken, shut and opened"},
+    {"id": "k15", "text": "the Ledger tab writes the book out, row by row"},
+    {"id": "k16", "text": "the kin's errand (the lantern seen by pixel, the burn, the expiry)"},
+    {"id": "k17", "text": "the HUD counts its fifteen minutes", "figure": {"record": "fifteen minutes", "asserted": "exact", "note": "kin.burn 900; A FLAME · 15:00 on the HUD, out a second past it"}},
+    {"id": "k18", "text": "An errand left its three days goes home with the kin.", "figure": {"record": "three days", "asserted": "exact", "note": "kin.errandDays 3; gone a second past three days"}},
+    {"id": "k19", "text": "T.kin {errandDays 3, burn 900, likes 4, appr 6}", "doc": "FEATURES.md", "figure": {"record": "likes 4, appr 6", "asserted": "exact", "note": "the shield given home warms the town +4 likes, +6 appreciation"}},
+    {"id": "k20", "text": "the parley (the gift by a real click, the stand, the walk-away, the word kept and broken)"},
+    {"id": "k21", "text": "gift {provisions 40, metal 30}", "doc": "FEATURES.md", "figure": {"record": "provisions 40, metal 30", "asserted": "exact", "note": "the row in the registries; the click takes them off the bank"}},
+    {"id": "k22", "text": "THE STAND — fifteen seconds", "figure": {"record": "fifteen seconds", "asserted": "exact", "note": "parley.standTime 15 in the registries"}},
+    {"id": "k23", "text": "a truce holds for a day", "figure": {"record": "a day", "asserted": "exact", "note": "parley.truceDays 1 in the registries"}},
+    {"id": "k24", "text": "THE WORD holds his fire from the column for three days", "figure": {"record": "three days", "asserted": "exact", "note": "parley.pactDays 3 in the registries"}},
+    {"id": "k25", "text": "the score (set, the roll, the mood, the reach against Ash and not Ridge, settled, cooled, the sheet's mark by pixel)"},
+    {"id": "k26", "text": "T.score {days 3, reachMul 1.25, near 400}", "doc": "FEATURES.md", "figure": {"record": "days 3, reachMul 1.25, near 400", "asserted": "exact", "note": "the row in the registries; a knife at 170 met for Ash and not for Ridge; cooled a second past three days"}},
+    {"id": "k27", "text": "the line (the compass, the hold, the slots, the facing, the pin by pixel, every name drawn and no two labels overlapping, the release)"},
+    {"id": "k28", "text": "T.ring {holdR 420, holdMax 120, gap 34}", "doc": "FEATURES.md", "figure": {"record": "holdR 420, holdMax 120, gap 34", "asserted": "exact", "note": "the row in the registries; slots a gap apart (±12), the line lifted past 420 and past two minutes"}},
+    {"id": "k29", "text": "the save"},
+    {"id": "k29b", "text": "the lamp law and the crowded strip (pixel-sampled, measured)"},
+    {"id": "k30", "text": "the coat keeps its navy at the chest (a pale wash of some fifteen hundred pixels before, none after)", "figure": {"record": "none after", "asserted": "exact", "note": "no coat texel at the chest washed pale (the fifteen hundred before were the old build's)"}},
+    {"id": "k31", "text": "the keepsake in the book"},
+    {"id": "k32", "text": "The keepsakes file under Curios › Keepsakes in the ledger's tree, and the dossier never puts one in a locker."},
+    {"id": "k33", "text": "no errors"}
+  ],
+  "checks": [
+    {"title": "THE REGISTRIES", "clauses": ["k1", "k2", "k3", "k4", "k5", "k6", "k12", "k13", "k19", "k21", "k22", "k23", "k24", "k26", "k28"], "kind": "record"},
+    {"title": "THE FACES WORN", "clauses": ["k7", "k8", "k9", "k10"], "kind": "record"},
+    {"title": "THE BOOK AND THE ERRAND", "clauses": ["k11", "k12", "k13", "k15"], "kind": "record"},
+    {"title": "BROKEN, SHUT AND OPENED", "clauses": ["k14"], "kind": "record"},
+    {"title": "THE KIN'S ERRAND", "clauses": ["k16", "k17", "k18", "k19"], "kind": "record"},
+    {"title": "THE GRUDGE ANSWERED", "clauses": ["k20", "k21"], "kind": "record"},
+    {"title": "THE WALKER'S SCORE", "clauses": ["k25", "k26"], "kind": "record"},
+    {"title": "THE LINE AT THE RING", "clauses": ["k27", "k28"], "kind": "record"},
+    {"title": "THE SAVE", "clauses": ["k29"], "kind": "record"},
+    {"title": "THE LAMP LAW AND THE CROWDED STRIP", "clauses": ["k29b", "k30"], "kind": "record"},
+    {"title": "THE KEEPSAKE IN THE BOOK", "clauses": ["k31", "k32"], "kind": "record"}
+  ],
+  "design": [
+    {"clause": "k6", "version": "v3.49", "what": "the mood and the manual grew with every version after v3.45 — 31 causes and 93 pages in v3.49"},
+    {"clause": "k15", "version": "v3.49", "what": "the terminal's Ledger tab is Records (the plain names)"},
+    {"clause": "k25", "version": "v3.46", "what": "the take, the stand-down or the chief's fall PAY a score; it is settled when the one who fell walks it to the ring (the check reads it paid)"},
+    {"clause": "k32", "version": "v3.49", "what": "the ledgers are Cargo Rules (the plain names); the keepsakes still file under Curios › Keepsakes"}
+  ],
+  "finish": {
+      "clauses": [
+          "k33"
+      ]
+  }
+}

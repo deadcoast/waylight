@@ -1,0 +1,40 @@
+{
+  "suite": "builds",
+  "version": "v3.12",
+  "record": {
+    "doc": "DESIGN.md",
+    "where": "v3.12 — THE BUILDS: the player's trophies get station-grade art, and the doctrine closes",
+    "count": 12,
+    "count_text": "Verification grew a thirteenth suite (`tests/builds.mjs`, 12 checks)"
+  },
+  "clauses": [
+    { "id": "c1", "text": "the no-curve law asserted at the source level (arc/quadratic/linear-gradient counts equal zero", "figure": { "record": "counts equal zero", "asserted": "exact", "note": "no arc, arcTo, quadratic or bezier curve, ellipse, rounded rect, linear or conic gradient in the renderer's source" } },
+    { "id": "c2", "text": "exactly one radial for the vignette", "figure": { "record": "exactly one radial", "asserted": "exact", "note": "one createRadialGradient, in resize(), the vignette" } },
+    { "id": "c3", "text": "one radial gradient survives — the screen vignette, which is the camera, not the world" },
+    { "id": "c4", "text": "all four sprites bake at their authored dimensions" },
+    { "id": "c5", "text": "Every build is an authored sprite" },
+    { "id": "c6", "text": "a seven-structure camp with a strung wire renders live without error" },
+    { "id": "c7", "text": "the certificate/service-record/manual/enlistment stamps all present" },
+    { "id": "c8", "text": "Death is a CERTIFICATE OF PASSAGE — dispatch stamp, greyscale file photo" },
+    { "id": "c9", "text": "TAKEN BY field, the record in ledger lines, filed under THE ROLL OF THE ORDER" },
+    { "id": "c10", "text": "Skills are a stamped SERVICE RECORD with the porter's photo" },
+    { "id": "c11", "text": "the help sheet is FM-1 · PROPERTY OF THE ORDER" },
+    { "id": "c12", "text": "chargen is the ENLISTMENT form, its portrait stapled square" },
+    { "id": "c13", "text": "and the square steady-timer still reads progress" },
+    { "id": "c14", "text": "the steady-QTE timer drains around a square" }
+  ],
+  "checks": [
+    { "title": "THE NO-CURVE LAW, CURVES", "clauses": ["c1"], "kind": "record" },
+    { "title": "THE NO-CURVE LAW, GRADIENTS", "clauses": ["c1", "c2", "c3"], "kind": "record" },
+    { "title": "…", "clauses": ["c4", "c5"], "kind": "record", "repeat": 4 },
+    { "title": "THE CAMP", "clauses": ["c6"], "kind": "record" },
+    { "title": "THE CERTIFICATE", "clauses": ["c7", "c8", "c9"], "kind": "record" },
+    { "title": "THE SERVICE RECORD", "clauses": ["c7", "c10"], "kind": "record" },
+    { "title": "THE MANUAL", "clauses": ["c7", "c11"], "kind": "record" },
+    { "title": "THE ENLISTMENT", "clauses": ["c7", "c12"], "kind": "record" },
+    { "title": "THE SQUARE STEADY-TIMER", "clauses": ["c13", "c14"], "kind": "record" }
+  ],
+  "design": [
+    { "clause": "c8", "version": "v3.49", "what": "the plain names: the CERTIFICATE OF PASSAGE is titled Death certificate; the dispatch stamp, the greyscale file photo and the rest of the paper stand" }
+  ]
+}

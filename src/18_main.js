@@ -221,22 +221,13 @@
       case 'build': if (S.place) { Systems.cancelPlace(); break; } if (!UI.anyModal() && !S.cine) UI.toggleBuild(); break;
       case 'flare': if (!UI.anyModal() && !S.cine) Systems.useFlare(); break;
       case 'rifle': if (!UI.anyModal() && !S.cine && !S.dead) Systems.rifleFire(); break;
-      case 'map': if (!S.cine) UI.toggleMap(); break;
-      case 'cargo': if (!S.dead) UI.toggleCargo(); break;
-      case 'skills': if (!S.cine && !S.dead) UI2.toggleSkills(); break;
       case 'eat': if (!UI.anyModal() && !S.cine && !S.dead) Systems.eatQuick(); break;
-      case 'manual': if (!S.cine) { if (!$('helpOv').classList.contains('hidden')) ManualUI.close(); else ManualUI.open(); } break;
-      case 'muster': if (!S.cine && !S.dead) { if (!$('musterOv').classList.contains('hidden')) MusterUI.close(); else MusterUI.open(); } break;
-      case 'pause':
-        if (S.place) { Systems.cancelPlace(); break; }
-        if (NPC.pressArmed && NPC.pressArmed()) { NPC.disarmPress(); UI.toast('The mark is put away — the presser waits by the fire'); break; }   // v3.28
-        if (!UI.escPressed()) togglePause();
-        break;
+      case 'map': case 'cargo': case 'skills': case 'manual': case 'muster': case 'pause': paperAct(act); break;   // v3.52: the papers, one path for the key and the click
       default: {
         /* the rail's letters: context prompts print their own key and read the world */
         if (e.code === 'KeyC') { const a2 = Systems.getInteractions().find(i => i.key === 'C'); if (a2 && !UI.anyModal()) a2.fn(); break; }
         if (e.code === 'KeyL' || e.code === 'KeyR') { const a2 = Systems.getInteractions().find(i => i.key === (e.code === 'KeyL' ? 'L' : 'R')); if (a2) a2.fn(); break; }
-        if (/^Key[VXPUGT]$/.test(e.code)) { if (UI.anyModal() || S.cine || S.place) break; const a2 = Systems.getInteractions().find(i => i.key === e.code.slice(3)); if (a2) a2.fn(); break; }
+        if (/^Key[VXPUGTQ]$/.test(e.code)) { if (UI.anyModal() || S.cine || S.place) break; const a2 = Systems.getInteractions().find(i => i.key === e.code.slice(3)); if (a2) a2.fn(); break; }   // v3.46: Q — the line's orders
         if (/^Digit[1-9]$/.test(e.code)) UI.buildHotkey(+e.code.slice(5) - 1);   // v3.27: nine works on the bar
       }
     }
@@ -276,6 +267,20 @@
   const canTravel = () => playing && !paused && S && !S.dead && !S.cine && !UI.anyModal();
   function updateMouseWorld() { input.mouse = Render.screenToWorld(mouseScr.x, mouseScr.y); }
   gameCv.addEventListener('contextmenu', e => e.preventDefault());
+  /* v3.49 THE WHEEL — mouse wheel up zooms the camera in, down zooms out, one whole-texel level a notch (a trackpad's small
+     deltas add up to a notch); the level is remembered for this viewer */
+  let wheelAcc = 0, zoomNoteT = 0;
+  gameCv.addEventListener('wheel', e => {
+    if (!playing || UI.anyModal()) return;
+    e.preventDefault();
+    wheelAcc += e.deltaMode === 1 ? e.deltaY * 40 : e.deltaY;
+    if (Math.abs(wheelAcc) < 50) return;
+    const before = Render.zoomStepOf(), after = Render.nudgeZoom(wheelAcc < 0 ? 1 : -1); wheelAcc = 0;
+    if (after === before) return;
+    UI.opts.zoomStep = after; UI.saveOpts();
+    const zn = $('zoomNote'); if (zn) { zn.textContent = `ZOOM ${after > 0 ? '+' : ''}${after}`; zn.classList.add('on'); clearTimeout(zoomNoteT); zoomNoteT = setTimeout(() => zn.classList.remove('on'), 900); }
+  }, { passive: false });
+  if (UI.opts && UI.opts.zoomStep) Render.setZoomStep(UI.opts.zoomStep);
   gameCv.addEventListener('mousedown', e => {
     if (!playing) return;
     mouseScr.x = e.clientX; mouseScr.y = e.clientY;
@@ -315,6 +320,27 @@
   addEventListener('blur', () => { input.ml = input.mr = false; });
 
   /* ---------- pause ---------- */
+  /* v3.52 THE PAPERS ROW — a paper's key and its button take this one path, so a click and a key never disagree */
+  function paperAct(act) {
+    switch (act) {
+      case 'map': if (!S.cine) UI.toggleMap(); break;
+      case 'cargo': if (!S.dead) UI.toggleCargo(); break;
+      case 'skills': if (!S.cine && !S.dead) UI2.toggleSkills(); break;
+      case 'manual': if (!S.cine) { if (!$('helpOv').classList.contains('hidden')) ManualUI.close(); else ManualUI.open(); } break;
+      case 'muster': if (!S.cine && !S.dead) { if (!$('musterOv').classList.contains('hidden')) MusterUI.close(); else MusterUI.open(); } break;
+      case 'pause':
+        if (S.place) { Systems.cancelPlace(); break; }
+        if (NPC.pressArmed && NPC.pressArmed()) { NPC.disarmPress(); UI.toast('The mark is put away — the presser waits by the fire'); break; }   // v3.28
+        if (!UI.escPressed()) togglePause();
+        break;
+    }
+  }
+  UI.paper = paperAct;   // the manual's index of windows opens the Paused sheet by the same path
+  $('papersRow') && $('papersRow').addEventListener('click', e => {
+    const b = e.target.closest && e.target.closest('[data-paper]');
+    if (!b || !playing) return;
+    Snd.sfx.ui(); paperAct(b.dataset.paper);
+  });
   function togglePause(force) {
     paused = force !== undefined ? force : !paused;
     $('pause').classList.toggle('hidden', !paused);
@@ -359,6 +385,7 @@
     const z = UI.opts.paperZoom || 1;
     document.documentElement.style.setProperty('--paperZoom', String(z));
     for (const b of document.querySelectorAll('#pause [data-scale]')) b.classList.toggle('on', +b.dataset.scale === z);
+    if (UI.fitBand) UI.fitBand(true);   // v3.52: the top band refits to the new scale
   }
   for (const b of document.querySelectorAll('#pause [data-scale]')) b.addEventListener('click', () => { UI.opts.paperZoom = +b.dataset.scale; UI.saveOpts && UI.saveOpts(); applyPaperScale(); Snd.sfx.ui && Snd.sfx.ui(); });
   applyPaperScale();
@@ -406,7 +433,7 @@
     }
     $('titleScreen').classList.add('hidden'); Render.setTitleDrift(false);
     Porter.transcribe();
-    S.legacy.push({ name: S.pName, cls: CHAR.CLASSES[S.pClass].name, fate: 'hung up the coat', likes: Math.round((S.pStats || {}).likes || 0), km: (((S.pStats || {}).km || 0) / 1000).toFixed(1), deliveries: (S.pStats || {}).deliveries || 0, cheated: !!S.flags.cheated, seed: S.pSeed, fact: S.pClass === 'lamplighter' ? 'lamplighters' : 'waylight' });   // v3.29/30: retirement earns a stone in the walker's OWN ground
+    S.legacy.push({ name: S.pName, cls: CHAR.CLASSES[S.pClass].name, fate: 'hung up the coat', likes: Math.round((S.pStats || {}).likes || 0), km: (((S.pStats || {}).km || 0) / 1000).toFixed(1), deliveries: (S.pStats || {}).deliveries || 0, cheated: !!S.flags.cheated, seed: S.pSeed, fact: S.pClass === 'lamplighter' ? 'lamplighters' : 'waylight', scars: (((S.pStats || {}).scars || []).length + (S.scar ? 1 : 0)), look: S.look ? { ...S.look } : null , keepsakes: S.cargo.filter(c => c.keepsake).map(c => ({ name: c.name, thing: c.keepsake.thing })) });   // v3.46: the kin's thanks go to the stone   // v3.44: the scars go to the stone, and the coat they cut with them   // v3.29/30: retirement earns a stone in the walker's OWN ground
     if (!S.echoRoster.includes(S.pName)) S.echoRoster.push(S.pName);
     for (const o of [...S.orders.active]) Systems.abandonOrder(o.idNum);
     const stH = S.stations.haven;
@@ -475,7 +502,7 @@
        can read back to us, because a 9-second toast is long gone by the time anyone asks */
     if (faultsSeen[key] === 120) {
       const chip = document.getElementById('faultChip');
-      if (chip) { chip.textContent = `⚠ FAULT EVERY FRAME · ${where}: ${String(e && e.message || e).slice(0, 80)} · ESC → FREE MY BOOTS`; chip.classList.remove('hidden'); }
+      if (chip) { chip.textContent = `⚠ FAULT EVERY FRAME · ${where}: ${String(e && e.message || e).slice(0, 80)} · ESC → UNSTICK`; chip.classList.remove('hidden'); }   // v3.51: the menu's own name for the release (v3.49 named the button Unstick; the chip still sent you to the old name)
     }
   }
   const simFaulted = () => Object.keys(faultsSeen).some(k => k.startsWith('the sim'));
@@ -544,6 +571,7 @@
       let dt = (now - last) / 1000;
       last = now;
       if (dt > 0.08) dt = 0.08;
+      if (dt < 0) dt = 0;   // v3.51: a frame stamped before the moment the clock was last reset (an unpause, the watchdog's release, a slow step) is no time at all — never time run backwards (the title's tour indexed a station behind the first)
       if (window.WL && window.WL.timeScale) dt *= window.WL.timeScale;   // debug: run the clock faster for balance sessions
       if (!S) return;
       const __t0 = window.__stepProf ? performance.now() : 0;
@@ -632,3 +660,4 @@
 
   boot();
 })();
+

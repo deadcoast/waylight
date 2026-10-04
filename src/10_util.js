@@ -87,3 +87,5 @@ const U = (() => {
   function html(parent, markup) { parent.insertAdjacentHTML('beforeend', markup); return parent.lastElementChild; }
   return { rng, hash2, fbm, clamp, lerp, smooth, easeOut, easeInOut, dist, segDist, polyLen, polyAt, fmtKg, fmtTime, fmtDist, pick, uid, setUidFloor, el, html };
 })();
+
+

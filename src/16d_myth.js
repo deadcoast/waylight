@@ -196,9 +196,11 @@ const Myth = (() => {
     const R = {
       gx, gy, aim: false,
       captive: { x: gx, y: gy, seed: 771 },
-      reapers: [0, 1, 2, 3].map(i => ({ x: gx + cs * 40 + pxc * (i - 1.5) * 17, y: gy + sn * 40 + pyc * (i - 1.5) * 17 })),
-      rider: { x: gx - pxc * 62, y: gy - pyc * 62, seed: 4412, bolted: false, boltAng, gf: 0, gone: 0 },
-      watchers: [0, 1, 2, 3, 4].map(i => ({ x: wx + pxc * (i - 2) * 13 - cs * (i % 2) * 9, y: wy + pyc * (i - 2) * 13 - sn * (i % 2) * 9, seed: 900 + i * 37, kid: i === 2 })),
+      /* v3.51: spaced for the figures they are now — a Reaper's cloak is sixteen texels wide and a courier's pack fourteen;
+         at the old spacing (drawn for rectangles eight units wide) the line and the ridge were one dark mass */
+      reapers: [0, 1, 2, 3].map(i => ({ x: gx + cs * 70 + pxc * (i - 1.5) * 32, y: gy + sn * 70 + pyc * (i - 1.5) * 32 })),
+      rider: { x: gx - pxc * 90, y: gy - pyc * 90, seed: 4412, bolted: false, boltAng, gf: 0, gone: 0 },
+      watchers: [0, 1, 2, 3, 4].map(i => ({ x: wx + pxc * (i - 2) * 26 - cs * (i % 2) * 12, y: wy + pyc * (i - 2) * 26 - sn * (i % 2) * 12, seed: 900 + i * 37, kid: i === 2 })),
     };
     const kid = R.watchers[2], recon = R.watchers[0];
     const ok = Cine.play([
@@ -298,7 +300,7 @@ const Myth = (() => {
     }
     const ang = (S.dir || 0) + Math.PI / 2;
     const rx = S.px + Math.cos(ang) * 290, ry = S.py + Math.sin(ang) * 290;
-    S.lamp = { fig: { x: rx, y: ry }, env: { x: rx + 16, y: ry + 10, show: false }, t: 0 };
+    S.lamp = { fig: { x: rx, y: ry }, env: { x: rx + 44, y: ry + 6, show: false }, t: 0 };   // v3.51: a stride beside the cloak, not inside it (the figures are drawn at their size now)
     let nearR = null;
     for (const cd of DATA.camps) { const c = S.camps[cd.id]; if (!c) continue; const r = (c.runners || []).find(r2 => U.dist(r2.x, r2.y, S.px, S.py) < 420); if (r) { nearR = r; break; } }
     const ok = Cine.play([
@@ -317,9 +319,9 @@ const Myth = (() => {
         } },
       { move: 'push', at: { x: rx, y: ry - 6 }, zoom: 2.3, zoomTo: 3.3, dur: 2.2,
         say: { line: 'Still upright. Good. The Order teaches falling; we teach standing.', col: '255,201,120', at: { x: rx, y: ry } } },
-      { move: 'cut', at: { x: rx + 8, y: ry }, zoom: 2.6, dur: 2.7,
+      { move: 'cut', at: { x: rx + 22, y: ry }, zoom: 2.6, dur: 2.7,
         on: () => { if (S.lamp) S.lamp.env.show = true; },
-        say: { line: 'GREETINGS, SURFACE-FRIEND. OUR BOOKS DESCRIBED YOUR KIND. THE BOOKS WERE WRONG.', col: '143,176,138', at: { x: rx + 16, y: ry + 4 } } },
+        say: { line: 'GREETINGS, SURFACE-FRIEND. OUR BOOKS DESCRIBED YOUR KIND. THE BOOKS WERE WRONG.', col: '143,176,138', at: { x: rx + 44, y: ry } } },
       { move: 'hold', at: { x: rx, y: ry }, zoom: 2.2, dur: 1.7, fx: { stamp: 'THE CLOAKED TORCH.' } },
     ], { ts: 0.25, onEnd: endLamp });
     if (!ok) endLamp();   // a blocked scene never blocks the meeting itself
@@ -377,3 +379,5 @@ const Myth = (() => {
 
   return { tick, tier, microCine, beginRide, canLamp, beginLamp, skip, mythLine, legendPrefix, TIERS };
 })();
+
+

@@ -1,0 +1,386 @@
+{
+  "suite": "exileroads",
+  "version": "v3.30",
+  "record": {
+    "doc": "DESIGN.md",
+    "where": "The exile roads (v3.30 — Shutterlight, the guild, the C-series, the Hooded Row)",
+    "count": 22,
+    "count_text": "exileroads.mjs, 22 checks green end to end"
+  },
+  "clauses": [
+    {
+      "id": "c1",
+      "text": "reveal gates, journey",
+      "doc": "FEATURES.md"
+    },
+    {
+      "id": "c2",
+      "text": "exchange arithmetic, restock cycle",
+      "doc": "FEATURES.md"
+    },
+    {
+      "id": "c3",
+      "text": "guild gating/pay/lapse-free ledger",
+      "doc": "FEATURES.md"
+    },
+    {
+      "id": "c4",
+      "text": "rank ladder, door, C-series purchases",
+      "doc": "FEATURES.md"
+    },
+    {
+      "id": "c5",
+      "text": "desk on the table, stone routing",
+      "doc": "FEATURES.md"
+    },
+    {
+      "id": "c6",
+      "text": "the exiles' sheet voice, save round-trip",
+      "doc": "FEATURES.md"
+    },
+    {
+      "id": "c7",
+      "text": "Shutterlight is REVEALED, never charted."
+    },
+    {
+      "id": "c8",
+      "text": "No Farkeeper rider will ride toward the exiles; the city arrives because the exiles decide you have seen enough."
+    },
+    {
+      "id": "c9",
+      "text": "The v3.25 rescue (or an exile walker's own coat) MARKS the Darklands table — \"a mark nobody made,\" a hooded lantern charcoaled onto the frame"
+    },
+    {
+      "id": "c10",
+      "text": "FOLLOW THE MARK runs a guided journey down a road no survey will hold."
+    },
+    {
+      "id": "c11",
+      "text": "The city opens on the table's far north-west edge with its own pin (a lantern with the shutter half down) and its own desk."
+    },
+    {
+      "id": "c12",
+      "text": "The exchange sells .338 at three metal a round from a cycled stock of six — dear, because the Nomads collect rifles, not brass.",
+      "figure": {
+        "record": "three metal a round from a cycled stock of six",
+        "asserted": "exact",
+        "note": "three rounds cost exactly 9 metal, the stock runs 6 → 3 → 0, and the cycle's turn brings back six, never more"
+      }
+    },
+    {
+      "id": "c13",
+      "text": "The guild posts the quiet work, gated HONESTLY by what already exists: a rifle on your back (v3.25) and a party of two at it (v3.24).",
+      "figure": {
+        "record": "a party of two",
+        "asserted": "threshold",
+        "note": "a rifle walking alone (no party) is refused and a rifle with a party of two can work; a party of one is not sampled"
+      }
+    },
+    {
+      "id": "c14",
+      "text": "Ridge watch, caravan gun, and the quiet collection — which writes the Renegade ledger, because the karma system was always going to color this — run on the wage-law clock with a mid-contract hazard roll"
+    },
+    {
+      "id": "c15",
+      "text": "\"it went loud\" pays half and asks no questions it already knows the answers to",
+      "figure": {
+        "record": "pays half",
+        "asserted": "exact",
+        "note": "the Caravan gun gone loud pays 12 metal and 1 × .338 of its 25 and 2, floored"
+      }
+    },
+    {
+      "id": "c16",
+      "text": "Contracts done build guild standing: three opens the C3A1 shelf, seven turns THE COLD DOOR's corner of the table.",
+      "figure": {
+        "record": "three opens the C3A1 shelf, seven turns THE COLD DOOR's corner",
+        "asserted": "exact",
+        "note": "standing 1 at 0 and 2 done, 2 at 3 and 6, 3 at 7; the door still hidden at six done and seen at the seventh"
+      }
+    },
+    {
+      "id": "c17",
+      "text": "guild standing 1→2 (3 done)→3 (7 done)",
+      "doc": "FEATURES.md",
+      "figure": {
+        "record": "1→2 (3 done)→3 (7 done)",
+        "asserted": "exact",
+        "note": "the rank read at 0, 2, 3, 6, 7 and 12 contracts done: 1 1 2 2 3 3"
+      }
+    },
+    {
+      "id": "c18",
+      "text": "C14 Timberwolf, the hand-me-down; C3A1 at standing two, the red-leaf service bolt; C20 behind the cold door, the semi-automatic answer.",
+      "figure": {
+        "record": "C3A1 at standing two",
+        "asserted": "threshold",
+        "note": "refused to a hand of standing 1 with the bank untouched, sold at standing 3 (seven done); standing 2 itself is not sampled"
+      }
+    },
+    {
+      "id": "c19",
+      "text": "C3A1 at standing 2 (80 metal · 20 ceramic; red leaf in the sights)",
+      "doc": "FEATURES.md",
+      "figure": {
+        "record": "80 metal · 20 ceramic",
+        "asserted": "exact",
+        "note": "the bank pays exactly 80 metal and 20 ceramic and nothing else"
+      }
+    },
+    {
+      "id": "c20",
+      "text": "C20 behind the cold door (120 metal · 24 wood)",
+      "doc": "FEATURES.md",
+      "figure": {
+        "record": "120 metal · 24 wood",
+        "asserted": "exact",
+        "note": "refused before the knock, then exactly 120 metal and 24 wood"
+      }
+    },
+    {
+      "id": "c21",
+      "text": "THE COLD DOOR: turns its table corner at standing 3; a KNOCK plays the raised-tongue scene and opens the C20 shelf",
+      "doc": "FEATURES.md",
+      "figure": {
+        "record": "at standing 3",
+        "asserted": "exact",
+        "note": "the door's pin turns at the seventh contract, standing 3, and not at the sixth"
+      }
+    },
+    {
+      "id": "c22",
+      "text": "Each is a set of multipliers on the v3.25 rifle constants — range, cooldown, drop time, warning radius"
+    },
+    {
+      "id": "c23",
+      "text": "A knock at the cold door plays the raised-tongue scene and opens the last shelf"
+    },
+    {
+      "id": "c24",
+      "text": "The Lamplighter memorial ground goes LIVE on the v3.29 architecture: revealed with the city, sited far from every station (the exiles bury their own where no map minds), dark stelae under hooded-lantern accents, UNHOODED for a stamp"
+    },
+    {
+      "id": "c25",
+      "text": "a Lamplighter-class walker's death routes their stone THERE by the banner on their legacy row, never to the Lantern Rows"
+    },
+    {
+      "id": "c26",
+      "text": "and the rifle is NAMED on the pack, the prompt, and the dry-fire line"
+    },
+    {
+      "id": "c27",
+      "text": "And the appreciation icon is sized like it matters: 30px beside \"+N APPRECIATION\" on the waybill, proven on a real local-post delivery.",
+      "figure": {
+        "record": "30px",
+        "asserted": "exact",
+        "note": "a real local-post delivery (a letter run off Elm Farm's board, handed over at Haven on a real E) lands a waybill whose icon beside \"+N APPRECIATION\" renders 30×30"
+      }
+    },
+    {
+      "id": "c28",
+      "text": "The appreciation icon sized like it matters: 30px on the waybill's \"+N APPRECIATION\" line, 16–18px in the ledgers — proven on a real local-post delivery",
+      "doc": "FEATURES.md",
+      "figure": {
+        "record": "30px … 16–18px",
+        "asserted": "exact",
+        "note": "30×30 on the waybill; on the terminal the icon under the stars renders 16 and each rung of the Mail tab's appreciation ladder 18"
+      }
+    }
+  ],
+  "checks": [
+    {
+      "title": "THE REVEAL GATE",
+      "clauses": [
+        "c1",
+        "c7",
+        "c8"
+      ],
+      "kind": "record"
+    },
+    {
+      "title": "A MARK NOBODY MADE",
+      "clauses": [
+        "c1",
+        "c9"
+      ],
+      "kind": "record"
+    },
+    {
+      "title": "AN EXILE'S OWN COAT",
+      "clauses": [
+        "c1",
+        "c9"
+      ],
+      "kind": "record"
+    },
+    {
+      "title": "THE JOURNEY",
+      "clauses": [
+        "c1",
+        "c10",
+        "c24"
+      ],
+      "kind": "record"
+    },
+    {
+      "title": "THE CITY ON THE TABLE",
+      "clauses": [
+        "c5",
+        "c11"
+      ],
+      "kind": "record"
+    },
+    {
+      "title": "THE EXCHANGE",
+      "clauses": [
+        "c2",
+        "c12"
+      ],
+      "kind": "record"
+    },
+    {
+      "title": "THE RESTOCK CYCLE",
+      "clauses": [
+        "c2",
+        "c12"
+      ],
+      "kind": "record"
+    },
+    {
+      "title": "THE GUILD'S HONEST GATE",
+      "clauses": [
+        "c3",
+        "c13",
+        "c14"
+      ],
+      "kind": "record"
+    },
+    {
+      "title": "A CONTRACT DONE CLEAN",
+      "clauses": [
+        "c3",
+        "c14",
+        "c27",
+        "c28"
+      ],
+      "kind": "record"
+    },
+    {
+      "title": "IT WENT LOUD",
+      "clauses": [
+        "c3",
+        "c14",
+        "c15"
+      ],
+      "kind": "record"
+    },
+    {
+      "title": "THE QUIET COLLECTION",
+      "clauses": [
+        "c3",
+        "c14"
+      ],
+      "kind": "record"
+    },
+    {
+      "title": "NO LAPSE",
+      "clauses": [
+        "c3"
+      ],
+      "kind": "record"
+    },
+    {
+      "title": "THE RANK LADDER",
+      "clauses": [
+        "c4",
+        "c16",
+        "c17",
+        "c21"
+      ],
+      "kind": "record"
+    },
+    {
+      "title": "THE KNOCK",
+      "clauses": [
+        "c4",
+        "c21",
+        "c23"
+      ],
+      "kind": "record"
+    },
+    {
+      "title": "THE C3A1",
+      "clauses": [
+        "c4",
+        "c18",
+        "c19",
+        "c26"
+      ],
+      "kind": "record"
+    },
+    {
+      "title": "THE C20",
+      "clauses": [
+        "c4",
+        "c18",
+        "c20",
+        "c21",
+        "c23"
+      ],
+      "kind": "record"
+    },
+    {
+      "title": "ONE FIRE PATH",
+      "clauses": [
+        "c22",
+        "c26"
+      ],
+      "kind": "record"
+    },
+    {
+      "title": "THE CRACK'S WARNING RADIUS",
+      "clauses": [
+        "c22"
+      ],
+      "kind": "record"
+    },
+    {
+      "title": "THE DESK ON THE TABLE",
+      "clauses": [
+        "c5",
+        "c11"
+      ],
+      "kind": "record"
+    },
+    {
+      "title": "THE STONE ROUTED",
+      "clauses": [
+        "c5",
+        "c25"
+      ],
+      "kind": "record"
+    },
+    {
+      "title": "THE EXILES' VOICE",
+      "clauses": [
+        "c6",
+        "c24"
+      ],
+      "kind": "record"
+    },
+    {
+      "title": "THE SAVE",
+      "clauses": [
+        "c6"
+      ],
+      "kind": "record"
+    }
+  ],
+  "design": [
+    {
+      "clause": "c9",
+      "version": "v3.49",
+      "what": "the plain names: the Darklands table is the Map's Region view (the Region map); the mark and the city's pin stand on it"
+    }
+  ]
+}

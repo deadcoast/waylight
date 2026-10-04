@@ -1,0 +1,55 @@
+{
+  "suite": "answered",
+  "version": "v3.47",
+  "record": {
+      "doc": "DESIGN.md",
+      "where": "The word answered (v3.47 — the door that heard, the keepsake set down, the road kept, the stone's keeping, the line's watch) · Proof",
+      "count": 8,
+      "count_text": "answered.mjs, 8 checks"
+  },
+  "clauses": [
+    {"id": "a1", "text": "answered.mjs, 8 checks: - the registries"},
+    {"id": "a2", "text": "seven marks", "figure": {"record": "seven marks", "asserted": "exact", "note": "seven 7×7 marks in MARK_PAL, all distinct"}},
+    {"id": "a3", "text": "the six keepsakes as they lie at a stone", "figure": {"record": "six", "asserted": "exact", "note": "KEEPSAKE_SET holds six, on the token's palette, larger than the token"}},
+    {"id": "a4", "text": "the truce stake kept (a gold knot), stripped (a scrap on the nail) and its rag in the dirt"},
+    {"id": "a5", "text": "the settled stones kicked over"},
+    {"id": "a6", "text": "the watch fire in two frames", "figure": {"record": "two frames", "asserted": "exact", "note": "WATCHFIRE holds two 9×8 frames over one laid fire"}},
+    {"id": "a7", "text": "the rag on its switch at the pack"},
+    {"id": "a8", "text": "THE GIFT'S CORD: twine, on the pack and on the tower's glyph. A red cord on pale cloth read as a medic's cross."},
+    {"id": "a9", "text": "T.word.answer {kept 3, broken 2}", "figure": {"record": "kept 3, broken 2", "asserted": "exact", "note": "the row in the registries; two kept words heard are not enough, the third answers; one broken word leaves the door open, the second shuts it"}},
+    {"id": "a10", "text": "T.kin {setLikes 3, setAppr 4, setR 60}", "figure": {"record": "setLikes 3, setAppr 4, setR 60", "asserted": "exact", "note": "the row in the registries"}},
+    {"id": "a11", "text": "T.road {gift: 30 provisions + 20 metal, kg 6, reach 150, roadW 70, bareDays 1}", "figure": {"record": "30 provisions + 20 metal, kg 6, reach 150, roadW 70, bareDays 1", "asserted": "exact", "note": "the row in the registries; the gift a 6 kg item, its price taken off the bank by the click"}},
+    {"id": "a12", "text": "T.stone {passR 70, pauseT 1.6, passCd 240, moodDays 1, walk 5, kick 1.2}", "figure": {"record": "passR 70, pauseT 1.6, passCd 240, moodDays 1, walk 5, kick 1.2", "asserted": "exact", "note": "the row in the registries"}},
+    {"id": "a13", "text": "T.watch {speed 84, fallInR 260, fireR 76, moodDays 1}", "figure": {"record": "speed 84, fallInR 260, fireR 76, moodDays 1", "asserted": "exact", "note": "the row in the registries"}},
+    {"id": "a14", "text": "The lessons and the mood: seven lessons (80 pages) and two mood causes (29).", "figure": {"record": "80 pages; two mood causes (29)", "asserted": "changed", "note": "later versions add lessons and causes: the check pins the 31 causes of v3.49 (the cairn and the watch among them) and holds the v3.49 manual's floor (93 pages) with the seven lessons of v3.47"}},
+    {"id": "a15", "text": "the word answered end to end (three kept words heard, the errand on the wire's word, the credit spent; two broken, shut by hearsay, refused, a late delivery leaving it shut, a good one opening it with SEEN AT THE DOOR)"},
+    {"id": "a16", "text": "the Ledger's row reads the same"},
+    {"id": "a17", "text": "the keepsake set down (the thing at the stone's foot pixel-sampled against the same frame without it)"},
+    {"id": "a18", "text": "The town is warmer by three likes and four of appreciation.", "figure": {"record": "three likes and four of appreciation", "asserted": "exact", "note": "the town +3 likes and +4 appreciation at the stone"}},
+    {"id": "a19", "text": "A stone takes its keepsake once."},
+    {"id": "a20", "text": "the road kept (the board's card by a real click, the rag at the pack pixel-sampled on the road and off it, the knives letting the loaded Walker by, the gold knot pixel-sampled, the rags down pixel-sampled)"},
+    {"id": "a21", "text": "the stone's keeping (the pause, the kick, the stones in the dirt pixel-sampled, the score again)"},
+    {"id": "a22", "text": "the watch (by a real click, the fire pixel-sampled laid and lit, the camp kept in, the run through, the storm held, home at dawn, called in early)"},
+    {"id": "a23", "text": "the save"},
+    {"id": "a24", "text": "no errors"}
+  ],
+  "checks": [
+    {"title": "THE REGISTRIES", "clauses": ["a1", "a2", "a3", "a4", "a5", "a6", "a7", "a8", "a9", "a10", "a11", "a12", "a13", "a14"], "kind": "record"},
+    {"title": "THE WORD ANSWERED", "clauses": ["a9", "a15", "a16"], "kind": "record"},
+    {"title": "THE KEEPSAKE SET DOWN", "clauses": ["a10", "a17", "a18", "a19"], "kind": "record"},
+    {"title": "THE ROAD KEPT", "clauses": ["a7", "a11", "a20"], "kind": "record"},
+    {"title": "THE STONE'S KEEPING", "clauses": ["a21"], "kind": "record"},
+    {"title": "THE LINE'S WATCH", "clauses": ["a22"], "kind": "record"},
+    {"title": "THE SAVE", "clauses": ["a23"], "kind": "record"}
+  ],
+  "design": [
+    {"clause": "a7", "version": "v3.50", "what": "the white rag on its switch rides the courier's own grid with an anchor in every facing; the old rig's RAG_CELLS are retired"},
+    {"clause": "a14", "version": "v3.49", "what": "the mood and the manual grew after v3.47 — 31 causes and 93 pages in v3.49"},
+    {"clause": "a16", "version": "v3.49", "what": "the terminal's Ledger tab is Records (the plain names)"}
+  ],
+  "finish": {
+      "clauses": [
+          "a24"
+      ]
+  }
+}

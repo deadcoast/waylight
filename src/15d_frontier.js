@@ -141,7 +141,7 @@ const Frontier = (() => {
       for (const k of Object.keys(haul)) haul[k] = Math.max(0, Math.floor(haul[k] / 2));
       if (r.raids === 1) Systems.addMail(`The ${reach.outpost} caravan was hit`, `Scrappers on the dark road — half the haul gone into the grey. The drivers walked away; freight doesn't bleed. The Farkeepers put a price on an escort for exactly this arithmetic.`);
     }
-    for (const [k, v] of Object.entries(haul)) if (v > 0) State.bank(k, v);
+    for (const [k, v] of Object.entries(haul)) if (v > 0) State.bank(k, v, 'haven');   // v3.51: the caravans walk into Haven — its board posts their surplus
     r.hauls = (r.hauls || 0) + 1;
     S.eco = S.eco || { produced: {} };
     S.eco.produced.outpost = (S.eco.produced.outpost || 0) + Object.values(haul).reduce((a, b2) => a + b2, 0);
@@ -167,3 +167,5 @@ const Frontier = (() => {
 
   return { REACHES, fundRecon, fundOutpost, toggleGuard, tick, phase, info, progress, counts };
 })();
+
+

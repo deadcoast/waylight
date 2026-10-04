@@ -1,0 +1,58 @@
+{
+  "suite": "carried",
+  "version": "v3.46",
+  "record": {
+      "doc": "DESIGN.md",
+      "where": "The word carried (v3.46 — the word on the wire, the kin's thanks, the truce as a road, the score settled, the line's orders) · Proof",
+      "count": 10,
+      "count_text": "carried.mjs, 10 checks"
+  },
+  "clauses": [
+    {"id": "w1", "text": "the registries (fourteen marks, the letter, the stake, the stones", "figure": {"record": "fourteen marks", "asserted": "exact", "note": "fourteen 7×7 marks in MARK_PAL, all distinct"}},
+    {"id": "w2", "text": "the letter on the wire (7×5, a gold seal kept, a rust seal broken)", "doc": "FEATURES.md", "figure": {"record": "7×5", "asserted": "exact", "note": "WORDNOTE.kept and .broken 7×5 in WORD_PAL, the gold seal and the rust"}},
+    {"id": "w3", "text": "the truce stake with its white rag (7×13)", "doc": "FEATURES.md", "figure": {"record": "7×13", "asserted": "exact", "note": "TRUCESTAKE 7×13 in TRUCE_PAL"}},
+    {"id": "w4", "text": "the settled stones, a cairn with a red thread (8×7)", "doc": "FEATURES.md", "figure": {"record": "8×7", "asserted": "exact", "note": "SETTLESTONE 8×7 in SETTLE_PAL, the red thread in it"}},
+    {"id": "w5", "text": "the runner's bundle, six keepsakes, the rows, the voices", "figure": {"record": "six keepsakes", "asserted": "exact", "note": "six keepsakes, each with a mark and a token, all distinct"}},
+    {"id": "w6", "text": "six keepsakes, each a mark and a 2×3 token for under the pack", "doc": "FEATURES.md", "figure": {"record": "2×3", "asserted": "exact", "note": "every token 2×3 in TOKEN_PAL"}},
+    {"id": "w7", "text": "the chief's runner's bundle and white rag stamped on the rig's grid", "doc": "FEATURES.md"},
+    {"id": "w8", "text": "twenty-seven causes, seventy-three lessons", "figure": {"record": "twenty-seven causes, seventy-three lessons", "asserted": "changed", "note": "later versions add causes and lessons: the check pins the 31 causes of v3.49 (settled among them) and holds the v3.49 manual's floor (93 pages) with the seven lessons of v3.46"}},
+    {"id": "w9", "text": "Q on the rail"},
+    {"id": "w10", "text": "the word on the wire end to end (the letter pixel-sampled on the canvas and the sheet, the landing, the door, the weight, the ledger, a broken word cooler)"},
+    {"id": "w11", "text": "now walks the wire to the two nearest lit towns, on the wire's own route", "figure": {"record": "the two nearest", "asserted": "exact", "note": "word.wire.near 2; the two letters go to the Mill's two nearest lit towns"}},
+    {"id": "w12", "text": "T.word.wire {near 2, likes 1, appr 2, speed 260}", "doc": "FEATURES.md", "figure": {"record": "likes 1, appr 2, speed 260", "asserted": "exact", "note": "the row in the registries; the letter's eta the route over 260 (±1 s); landing kept +1 like +2 appreciation, broken −1 like"}},
+    {"id": "w13", "text": "the kin's thanks (the token under the pack sampled against the same frame without it, the slip, the plate, the dossier, the card)"},
+    {"id": "w14", "text": "the dossier never stores it"},
+    {"id": "w15", "text": "Every delivery into that town with it is a like warmer, and the slip says THE KIN'S THANKS", "figure": {"record": "a like warmer", "asserted": "exact", "note": "kin.keepsakeLikes 1; the town 40 → 41 on the delivery"}},
+    {"id": "w16", "text": "the stone's flame (the cold lantern sampled — dark, no flame)"},
+    {"id": "w17", "text": "Twice; after that the kin keep it themselves.", "figure": {"record": "twice", "asserted": "exact", "note": "kin.relights 2; the row kept at the second"}},
+    {"id": "w18", "text": "T.kin {relights 2, relightLikes 2}", "doc": "FEATURES.md", "figure": {"record": "relightLikes 2", "asserted": "exact", "note": "the lantern set back, the town 40 → 42"}},
+    {"id": "w19", "text": "the truce road (closed hostile, open at truce, the rags sampled, the sheet)"},
+    {"id": "w20", "text": "the chief's runner (the bundle sampled, the gift, turned back and nothing comes)"},
+    {"id": "w21", "text": "T.parley.giftBack {metal 30, provisions 24}", "doc": "FEATURES.md", "figure": {"record": "metal 30, provisions 24", "asserted": "exact", "note": "the row in the registries; the bank +30 metal and +24 provisions when he arrives"}},
+    {"id": "w22", "text": "the score settled (the stones and the red thread sampled)"},
+    {"id": "w23", "text": "A score paid and never walked in three days is let go (the mail).", "figure": {"record": "three days", "asserted": "exact", "note": "score.walkDays 3; let go a second past three days"}},
+    {"id": "w24", "text": "the line's orders (a real click each, the rope sampled, the U sampled)"},
+    {"id": "w25", "text": "the save"},
+    {"id": "w26", "text": "no errors"}
+  ],
+  "checks": [
+    {"title": "THE REGISTRIES", "clauses": ["w1", "w2", "w3", "w4", "w5", "w6", "w7", "w8", "w11", "w12", "w17", "w18", "w21", "w23"], "kind": "record"},
+    {"title": "THE WORD ON THE WIRE", "clauses": ["w10", "w11", "w12"], "kind": "record"},
+    {"title": "THE KIN'S THANKS", "clauses": ["w13", "w14", "w15"], "kind": "record"},
+    {"title": "THE STONE'S FLAME", "clauses": ["w16", "w17", "w18"], "kind": "record"},
+    {"title": "THE TRUCE AS A ROAD", "clauses": ["w19"], "kind": "record"},
+    {"title": "THE CHIEF'S RUNNER", "clauses": ["w7", "w20", "w21"], "kind": "record"},
+    {"title": "THE SCORE SETTLED", "clauses": ["w22", "w23"], "kind": "record"},
+    {"title": "THE LINE'S ORDERS", "clauses": ["w9", "w24"], "kind": "record"},
+    {"title": "THE SAVE", "clauses": ["w25"], "kind": "record"}
+  ],
+  "design": [
+    {"clause": "w7", "version": "v3.51", "what": "the runner is the knife figure on the courier's grid; his bundle is lashed at the knife's own anchors in every facing"},
+    {"clause": "w8", "version": "v3.49", "what": "the mood and the manual grew with every version after v3.46 — 31 causes and 93 pages in v3.49"}
+  ],
+  "finish": {
+      "clauses": [
+          "w26"
+      ]
+  }
+}

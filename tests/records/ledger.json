@@ -1,0 +1,54 @@
+{
+  "suite": "ledger",
+  "version": "v3.9",
+  "record": {
+    "doc": "DESIGN.md",
+    "where": "v3.9 — LEDGERLIGHT: the house style, named (8 checks) · v3.10 — the interface is the Order's paperwork (four new checks)",
+    "count": 12,
+    "count_text": ["Verification grew an eleventh suite (`tests/ledger.mjs`, 8 checks)", "Four new checks in `tests/ledger.mjs`"]
+  },
+  "clauses": [
+    { "id": "c1", "text": "the title camera provably drifts" },
+    { "id": "c2", "text": "the wordmark's bone and gold pixels are counted" },
+    { "id": "c3", "text": "caravans spawn between connected stations and advance along their routes" },
+    { "id": "c4", "text": "stockRead maps pantry → bays (2 full / 0 starved)", "figure": { "record": "2 full / 0 starved", "asserted": "exact", "note": "both bays at a full pantry, none starved (and one running short)" } },
+    { "id": "c5", "text": "with the on-screen glass dimming measured as a delta" },
+    { "id": "c6", "text": "the coat palette swaps by rank" },
+    { "id": "c7", "text": "The title screen is the ledger itself. No static menu" },
+    { "id": "c8", "text": "A new player tours the dark valley they are about to fix" },
+    { "id": "c9", "text": "behind an authored WAYLIGHT wordmark (drawn letter by letter, bone and gold, the beacon burning over the I of LIGHT)" },
+    { "id": "c10", "text": "now every feeding pair sends caravans of light down the road between them (the crow-line until one is paved)" },
+    { "id": "c11", "text": "spawn rate tied to the real flow multiplier" },
+    { "id": "c12", "text": "A station's longhouse reads its own pantry: full, both window bays burn; running short, one goes dark; starved, both are out and the doorway gutters" },
+    { "id": "c13", "text": "The Order writes itself on the Walker's back: drab wool at Greenhand, the blue coat once Sworn, gold trim as a Lifeline, and the dark gold-lined coat of a Legend" },
+    { "id": "c14", "text": "dither-paper computed style" },
+    { "id": "c15", "text": "waybill stamps on live cards" },
+    { "id": "c16", "text": "raised ledger tabs" },
+    { "id": "c17", "text": "the delivery-slip title" },
+    { "id": "c18", "text": "every panel and card is textured with a 4-pixel tile of the game's Bayer dither — paper grain in the same language as the terrain — via an inline SVG tile", "figure": { "record": "4-pixel tile", "asserted": "exact", "note": "the inline SVG tile is 4 × 4 on every live panel and card" } },
+    { "id": "c19", "text": "Every card leads with a stamped tag — WAYBILL, MAILBAG, PRIORITY DISPATCH — and carries a perforated left edge" },
+    { "id": "c20", "text": "Its tabs are raised file-folder index tabs, not web nav; the active tab joins the page" },
+    { "id": "c21", "text": "The results screen is the stamped delivery slip — \"WAYBILL — DELIVERED · OFFICE OF THE DISPATCH · THE ORDER OF WAYLIGHTERS\", the grade slammed on it like ink" }
+  ],
+  "checks": [
+    { "title": "THE TITLE CAMERA DRIFTS", "clauses": ["c1", "c7", "c8"], "kind": "record" },
+    { "title": "THE WORDMARK'S BONE", "clauses": ["c2", "c9"], "kind": "record" },
+    { "title": "THE WORDMARK'S GOLD", "clauses": ["c2", "c9"], "kind": "record" },
+    { "title": "THE CARAVANS SPAWN", "clauses": ["c3", "c10"], "kind": "record" },
+    { "title": "THE CARAVANS ADVANCE, AT THE FLOW'S RATE", "clauses": ["c3", "c10", "c11"], "kind": "record" },
+    { "title": "THE WINDOWS READ THE PANTRY", "clauses": ["c4", "c12"], "kind": "record" },
+    { "title": "THE GLASS DIMS ON SCREEN", "clauses": ["c5", "c12"], "kind": "record" },
+    { "title": "THE COAT IS THE RANK", "clauses": ["c6", "c13"], "kind": "record" },
+    { "title": "PAPER", "clauses": ["c14", "c18"], "kind": "record" },
+    { "title": "PAPER", "clauses": ["c15", "c19"], "kind": "record" },
+    { "title": "PAPER", "clauses": ["c16", "c20"], "kind": "record" },
+    { "title": "PAPER", "clauses": ["c17", "c21"], "kind": "record" }
+  ],
+  "design": [
+    { "clause": "c13", "version": "v3.23", "what": "a coat cut at enlistment is the walker's own and is worn over the rank's; the four rank palettes stand for a walker who cut none — the check reads both" },
+    { "clause": "c15", "version": "v3.49", "what": "the plain names: the WAYBILL tag reads DELIVERY (MAILBAG and PRIORITY DISPATCH stand)" },
+    { "clause": "c19", "version": "v3.49", "what": "the plain names: the WAYBILL tag reads DELIVERY; the perforated edge stands" },
+    { "clause": "c17", "version": "v3.49", "what": "the plain names: the slip's title reads Delivery complete" },
+    { "clause": "c21", "version": "v3.49", "what": "the plain names: the slip's title reads Delivery complete; the OFFICE OF THE DISPATCH · THE ORDER OF WAYLIGHTERS stamp and the grade stand" }
+  ]
+}

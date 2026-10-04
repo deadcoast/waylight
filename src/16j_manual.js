@@ -16,7 +16,7 @@ const ManualUI = (() => {
   /* ---------- CONTROLS ---------- */
   const cap = (code, a, fixed) => `<span class="k fmCap ${fixed ? 'fixed' : ''} ${listening === a && !fixed ? 'listen' : ''}" data-act="${a}" title="${fixed ? 'stands fixed' : 'click, then press a key'}">${listening === a && !fixed ? 'PRESS…' : KEYS.label(code)}</span>`;
   function controls() {
-    const groups = { walk: 'THE WALK', hands: 'THE HANDS', papers: 'THE PAPERS' };
+    const groups = { walk: 'MOVEMENT', hands: 'ACTIONS', papers: 'WINDOWS' };   // v3.49: plain group names
     let htm = `<div class="fmNote">Click a key cap and press the key you want there; <b>Esc</b> stops listening. A key another action answers is refused by name. The second cap of a pair stays as printed.${KEYS.changed() ? ` <button class="miniBtn" data-fmreset="all">RESET TO THE ORDER'S DEFAULTS</button>` : ''}</div>`;
     for (const [g, head] of Object.entries(groups)) {
       htm += `<div class="fmGroup">${head}</div>`;
@@ -24,13 +24,14 @@ const ManualUI = (() => {
         htm += `<div class="fmRow"><span class="fmCaps">${r.codes.map((c, i) => cap(c, r.id, r.fixed || i > 0)).join('')}</span><span class="fmName">${r.name}${r.hold ? '<i>hold</i>' : ''}${r.custom ? ' <i style="color:var(--gold)">rebound</i>' : ''}</span>${r.custom ? `<button class="miniBtn" data-fmreset="${r.id}">default</button>` : ''}</div>`;
       }
     }
-    htm += `<div class="fmGroup">THE MOUSE</div>
+    htm += `<div class="fmGroup">MOUSE</div>
       <div class="fmRow"><span class="fmCaps"><span class="k">M1</span></span><span class="fmName">Click a place — walk there. Click a terminal, ruin, crate or your walking partner — walk there and use it</span></div>
       <div class="fmRow"><span class="fmCaps"><span class="k">&#8679;M1</span></span><span class="fmName">Shift-click (world or map) — string waypoints; your feet take them in order</span></div>
       <div class="fmRow"><span class="fmCaps"><span class="k">M1</span><i>hold</i></span><span class="fmName">Steer toward the cursor</span></div>
       <div class="fmRow"><span class="fmCaps"><span class="k">M1</span>+<span class="k">M2</span></span><span class="fmName">Hold both — sprint</span></div>
       <div class="fmRow"><span class="fmCaps"><span class="k">M2</span></span><span class="fmName">Fold a blueprint away · put a presser's mark away</span></div>
-      <div class="fmGroup">THE RAIL'S LETTERS &amp; THE BAR</div>
+      <div class="fmRow"><span class="fmCaps"><span class="k">WHEEL</span></span><span class="fmName">Zoom the camera — up in, down out, a whole level a notch; the level is remembered</span></div>
+      <div class="fmGroup">PROMPT KEYS &amp; THE BUILD BAR</div>
       <div class="fmNote">Context prompts print their own letter beside what they do — <b>${KEYS.PROMPT_KEYS.join(' · ')}</b> — and read the world: a stash, a cairn, a zipline's other end, a trade of loads, a raising. They are labels, not bindings. The build bar's works answer <b>${KEYS.BUILD_SLOTS}</b> in the order they stand.</div>
       <div class="fmNote">Heavy loads wobble on rough ground — steady them on the ring, or hold <b>${KEYS.labels('brace')[0]}</b> to brace and walk it out. Cold water soaks crates; light, shelters and tarps blunt the greyfall; a flare frees the kept.</div>`;
     return htm;
@@ -61,19 +62,29 @@ const ManualUI = (() => {
       const w = walked(k), title = T2[k] || k, text = DATA.tutorials[k];
       if (q && !(w && (title.toLowerCase().includes(q) || strip(text).toLowerCase().includes(q)))) return;
       shown++;
-      htm += `<div class="fmLesson ${w ? '' : 'sealed'}"><div class="fmTitle">${title}<span class="fmPg">PAGE ${i + 1}${w ? '' : ' · SEALED'}</span></div><div class="fmText">${w ? KEYS.say(text) : 'a page not yet walked'}</div></div>`;
+      const plates = w && PLATES[k] && typeof Render !== 'undefined' && Render.rigOverlayURL ? `<div class="fmPlates">${PLATES[k].map(([pk, cap]) => `<figure><img src="${Render.rigOverlayURL(pk, 3)}" width="64" height="76" alt=""><figcaption>${cap}</figcaption></figure>`).join('')}</div>` : '';   // v3.44: the wound's page in plates
+      htm += `<div class="fmLesson ${w ? '' : 'sealed'}"><div class="fmTitle">${title}<span class="fmPg">PAGE ${i + 1}${w ? '' : ' · SEALED'}</span></div><div class="fmText">${w ? KEYS.say(text) : 'a page not yet walked'}</div>${plates}</div>`;
     });
     if (!shown) htm += `<div class="fmNote">No walked page carries that word.</div>`;
     return htm;
   }
 
+  /* v3.44 — the manual's plates for the wound: the Walker's own rig with the bolt in, the scar, the dressing —
+     composed by the renderer from the registry's rows, shown on the walked pages that speak of them */
+  const PLATES = {
+    firstArrow: [['bolt', 'THE BOLT IN — the wind at half pace, the wound seeping, until a hand pulls it']],
+    firstScar: [['bolt', 'the bolt, before the pull'], ['scar', 'THE SCAR — the wind\'s ceiling at 85 until it is dressed'], ['dressed', 'DRESSED — a white patch; closes in a day, undressed in two']],
+    firstScarStone: [['scar', 'the mark that goes to the stone with you'], ['dressed', 'dressed thrice — the card says by whom']],
+  };
   /* ---------- THE PAPERS ---------- */
   function papers() {
-    let htm = `<div class="fmNote">Every sheet the Order keeps, and the way it opens. <b>OPEN</b> steps out of this manual and into the paper.</div>`;
+    let htm = `<div class="fmNote">Every window in the game, what it is, how it opens — and, under each, what it does for your deliveries. <b>OPEN</b> closes the manual and opens that window.</div>`;
     for (const p of PAPERS) {
-      const how = p.key ? `<span class="k">${KEYS.labels(p.key)[0]}</span>` : `<span class="fmHow">${p.via}</span>`;
+      const onRow = p.key && typeof UI2 !== 'undefined' && UI2.PAPERS_ROW && UI2.PAPERS_ROW.includes(p.key);   // v3.52: the papers row's own button, beside the key
+      const how = p.key ? `<span class="k">${KEYS.labels(p.key)[0]}</span>${onRow ? `<img class="fmRowGl" src="${UI2.paperGlyph(p.key)}" width="24" height="24" alt="" title="or its button in the papers row, top right">` : ''}` : `<span class="fmHow">${p.via}</span>`;
       const can = p.open && p.open !== 'manual' && ctx.playing();
-      htm += `<div class="fmPaper"><span class="fmName">${p.name}</span><span class="fmLine">${p.line}</span>${how}${can ? `<button class="miniBtn" data-fmopen="${p.open}">OPEN</button>` : ''}</div>`;
+      const mk = p.mark && typeof UI !== 'undefined' && UI.markURL ? `<img class="mkImg fmMark" src="${UI.markURL(p.mark)}" width="14" height="14" alt="">` : '';   // v3.51 THE BUS MAP: the mark of what it moves
+      htm += `<div class="fmPaper" data-paper="${p.id}"><span class="fmName">${mk}${p.name}</span><span class="fmLine">${p.line}${p.loop ? `<span class="fmLoop"><b>FOR YOUR DELIVERIES</b> ${p.loop}</span>` : ''}</span>${how}${can ? `<button class="miniBtn" data-fmopen="${p.open}">OPEN</button>` : ''}</div>`;
     }
     return htm;
   }
@@ -87,6 +98,7 @@ const ManualUI = (() => {
     else if (id === 'ledgers' && typeof LedgerUI !== 'undefined') LedgerUI.open();
     else if (id === 'republic' && typeof RepublicUI !== 'undefined') RepublicUI.open();
     else if (id === 'muster' && typeof MusterUI !== 'undefined') MusterUI.open();
+    else if (id === 'pause' && UI.paper) UI.paper('pause');   // v3.52
   }
 
   /* ---------- THE PASSAGE ---------- */
@@ -94,23 +106,23 @@ const ManualUI = (() => {
     const here = si.n === cur;
     const body = si.empty ? `<div class="fmSlotName">an empty valley</div><div class="fmSlotSub">no walker has shouldered a pack here</div>`
       : si.broken ? `<div class="fmSlotName">${si.name}</div><div class="fmSlotSub">${si.bytes} bytes the Order cannot read</div>`
-      : `<div class="fmSlotName">${si.name}${si.dead ? ' †' : ''}</div><div class="fmSlotSub">${si.cls} · <b>${si.title}</b> lv ${si.level}<br>day <b>${si.day}</b> · <b>${si.lit}</b> lit · <b>${si.likes.toLocaleString()}</b> ◆ · <b>${si.legacy}</b> on the Roll</div>`;
+      : `${Render.walkerFaceURL ? `<img class="fmSlotFace" src="${Render.walkerFaceURL(3, si.look || {})}" width="48" height="48" alt="">` : ''}<div class="fmSlotName">${si.name}${si.dead ? ' †' : ''}</div><div class="fmSlotSub">${si.cls} · <b>${si.title}</b> lv ${si.level}<br>day <b>${si.day}</b> · <b>${si.lit}</b> lit · <b>${si.likes.toLocaleString()}</b> ◆ · <b>${si.legacy}</b> on the Roll</div>`;
     let act = '';
     if (ctx.playing()) act = here ? '<span class="rpGate">this valley — the one under your boots</span>' : `<button class="miniBtn" data-fmimport="${si.n}">IMPORT A CODE HERE</button>`;
-    else act = here ? '<span class="rpGate">chosen — Continue or New Waylighter walk it</span>' : `<button class="miniBtn" data-fmuse="${si.n}">CHOOSE THIS VALLEY</button><button class="miniBtn" data-fmimport="${si.n}">IMPORT A CODE HERE</button>`;
+    else act = here ? '<span class="rpGate">chosen — Continue or New character walks it</span>' : `<button class="miniBtn" data-fmuse="${si.n}">CHOOSE THIS VALLEY</button><button class="miniBtn" data-fmimport="${si.n}">IMPORT A CODE HERE</button>`;
     return `<div class="fmSlot ${here ? 'cur' : ''} ${si.empty ? 'empty' : ''}" data-fmslot="${si.n}"><div class="fmSlotN">VALLEY ${si.n}${here ? ' · CHOSEN' : ''}</div>${body}<div class="rpCtl">${act}</div></div>`;
   }
   let importTarget = null;
   function passage() {
     const cur = State.slot(), sl = State.slots();
-    let htm = `<div class="fmNote">Three valleys, saved in this browser. A <b>passage code</b> is a valley as text — copy it out, paste it into any browser's manual, and the valley walks there whole. Importing over a valley stashes the old page in its backup first; nothing is ever purged.</div>
+    let htm = `<div class="fmNote">Three valleys, saved in this browser. A <b>save code</b> is a valley as text — copy it out, paste it into any browser's manual, and the valley walks there whole. Importing over a valley stashes the old page in its backup first; nothing is ever purged.</div>
       <div class="fmSlots">${sl.map(si => slotPlate(si, cur)).join('')}</div>`;
     const canExport = !sl[cur - 1].empty;
     htm += `<div class="fmGroup">EXPORT — VALLEY ${cur}${ctx.playing() ? ' (saved as it stands now)' : ''}</div>
-      <div class="fmCodeRow"><button class="miniBtn" id="fmExport" ${canExport ? '' : 'disabled'}>WRITE THE PASSAGE CODE</button><button class="miniBtn" id="fmCopy" disabled>COPY</button><span class="fmVerdict" id="fmExportNote"></span></div>
-      <textarea class="fmCode" id="fmExportBox" readonly placeholder="${canExport ? 'the code appears here' : 'an empty valley has no passage to write'}"></textarea>`;
+      <div class="fmCodeRow"><button class="miniBtn" id="fmExport" ${canExport ? '' : 'disabled'}>Export save code</button><button class="miniBtn" id="fmCopy" disabled>COPY</button><span class="fmVerdict" id="fmExportNote"></span></div>
+      <textarea class="fmCode" id="fmExportBox" readonly placeholder="${canExport ? 'the code appears here' : 'an empty valley has nothing to export'}"></textarea>`;
     htm += `<div class="fmGroup">IMPORT${importTarget ? ` — INTO VALLEY ${importTarget}` : ''}</div>
-      <textarea class="fmCode" id="fmImportBox" placeholder="paste a passage code (it begins WL1: or WL0:)"></textarea>
+      <textarea class="fmCode" id="fmImportBox" placeholder="paste a save code (it begins WL1: or WL0:)"></textarea>
       <div class="fmCodeRow">${[1, 2, 3].filter(n => !(ctx.playing() && n === cur)).map(n => `<button class="miniBtn ${importTarget === n ? 'on' : ''}" data-fmimport="${n}">INTO VALLEY ${n}</button>`).join('')}<button class="miniBtn" id="fmImportGo" ${importTarget ? '' : 'disabled'}>IMPORT</button><span class="fmVerdict ${/refused|cannot|not/i.test(verdict) ? 'bad' : ''}" id="fmImportNote">${verdict}</span></div>`;
     if (ctx.playing()) htm += `<div class="fmNote" style="margin-top:8px">To walk another valley, <b>return to the title</b> from the pause sheet — this one is saved when you leave.</div>`;
     return htm;
@@ -182,3 +194,5 @@ const ManualUI = (() => {
 
   return { open, close, render, ctx, isListening: () => !!listening, tab: () => tab };
 })();
+
+

@@ -34,7 +34,8 @@ const Porter = (() => {
   }
   function generate(opts = {}) {
     const rng = opts.rng || rand;
-    const cls = opts.cls || U.pick(rng, Object.keys(CLASSES));
+    const open = k => !CLASSES[k].locked || (typeof S !== 'undefined' && S && S.flags && S.flags[CLASSES[k].locked]);   // a locked calling rolls only where the enlistment offers it
+    const cls = opts.cls || U.pick(rng, Object.keys(CLASSES).filter(open));
     return {
       name: opts.name || randomName(rng),
       cls,
@@ -82,7 +83,7 @@ const Porter = (() => {
       noSprint: !!pack.noSprint,
       wobbleMul: (1 - lv('bal') * 0.05) * (has('surefoot') ? 0.75 : 1) * (has('weakknees') ? 1.25 : 1) * (boots.wobbleMul || 1) * (pack.wobbleMul || 1),
       windowAdd: lv('bal') * 0.04 + (charm.windowAdd || 0),
-      stamMax: 90 + lv('end') * 6 + (has('deeplungs') ? 15 : 0),
+      stamMax: DATA.T.baseStam + lv('end') * 6 + (has('deeplungs') ? 15 : 0),   // v3.51: from the walker's own hundred (it read 90 and went unread)
       drainMul: has('ironlungs') ? 0.85 : 1,
       regenMul: (1 + lv('end') * 0.04) * (has('asthmatic') ? 0.8 : 1) * (S.flags.effects.regen20 ? 1.2 : 1),
       stationRegen: (charm.stationRegen || 1) * (has('restless') ? 0.75 : 1),
@@ -185,6 +186,7 @@ const Porter = (() => {
     let cold = north + (Systems.rainAt(S.px, S.py) > 0.05 ? 0.35 : 0) + (terr.water ? 0.5 : 0) + Economy.dayPhase().nightness * 0.35;
     let ins = e.warmthIns + (World.lightAt(S.px, S.py) > 0.3 ? 0.4 : 0) + (S.buffs.warmed > 0 ? 0.6 : 0) + (S.warmT > 0 ? 0.5 : 0);
     if (Systems.inAura('generator') || Systems.inAura('shelter') || Systems.nearStation(150)) ins += 1.2;
+    if (typeof Republic !== 'undefined' && Republic.restFire && Republic.restFire(S.px, S.py)) ins += 1.2;   // v3.49: a given ring's fire on the route
     const net = cold - ins;
     S.warmth = U.clamp(S.warmth + (net > 0 ? -net * 1.1 : 7) * dt, 0, 100);
     if (S.warmth < 15 && !townId) damage(0.3 * dt, 'cold', { silent: true });   // the town law covers the cold too
@@ -194,7 +196,7 @@ const Porter = (() => {
     if (S.bruisedT > 0) S.bruisedT -= dt;
     // regen
     if (S.health < 100 && S.food > 45 && !S.bleeding) {
-      const atRest = Systems.nearStation(150) || Systems.inAura('shelter') || Systems.inAura('generator');
+      const atRest = Systems.nearStation(150) || Systems.inAura('shelter') || Systems.inAura('generator') || (typeof Republic !== 'undefined' && Republic.restFire && !!Republic.restFire(S.px, S.py));   // v3.49
       S.health = Math.min(100, S.health + (atRest ? 0.6 : S.food > 70 ? 0.08 : 0) * dt);
     }
   }
@@ -353,7 +355,7 @@ const Porter = (() => {
     }
     S.orders.active = [];
     // legacy
-    S.legacy.push({ name: S.pName, cls: CLASSES[S.pClass].name, fate: CAUSES[cause] || cause, likes: Math.round(S.pStats.likes), km: (S.pStats.km / 1000).toFixed(1), deliveries: S.pStats.deliveries, cheated: !!S.flags.cheated, seed: S.pSeed, fact: S.pClass === 'lamplighter' ? 'lamplighters' : 'waylight' });   // v3.29/30: the face and the banner ride the roll — an exile's stone stands in the exiles' own ground
+    S.legacy.push({ name: S.pName, cls: CLASSES[S.pClass].name, fate: CAUSES[cause] || cause, likes: Math.round(S.pStats.likes), km: (S.pStats.km / 1000).toFixed(1), deliveries: S.pStats.deliveries, cheated: !!S.flags.cheated, seed: S.pSeed, fact: S.pClass === 'lamplighter' ? 'lamplighters' : 'waylight', scars: ((S.pStats.scars || []).length + (S.scar ? 1 : 0)), look: S.look ? { ...S.look } : null , keepsakes: S.cargo.filter(c => c.keepsake).map(c => ({ name: c.name, thing: c.keepsake.thing })) });   // v3.46: the kin's thanks go to the stone   // v3.44: the scars go to the stone, and the coat they cut with them   // v3.29/30: the face and the banner ride the roll — an exile's stone stands in the exiles' own ground
     if (!inGrey) {
       if (!S.echoRoster.includes(S.pName)) S.echoRoster.push(S.pName);
       Systems.addMail(`${S.pName} walks the network now`, 'Waylighters the light remembers never really stop delivering.');
@@ -366,7 +368,7 @@ const Porter = (() => {
        and any reload lands on the Certificate of Passage instead of a zombie world with its
        boots nailed down. This was the frozen-input bug: an auto-save on the death screen stored
        dead:true, and every boot after loaded a world where nothing could move but the ESC menu. */
-    S.deadInfo = { name: S.pName, cls: CLASSES[S.pClass].name, cause: CAUSES[cause] || cause, wraith: inGrey, stats: S.pStats, seed: S.pSeed };
+    S.deadInfo = { name: S.pName, cls: CLASSES[S.pClass].name, cause: CAUSES[cause] || cause, causeKey: cause, wraith: inGrey, stats: S.pStats, seed: S.pSeed };   // v3.51: the key the epitaph is filed under, beside the words
     UI2.showDeath(S.deadInfo);
     State.save();
   }
@@ -437,3 +439,5 @@ const Porter = (() => {
 
   return { generate, applyToState, randomName, randomTraits, eff, dirty, xp, xpAcc, update, damage, heal, eat, useItem, readManual, moodles, fearActive, transcribe, die, claimGrave, freeWraithGrave, portrait, freshSkills };
 })();
+
+

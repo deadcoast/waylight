@@ -1,0 +1,80 @@
+{
+  "suite": "shopaudit",
+  "version": "v3.28c",
+  "record": {
+    "doc": "DESIGN.md",
+    "where": "The clean shop (v3.28c — the standards correction, executed as work): the gate and its Proof",
+    "count": null,
+    "uncounted": "the record never states the suite's own count: the battery's tally went from 480 checks across thirty suites (v3.28) to 481 across thirty-one with the gate in it, and the gate's own checks are never numbered"
+  },
+  "clauses": [
+    {
+      "id": "c1",
+      "text": "`tests/shopaudit.mjs` runs the audit inside the battery"
+    },
+    {
+      "id": "c2",
+      "text": "any future dead declaration, dead export, unread tuning constant, unfired tutorial, unreachable branch, or ghost save-field FAILS the build"
+    },
+    {
+      "id": "c3",
+      "text": "The shop stays swept because the sweep is a gate, not a memory."
+    },
+    {
+      "id": "c4",
+      "text": "shopaudit.mjs: the audit is a STANDING BATTERY GATE — any future dead declaration, dead export, unread tuning constant, unfired tutorial, unreachable branch, or ghost save-field fails the build",
+      "doc": "FEATURES.md"
+    },
+    {
+      "id": "c5",
+      "text": "the audit installed as a STANDING BATTERY GATE (shopaudit.mjs)",
+      "doc": "ROADMAP.md"
+    },
+    {
+      "id": "c6",
+      "text": "and the gate itself stands in the count"
+    }
+  ],
+  "checks": [
+    {
+      "title": "THE GATE",
+      "clauses": [
+        "c1",
+        "c2",
+        "c4",
+        "c5",
+        "c6"
+      ],
+      "kind": "record"
+    },
+    {
+      "title": "THE GATE BITES",
+      "clauses": [
+        "c2",
+        "c3",
+        "c4"
+      ],
+      "kind": "record",
+      "beyond": true
+    },
+    {
+      "title": "NO DEAD DECLARATION",
+      "clauses": [
+        "c2",
+        "c4"
+      ],
+      "kind": "record",
+      "beyond": true
+    },
+    {
+      "title": "NO GHOST SAVE-FIELD",
+      "clauses": [
+        "c2",
+        "c4"
+      ],
+      "kind": "record",
+      "beyond": true
+    }
+  ],
+  "design": []
+}

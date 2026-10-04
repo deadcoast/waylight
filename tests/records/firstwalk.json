@@ -1,0 +1,52 @@
+{
+  "suite": "firstwalk",
+  "version": "v2.2",
+  "record": {
+    "doc": "DESIGN.md",
+    "where": "Three lessons, all kept (v2.1 → v2.2) · The first walk (unchanged, re-verified) · v3.14's DELIVER ceremony, walked by the screen-reading bot",
+    "count": 24,
+    "count_text": "the screen-reading first walk (24)"
+  },
+  "clauses": [
+    { "id": "c1", "text": "The gold Guide line under the compass always says what to do next, which key does it, and where it is" },
+    { "id": "c2", "text": "Order p1 medicine + a letter to Elm across the wadeable creek" },
+    { "id": "c3", "text": "p2 two crates of food home with two ladders granted", "figure": { "record": "two crates … two ladders", "asserted": "exact", "note": "The crossing puts two crates of rations and two ladders on the pack" } },
+    { "id": "c4", "text": "p3 the beacon core" },
+    { "id": "c5", "text": "Elm Farm is on the wire: watch the terminal, Haven's food and Elm's tools now move between them on their own" },
+    { "id": "c6", "text": "Random events hold until the first delivery lands" },
+    { "id": "c7", "text": "The screen-reading bot finishes the arc in ~95 s", "figure": { "record": "~95 s", "asserted": "threshold", "note": "the arc must close in under 150 s of the game's clock" } },
+    { "id": "c8", "text": "The first delivery is walked by a bot that reads only the screen" },
+    { "id": "c9", "text": "the DELIVER ceremony walked by the screen-reading bot" },
+    { "id": "c10", "text": "In range of a destination the prompt list leads with a gold DELIVER plate" },
+    { "id": "c11", "text": "pressing it roots the walker and the crates leave the pack one by one" },
+    { "id": "c12", "text": "then \"RECEIVED — N CRATES\", then the slips, then the board" },
+    { "id": "c13", "text": "the tower on the walker's back empties crate by crate as the hand-over plays" }
+  ],
+  "checks": [
+    { "title": "THE GUIDE SPEAKS FIRST", "clauses": ["c1"], "kind": "record" },
+    { "title": "THE ARROW POINTS TRUE", "clauses": ["c1"], "kind": "record" },
+    { "title": "THE BOARD", "clauses": ["c1"], "kind": "record" },
+    { "title": "THE ★ ORDER TAKEN", "clauses": ["c2"], "kind": "record" },
+    { "title": "THE WALK IS TAUGHT", "clauses": ["c1"], "kind": "record" },
+    { "title": "RANDOM EVENTS HOLD", "clauses": ["c6"], "kind": "record" },
+    { "title": "THE CREEK IS WADEABLE", "clauses": ["c2"], "kind": "record" },
+    { "title": "IN THE WATER", "clauses": ["c1"], "kind": "record" },
+    { "title": "THE DELIVER PLATE", "clauses": ["c9", "c10"], "kind": "record" },
+    { "title": "THE HAND-OVER", "clauses": ["c9", "c11", "c12", "c13"], "kind": "record" },
+    { "title": "THE SLIP", "clauses": ["c2", "c12"], "kind": "record" },
+    { "title": "THE NEXT ORDER", "clauses": ["c3", "c12"], "kind": "record" },
+    { "title": "TWO LADDERS", "clauses": ["c3"], "kind": "record" },
+    { "title": "THE LADDER LESSON", "clauses": ["c1"], "kind": "record" },
+    { "title": "THE BLUEPRINT", "clauses": ["c1"], "kind": "record" },
+    { "title": "THE LADDER LAID", "clauses": ["c1", "c3"], "kind": "record" },
+    { "title": "DRY FEET", "clauses": ["c3"], "kind": "record" },
+    { "title": "HAVEN'S DELIVERY", "clauses": ["c3", "c9", "c10", "c11"], "kind": "record" },
+    { "title": "FIRST LIGHT", "clauses": ["c4"], "kind": "record" },
+    { "title": "YOUR OWN LADDER", "clauses": ["c1"], "kind": "record" },
+    { "title": "THE CORE LIGHTS ELM", "clauses": ["c4", "c5"], "kind": "record" },
+    { "title": "THE WIRE LINE", "clauses": ["c5"], "kind": "record" },
+    { "title": "THE GUIDE NEVER WENT QUIET", "clauses": ["c1"], "kind": "record" },
+    { "title": "THE ARC, ON KEYS AND CLICKS", "clauses": ["c7", "c8"], "kind": "record" }
+  ],
+  "design": []
+}

@@ -1,0 +1,330 @@
+{
+  "suite": "republic",
+  "version": "v3.32",
+  "record": {
+    "doc": "DESIGN.md",
+    "where": "The Republic in force (v3.32 — the CK3 sandbox foundation)",
+    "count": 19,
+    "count_text": "republic.mjs — 19 checks measuring the WORLD"
+  },
+  "clauses": [
+    {
+      "id": "c1",
+      "text": "the registries seed real open ground"
+    },
+    {
+      "id": "c2",
+      "text": "the seals hold against play"
+    },
+    {
+      "id": "c3",
+      "text": "the truce gates then walks and stands the camps AND the horns down"
+    },
+    {
+      "id": "c4",
+      "text": "the rising douses a lamp with no core posted"
+    },
+    {
+      "id": "c5",
+      "text": "the parley and the quell each restore it"
+    },
+    {
+      "id": "c6",
+      "text": "the quell marching on real ground, paying appreciation, raising a Standing Teeth stone"
+    },
+    {
+      "id": "c7",
+      "text": "the shrines feed and climb the ladder"
+    },
+    {
+      "id": "c8",
+      "text": "the procession harvests only what walks in"
+    },
+    {
+      "id": "c9",
+      "text": "the far shape stands whole in frame"
+    },
+    {
+      "id": "c10",
+      "text": "the mountain road cuts and lives the whole kit"
+    },
+    {
+      "id": "c11",
+      "text": "the class-read intercept drops a runner at range"
+    },
+    {
+      "id": "c12",
+      "text": "the hall is walked end to end"
+    },
+    {
+      "id": "c13",
+      "text": "the banner sheet obeys the modal law with no TODO anywhere"
+    },
+    {
+      "id": "c14",
+      "text": "One ordered ladder — Absolute Ally · Ally · Friendly · Wary · Hostile · Absolute Hostile · Unknown — and a RULES row per banner saying what play may move it and through which gate."
+    },
+    {
+      "id": "c15",
+      "text": "Waylight and Farkeep are SEALED ABSOLUTE_ALLY by the founding; the Reapers and Hollow Fires SEALED ABSOLUTE_HOSTILE (shoot on sight is mercy). No play moves a seal."
+    },
+    {
+      "id": "c16",
+      "text": "the Raiders can be brought to a WARY TRUCE at Road's-Own renegade standing"
+    },
+    {
+      "id": "c17",
+      "text": "the Flame Keepers climb Wary → Friendly → Ally as you FEED their shrines"
+    },
+    {
+      "id": "c18",
+      "text": "the Lamplighters and the Diefenbunker MIRROR ledgers that already exist (the guild rank, the cold door)"
+    },
+    {
+      "id": "c19",
+      "text": "A town whose people decide the wire is a leash douses its own waylight BY CHOICE — political dark, not starvation, and NO delivered core will answer it."
+    },
+    {
+      "id": "c20",
+      "text": "THE QUELL sends a column of Farkeeper shields that MARCHES the real road (snapped to the crossings like any walker), restores the light by force, costs the town's love, and can cost the mountain a name — a casualty raises a stone on the Standing Teeth."
+    },
+    {
+      "id": "c21",
+      "text": "THE PARLEY is your own boots at their cold fire, a gift of stores"
+    },
+    {
+      "id": "c22",
+      "text": "gated behind a town that loved you once"
+    },
+    {
+      "id": "c23",
+      "text": "The first rising is authored (the stone-cutters at the Quarry)"
+    },
+    {
+      "id": "c24",
+      "text": "The Flame Keepers' shrines stand on the walked ways — a stone bowl you FEED with carried lumen, burning tall for most of a day, warming their stance.",
+      "figure": {
+        "record": "for most of a day",
+        "asserted": "unpinned",
+        "note": "the fed bowl burns past the moment it is fed and stands tall on the ground; the length of its burn against the day is not read"
+      }
+    },
+    {
+      "id": "c25",
+      "text": "The Hollow Fires' larders burn far from every station"
+    },
+    {
+      "id": "c26",
+      "text": "The Reapers cross the night grey in a hooded FILE that harvests only what walks into it — no chase."
+    },
+    {
+      "id": "c27",
+      "text": "sighted, mailed, and after three sightings the Republic posts a standing watch",
+      "figure": {
+        "record": "after three sightings",
+        "asserted": "exact",
+        "note": "the first sighting mails, the second mails again, the third posts the standing watch (gi.seen === 3)"
+      }
+    },
+    {
+      "id": "c28",
+      "text": "The far shape draws LATE, after the mist that would otherwise bury it, with the world transform restored by hand"
+    },
+    {
+      "id": "c29",
+      "text": "a road-gang project on the Darklands table's far east edge"
+    },
+    {
+      "id": "c30",
+      "text": "When it opens, the Farlands go live on the globe, Farkeep answers the wire with its own desk, and the kit of the mountain HIRES — the Longbowman (answers trouble at 320), the Rifle Rider (a breech and a horse, 380), the Berserker (a claymore and a horrible knock up close).",
+      "figure": {
+        "record": "at 320 … 380",
+        "asserted": "exact",
+        "note": "the kit rows read range 320 and 380, and cut, every class row lives with those stats"
+      }
+    },
+    {
+      "id": "c31",
+      "text": "The intercept READS THE CLASS ROW: a ward meets a runner from its own trade — a fist knocks him flat, a bow or a breech DROPS him where he stands."
+    },
+    {
+      "id": "c32",
+      "text": "The cold door, once knocked open (v3.30), now STEPS INSIDE — a registry ROOM with its own floor: concrete ribs, cold strip light, lockers, the SBSN log desk you can read standing up, the brass wall of a century's names, and the armory cage with the red-stencilled C20 crate. Nothing made of grey follows you in."
+    }
+  ],
+  "checks": [
+    {
+      "title": "THE REGISTRIES",
+      "clauses": [
+        "c1",
+        "c14",
+        "c23",
+        "c30",
+        "c32"
+      ],
+      "kind": "record"
+    },
+    {
+      "title": "THE GROUND",
+      "clauses": [
+        "c1",
+        "c24",
+        "c25"
+      ],
+      "kind": "record"
+    },
+    {
+      "title": "THE SEALS",
+      "clauses": [
+        "c2",
+        "c15",
+        "c18"
+      ],
+      "kind": "record"
+    },
+    {
+      "title": "THE TRUCE, GATED",
+      "clauses": [
+        "c3",
+        "c16"
+      ],
+      "kind": "record"
+    },
+    {
+      "title": "THE TRUCE, WALKED — THE CAMPS STAND DOWN",
+      "clauses": [
+        "c3",
+        "c16"
+      ],
+      "kind": "record"
+    },
+    {
+      "title": "THE HORNS STAND DOWN WITH THEM",
+      "clauses": [
+        "c3"
+      ],
+      "kind": "record"
+    },
+    {
+      "title": "THE RISING",
+      "clauses": [
+        "c4",
+        "c19",
+        "c23"
+      ],
+      "kind": "record"
+    },
+    {
+      "title": "THE PARLEY",
+      "clauses": [
+        "c5",
+        "c21",
+        "c22"
+      ],
+      "kind": "record"
+    },
+    {
+      "title": "THE QUELL MARCHES THE REAL ROAD",
+      "clauses": [
+        "c6",
+        "c20"
+      ],
+      "kind": "record"
+    },
+    {
+      "title": "THE QUELL LANDS",
+      "clauses": [
+        "c5",
+        "c6",
+        "c20"
+      ],
+      "kind": "record"
+    },
+    {
+      "title": "THE BOWL FED",
+      "clauses": [
+        "c7",
+        "c17",
+        "c24"
+      ],
+      "kind": "record"
+    },
+    {
+      "title": "THE LADDER CLIMBED",
+      "clauses": [
+        "c7",
+        "c17"
+      ],
+      "kind": "record"
+    },
+    {
+      "title": "THE PROCESSION HARVESTS ONLY WHAT WALKS IN",
+      "clauses": [
+        "c8",
+        "c26"
+      ],
+      "kind": "record"
+    },
+    {
+      "title": "THE FAR SHAPE STANDS WHOLE IN FRAME",
+      "clauses": [
+        "c9",
+        "c27",
+        "c28"
+      ],
+      "kind": "record"
+    },
+    {
+      "title": "THE MOUNTAIN ROAD, FUNDED AND CUT",
+      "clauses": [
+        "c10",
+        "c29",
+        "c30"
+      ],
+      "kind": "record"
+    },
+    {
+      "title": "THE WHOLE KIT HIRES AT FARKEEP'S DESK",
+      "clauses": [
+        "c10",
+        "c30"
+      ],
+      "kind": "record"
+    },
+    {
+      "title": "THE INTERCEPT READS THE CLASS ROW",
+      "clauses": [
+        "c11",
+        "c31"
+      ],
+      "kind": "record"
+    },
+    {
+      "title": "THE DIEFENBUNKER, WALKED",
+      "clauses": [
+        "c12",
+        "c32"
+      ],
+      "kind": "record"
+    },
+    {
+      "title": "THE BANNER SHEET, IN SESSION",
+      "clauses": [
+        "c13"
+      ],
+      "kind": "record"
+    }
+  ],
+  "design": [
+    {
+      "clause": "c13",
+      "version": "v3.49",
+      "what": "the plain names: the Banner Sheet is the Factions window, opened from the Map's rail (the survey sheet is the Map)"
+    },
+    {
+      "clause": "c29",
+      "version": "v3.49",
+      "what": "the plain names: the Darklands table is the Map's Region view; the mountain pass's pin stands on its far east edge"
+    }
+  ]
+}

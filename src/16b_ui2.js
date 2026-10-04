@@ -21,7 +21,7 @@ const UI2 = (() => {
       <div class="lookRow"><span class="tag">Trim</span>${LOOK_TRIMS.map((t2, i) => swatch('trim', i, t2[1], look.T === t2[1])).join('')}</div>
       <div class="lookRow"><span class="tag">Hood</span>${CHAR.PORTRAIT.hoods.map((h, i) => swatch('hood', i, h, look.H === h)).join('')}</div>
       <div class="lookRow"><span class="tag">Skin</span>${CHAR.PORTRAIT.skins.map((s2, i) => swatch('skin', i, s2, look.S === s2)).join('')}</div>`;
-    rigImg.src = Render.rigPreviewURL(look, 8);
+    rigImg.src = Render.rigPreviewURL(look, 6);   // v3.50: the courier toward the eye, 16×24 texels at six
     rowsEl.onclick = e => {
       const a = e.target.getAttribute && e.target.getAttribute('data-look');
       if (!a) return;
@@ -48,7 +48,7 @@ const UI2 = (() => {
     cg.look = defaultLook();
     $('chargen').classList.remove('hidden');
     renderCG();
-    renderLookRows($('cgLookRows'), $('cgRig'), cg.look);
+    renderLookRows($('cgLookRows'), $('cgRig'), cg.look, look => { if (Render.walkerFaceURL) $('cgPortrait').src = Render.walkerFaceURL(5, look); });   // v3.45: the bust follows the swatches
   }
   function cgBudget() {
     let b = CLASSES[cg.cls].pts;
@@ -57,7 +57,7 @@ const UI2 = (() => {
   }
   function renderCG() {
     $('cgName').value = cg.name;
-    $('cgPortrait').src = Porter.portrait(cg.seed, 84);
+    $('cgPortrait').src = Render.walkerFaceURL ? Render.walkerFaceURL(5, cg.look || {}) : Porter.portrait(cg.seed, 84);   // v3.45: the bust on the keepers' alphabet, in the coat being cut
     $('cgLine').textContent = '“' + cg.line + '”';
     const bud = cgBudget();
     $('cgBudget').textContent = bud;
@@ -149,14 +149,14 @@ const UI2 = (() => {
     UI.closeAllModals();
     UI.setLetterbox(false);
     $('deathOv').classList.remove('hidden');
-    $('deathPortrait').src = Porter.portrait(info.seed, 80);
+    $('deathPortrait').src = Render.walkerFaceURL ? Render.walkerFaceURL(5) : Porter.portrait(info.seed, 80);   // v3.44: the Walker's own bust, in the coat they cut
     $('deathName').textContent = `${info.name} fell.`;
     $('deathCause').textContent = `${info.cls} · ${info.cause}`;
     const days = Math.max(1, Math.round((Date.now() - (info.stats.bornAt || Date.now())) / 60000));
     $('deathStats').innerHTML =
       `${info.stats.deliveries} deliveries · ${(info.stats.km / 1000).toFixed(1)} km on foot · ${Math.round(info.stats.likes)} ◆ earned<br>` +
       `${Math.round(S.cov * 100)}% of the valley holds its light because Waylighters like this one walked`;
-    const epi = DATA.epitaphs[info.cause] || '';
+    const epi = DATA.epitaphs[info.causeKey || info.cause] || '';   // v3.51: by the cause's key — the certificate's words are not the key (the scrappers' death closed on nothing)
     $('deathNote').textContent = (epi ? epi + ' ' : '') + (info.wraith
       ? 'The Grey kept them — carry light to where they stand, and they walk the network forever.'
       : 'The cairn holds everything they carried, and their name already moves along the wires.');
@@ -184,7 +184,7 @@ const UI2 = (() => {
   }
   function renderSkills() {
     $('skillsName').textContent = S.pName;
-    $('skillsPortrait').src = Porter.portrait(S.pSeed, 64);
+    $('skillsPortrait').src = Render.walkerFaceURL ? Render.walkerFaceURL(4) : Porter.portrait(S.pSeed, 64);   // v3.44: the Walker's own bust
     renderPaperdoll();
     const c = CLASSES[S.pClass];
     $('skillsSub').textContent = `${c.name} · ${S.pTraits.map(t => TRAITS[t].name).join(' · ') || 'untraited'} · “${S.pLine}”`;
@@ -234,7 +234,7 @@ const UI2 = (() => {
     const slots = ['coat', 'boots', 'pack', 'charm'];
     const carriedFor = slot => S.cargo.filter(c2 => c2.cat === 'gear' && DATA.items[c2.defId] && DATA.items[c2.defId].slot === slot);
     host.innerHTML = `
-      <img id="dollRig" width="72" height="108" style="image-rendering:pixelated;border:3px solid #d8d2bd;box-shadow:var(--chunk);background:#10161f" src="${Render.rigPreviewURL(Render.wornPal(), 6)}" alt="">
+      <img id="dollRig" width="86" height="126" style="image-rendering:pixelated;border:3px solid #d8d2bd;box-shadow:var(--chunk);background:#10161f" src="${Render.rigPreviewURL(Render.wornPal(), 5)}" alt="">
       <div style="flex:1">
         <div class="tag" style="margin-bottom:4px">As they stand — gear rides the rig</div>
         ${slots.map(sl => {
@@ -293,7 +293,7 @@ const UI2 = (() => {
   function toggleWedge(on) {
     setHudPref('wedge', on === undefined ? !wedgeShown() : !!on);
     updateCompChip();
-    const rb = $('railWedgeBtn'); if (rb) rb.innerHTML = `THE WEDGE CARD · ${wedgeShown() ? 'SHOWN' : 'PUT AWAY'}`;
+    const rb = $('railWedgeBtn'); if (rb) rb.innerHTML = `PARTY CARD · ${wedgeShown() ? 'SHOWN' : 'HIDDEN'}`;
   }
   function updateCompChip() {
     const pt = NPC.party();
@@ -305,13 +305,13 @@ const UI2 = (() => {
     const rows = pt.map(n => {
       const kg = n.carry.reduce((a, c) => a + c.kg, 0), m = NPC.mood(n);
       const why = m.causes.length ? m.causes.map(c => `${c.line} ${c.v > 0 ? '+' : ''}${c.v}`).join(' · ') : 'nothing weighs on them';
-      const kit = n.fk && typeof SPRITES !== 'undefined' && SPRITES.KIT[n.fkCls];
-      return `<div class="wcRow"><img src="${Render.npcRigURL(n, 2)}" width="${kit ? 28 : 24}" height="${kit ? 44 : 36}" alt="">
+      const [fw, fh] = Render.npcRigSize(n, 2);   // v3.50: the figure at its own size, the border outside it
+      return `<div class="wcRow"><img src="${Render.npcRigURL(n, 2)}" width="${fw + 2}" height="${fh + 2}" alt="">
         <div><div class="nm">${n.name.split(' ')[0]} <i class="wcMood" style="color:${m.col}" title="${why}">${m.band}</i></div>
         <div class="st">${n.fk ? ((FACT.FK_CLASSES[n.fkCls] || {}).name || 'Farkeeper') : CLASSES[n.cls].name} · carrying <b>${U.fmtKg(kg)}/${NPC.capOf(n)} kg</b> · ${n.hungry ? '<span class="hungry">HUNGRY</span>' : 'fed'}</div></div></div>`;
     }).join('');
     const htm = `<canvas id="wcGlyph" width="64" height="72" class="wcGlyph" title="the wedge — where each back stands, live"></canvas>
-      <div class="wcRows">${rows}<div class="wcFoot"><span>click to hand over</span><button class="wcBtn" id="wcMuster" title="the muster roll">THE MUSTER</button><button class="wcBtn dim" id="wcHide" title="put the wedge card away">&minus;</button></div></div>`;
+      <div class="wcRows">${rows}<div class="wcFoot"><span>click to hand over</span><button class="wcBtn" id="wcMuster" title="open the Crew window">CREW</button><button class="wcBtn dim" id="wcHide" title="hide the party card">&minus;</button></div></div>`;
     if (chip._last !== htm) { chip._last = htm; chip.innerHTML = htm; chip._gt = 0; }
     drawWedgeGlyph(true);
   }
@@ -348,7 +348,7 @@ const UI2 = (() => {
     }
     if (hold) { g.strokeStyle = 'rgba(255,181,79,0.4)'; g.setLineDash([2, 2]); g.beginPath(); g.arc(cxp, cyp, MUSTER.HOLD_SCREEN * k * 0.55, 0, 7); g.stroke(); g.setLineDash([]); }
     g.fillStyle = '#ffd98f'; g.fillRect(cxp - 1, cyp - 2, 3, 4);   // you
-    g.fillStyle = '#7a7666'; g.font = '800 6px ui-monospace, Menlo, monospace'; g.textAlign = 'center'; g.fillText('THE WEDGE', cxp, H - 3);
+    g.fillStyle = '#7a7666'; g.font = '800 6px ui-monospace, Menlo, monospace'; g.textAlign = 'center'; g.fillText('PARTY', cxp, H - 3);
   }
   function tickWedge() { if ($('compChip').classList.contains('hidden')) return; drawWedgeGlyph(false); }
   $('compChip') && $('compChip').addEventListener('click', e => {
@@ -358,7 +358,7 @@ const UI2 = (() => {
     Snd.sfx.ui(); openTransfer();
   });
   $('wcTab') && $('wcTab').addEventListener('click', () => { Snd.sfx.ui(); toggleWedge(true); });
-  { const rb = $('railWedgeBtn'); if (rb) { rb.innerHTML = `THE WEDGE CARD · ${wedgeShown() ? 'SHOWN' : 'PUT AWAY'}`; rb.addEventListener('click', () => { Snd.sfx.ui(); toggleWedge(); }); } }
+  { const rb = $('railWedgeBtn'); if (rb) { rb.innerHTML = `PARTY CARD · ${wedgeShown() ? 'SHOWN' : 'HIDDEN'}`; rb.addEventListener('click', () => { Snd.sfx.ui(); toggleWedge(); }); } }
 
   /* ---------- the hand-over: your pack and theirs, side by side ---------- */
   function openTransfer() {
@@ -460,13 +460,13 @@ const UI2 = (() => {
     const breed = (FACT.STABLES && FACT.STABLES[stId]) || 'mustang';
     const B = FACT.HORSES[breed];
     let htm = `<p style="color:var(--bone-dim); font-size:13px; margin-bottom:10px">Waylighters walk for hire — one fee, then food. Companions carry, steady you, meet trouble head-on, and <b>take the blow that would drop you</b> — the party is the health pool, and you fall last. Party <b class="num">${pt.length}/${NPC.partyCap()}</b> · charters <b class="num">${NPC.routesActive()}/${NPC.routeSlots()}</b> · provisions banked <b class="num">${Math.floor(S.banked.provisions)}</b>.</p>
-      <div style="margin:-2px 0 10px"><button class="btn quiet" id="wlMusterBtn">THE MUSTER ROLL <span class="k" style="margin:0 0 0 6px">${typeof KEYS !== 'undefined' ? KEYS.capFor('muster') : 'O'}</span></button> <span class="desc" style="color:var(--bone-faint)">everyone under your command · standing orders · the wedge</span></div>`;
+      <div style="margin:-2px 0 10px"><button class="btn quiet" id="wlMusterBtn">CREW <span class="k" style="margin:0 0 0 6px">${typeof KEYS !== 'undefined' ? KEYS.capFor('muster') : 'O'}</span></button> <span class="desc" style="color:var(--bone-faint)">everyone under your command · standing orders · the wedge</span></div>`;
     for (const comp of pt) {
       const kg = comp.carry.reduce((a, c) => a + c.kg, 0);
       const horseLine = comp.horse
         ? `riding a <b>${FACT.HORSES[comp.horse.breed].name}</b> (${comp.horse.owned ? 'theirs for good' : 'stable loaner'})`
         : `on foot — the stable here keeps <b>${B.name}s</b>`;
-      htm += `<div class="orderCard prio"><div class="top"><h4><img src="${Porter.portrait(comp.seed, 28)}" width="28" height="28" style="vertical-align:-8px;border-radius:3px"> ${comp.name} — walking with you</h4><span class="tag">${CLASSES[comp.cls].name}</span></div>
+      htm += `<div class="orderCard prio"><div class="top"><h4><img class="handFace" src="${Render.handFaceURL(comp, 2)}" width="32" height="32" alt=""> ${comp.name} — walking with you</h4><span class="tag">${CLASSES[comp.cls].name}</span></div>
         <div class="meta">carrying ${U.fmtKg(kg)} / ${NPC.capOf(comp)} kg · ${comp.hungry ? '<b class="rust">hungry — bank provisions</b>' : 'fed'} · ${horseLine} · “${comp.line}”</div>
         <div class="actions">
           ${!comp.horse && S.stations[stId].connected ? `<button class="btn" data-saddle="${comp.id}:rent">Saddle a ${B.name} — ${DATA.T.compHorseRent} provisions</button><button class="btn quiet" data-saddle="${comp.id}:buy">Buy it outright — ${DATA.T.compHorseBuy}</button>` : ''}
@@ -474,14 +474,14 @@ const UI2 = (() => {
           <button class="btn quiet" data-dismiss="${comp.id}">Part ways here</button></div></div>`;
     }
     for (const m of mending) {
-      htm += `<div class="orderCard"><div class="top"><h4><img src="${Porter.portrait(m.seed, 28)}" width="28" height="28" style="vertical-align:-8px;border-radius:3px;filter:grayscale(1)"> ${m.name} — mending at ${DATA.stations[m.at].name}</h4><span class="tag rust">took your blow</span></div>
+      htm += `<div class="orderCard"><div class="top"><h4><img class="handFace mending" src="${Render.handFaceURL(m, 2)}" width="32" height="32" alt=""> ${m.name} — mending at ${DATA.stations[m.at].name}</h4><span class="tag rust">took your blow</span></div>
         <div class="meta">back on their feet in <b class="num">${U.fmtTime(Math.max(0, m.recoverT || 0))}</b> · fee already paid in blood</div></div>`;
     }
     for (const n of here) {
       const cost = NPC.hireCost(n);
       const skills = Object.entries(n.skills).filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]).slice(0, 4);
       htm += `<div class="orderCard"><div class="top">
-        <h4><img src="${Porter.portrait(n.seed, 28)}" width="28" height="28" style="vertical-align:-8px;border-radius:3px"> ${n.name} ${n.bond ? '<span class="constraint">owes you</span>' : ''}</h4>
+        <h4><img class="handFace" src="${Render.handFaceURL(n, 2)}" width="32" height="32" alt=""> ${n.name} ${n.bond ? '<span class="constraint">owes you</span>' : ''}</h4>
         <span class="tag">${CLASSES[n.cls].name}</span></div>
         <div class="meta">${skills.map(([s, v]) => `${SKILLS[s].name} ${v}`).join(' · ') || 'green as spring'}<br>
         ${[...n.traits.map(t => TRAITS[t].name), `“${n.line}”`, `◆${n.likes}`].join(' · ')}</div>
@@ -557,11 +557,42 @@ const UI2 = (() => {
     const btn = $('briefGo');
     btn.onclick = () => { ov.classList.add('hidden'); Snd.sfx.accept(); if (onDone) onDone(); };
   }
+  /* ---------- v3.52 THE PAPERS ROW — the six papers the keys open (KEYS' 'papers' group), a click away from the field.
+     A hand-drawn glyph each (SPRITES.HUDGLYPH; the bench tools/hud/hud.py) at two screen pixels a texel; the paper's own
+     name and the key that answers it NOW under the row while the pointer is on a button; lit while that paper is open.
+     A click takes the key's own path (the main loop's paper act), so a click and a key can never disagree. ---------- */
+  const PAPERS_ROW = ['map', 'cargo', 'skills', 'muster', 'manual', 'pause'];
+  const paperURL = {};
+  function paperGlyph(a) {
+    if (paperURL[a]) return paperURL[a];
+    const rows = SPRITES.HUDGLYPH[a === 'muster' ? 'crew' : a], pal = SPRITES.MARK_PAL, c = document.createElement('canvas'); c.width = c.height = 48;   // 4 a texel, shown at 2: whole texels at a device ratio of 1 or 2 (Crew answers the muster key)
+    const g = c.getContext('2d');
+    rows.forEach((row, j) => { for (let i = 0; i < row.length; i++) { const ch = row[i]; if (ch === '.') continue; g.fillStyle = pal[ch]; g.fillRect(i * 4, j * 4, 4, 4); } });
+    return (paperURL[a] = c.toDataURL());
+  }
+  const paperName = a => (typeof KEYS !== 'undefined' && KEYS.ACTIONS[a] ? KEYS.ACTIONS[a].name.split(' · ')[0] : a);
+  let papersKey = '';
+  function syncPapers() {
+    const el = $('papersRow'); if (!el || typeof KEYS === 'undefined' || !SPRITES.HUDGLYPH) return;
+    const caps = PAPERS_ROW.map(a => KEYS.capFor(a)).join('|');
+    if (caps !== papersKey) {   // drawn once, and again only when a key is rebound
+      papersKey = caps;
+      el.innerHTML = PAPERS_ROW.map(a => `<div class="paperBtn" role="button" data-paper="${a}" data-name="${paperName(a)}" data-cap="${KEYS.capFor(a)}" aria-label="${paperName(a)} — ${KEYS.capFor(a)}"><img src="${paperGlyph(a)}" width="24" height="24" alt=""></div>`).join('');
+    }
+    const shown = id => { const e = $(id); return !!e && !e.classList.contains('hidden'); };
+    const open = { map: UI.mapOpen, cargo: UI.cargoOpen, skills: shown('skillsOv'), muster: shown('musterOv'), manual: shown('helpOv'), pause: shown('pause') };
+    for (const b of el.children) { const on = !!open[b.dataset.paper]; if (b.classList.contains('on') !== on) b.classList.toggle('on', on); }
+  }
+  { const el = $('papersRow'), lb = $('papersLabel');
+    if (el && lb) {
+      el.addEventListener('mouseover', e => { const b = e.target.closest && e.target.closest('[data-paper]'); if (!b) return; lb.innerHTML = `${b.dataset.name}<span class="pk">${b.dataset.cap}</span>`; lb.classList.add('on'); const zn = $('zoomNote'); if (zn) zn.classList.remove('on'); });   // the zoom read stands where the name reads: the name wins
+      el.addEventListener('mouseleave', () => lb.classList.remove('on'));
+    } }
   /* v3.37 (the v3.35 note kept): the hint strip prints the caps KEYS holds NOW — a rebound key reads here too */
   function renderHint() {
     const h = $('hintStrip'); if (!h) return;
     const cap = a => (typeof KEYS !== 'undefined' ? KEYS.capFor(a) : '');
-    h.innerHTML = `<span class="k">M1</span>walk there <span class="k">M1+M2</span>sprint <span class="k">${cap('cargo') || 'I'}</span>pack <span class="k">${cap('skills') || 'K'}</span>skills <span class="k">${cap('eat') || 'H'}</span>eat <span class="k">${cap('map') || 'M'}</span>map <span class="k">${cap('interact') || 'E'}</span>interact <span class="k">${cap('build') || 'B'}</span>build`;
+    h.innerHTML = `<span class="k">M1</span>walk there <span class="k">M1+M2</span>sprint <span class="k">${cap('cargo') || 'I'}</span>pack <span class="k">${cap('skills') || 'K'}</span>skills <span class="k">${cap('eat') || 'H'}</span>eat <span class="k">${cap('map') || 'M'}</span>map <span class="k">${cap('interact') || 'E'}</span>interact <span class="k">${cap('build') || 'B'}</span>build <span class="k">WHEEL</span>zoom`;
   }
   function showHint(seconds) {
     const h = $('hintStrip');
@@ -574,5 +605,8 @@ const UI2 = (() => {
   return {
     openTailor,
  openCharGen, showDeath, toggleSkills, updateMoodles, openLoot, openTrader, renderWaylighters, showBriefing, showHint, openTransfer,
-    tickWedge, toggleWedge, wedgeShown, renderHint };   // v3.37: the wedge card, the hint strip in YOUR keys
+    tickWedge, toggleWedge, wedgeShown, renderHint,   // v3.37: the wedge card, the hint strip in YOUR keys
+    syncPapers, paperGlyph, PAPERS_ROW };   // v3.52: the papers row
 })();
+
+

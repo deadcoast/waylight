@@ -1,0 +1,49 @@
+{
+  "suite": "assets",
+  "version": "v3.33",
+  "record": {
+    "doc": "DESIGN.md",
+    "where": "The asset pass (v3.33 — the PixelLab pipeline, on our terms)",
+    "count": 13,
+    "count_text": "assets.mjs, 13 checks"
+  },
+  "clauses": [
+    { "id": "c1", "text": "the registry embeds (no URL, under budget)" },
+    { "id": "c2", "text": "integrity (rectangular rows, letters in palette, anchors inside)" },
+    { "id": "c3", "text": "THE SCALE LAW (horses 24–32 × 18–26, classes 14×22, the tender 12×18)",
+      "figure": { "record": "horses 24–32 × 18–26, classes 14×22, the tender 12×18", "asserted": "changed", "note": "the courier's scale (v3.50–v3.51): the six Farkeeper rows on a 32×40 grid a courier's head (seven texels) taller than the courier, the tender a courier's height on 32×32, the six breeds 36–42 long and 28–33 high with the seat 16–24 over the hooves" } },
+    { "id": "c4", "text": "distinctness of every breed/class/frame" },
+    { "id": "c5", "text": "zero orphan texels" },
+    { "id": "c6", "text": "the uneven cadence" },
+    { "id": "c7", "text": "The walk runs on an UNEVEN cadence (0.17 · 0.11 · 0.17 · 0.11), per the audited research: a four-beat with two short beats reads as a gait, not a loop.",
+      "figure": { "record": "0.17 · 0.11 · 0.17 · 0.11", "asserted": "exact", "note": "the cadence row reads 0.17, 0.11, 0.17, 0.11 to 1e-9; on screen a step held 0.02 s and 0.15 s into the 0.17 beat is one picture" } },
+    { "id": "c8", "text": "five mounts as five different pictures" },
+    { "id": "c9", "text": "the seat anchor on the back" },
+    { "id": "c10", "text": "The registry row carries the anchors — GROUND under the hooves, SEAT on the back — and the renderer composes any rider onto the seat with exact texel math" },
+    { "id": "c11", "text": "three hired classes as three different figures" },
+    { "id": "c12", "text": "the crated donkey and the torch-bearing tender in pixels" },
+    { "id": "c13", "text": "the fallback row standing" },
+    { "id": "c14", "text": "the cache key fixed" },
+    { "id": "c15", "text": "The key now hashes every row." }
+  ],
+  "checks": [
+    { "title": "THE EMBED LAW", "clauses": ["c1"], "kind": "record" },
+    { "title": "INTEGRITY", "clauses": ["c2", "c10"], "kind": "record" },
+    { "title": "THE SCALE LAW (v3.50–v3.51", "clauses": ["c3"], "kind": "record" },
+    { "title": "DISTINCTNESS", "clauses": ["c4"], "kind": "record" },
+    { "title": "ZERO ORPHAN TEXELS (v3.51", "clauses": ["c5"], "kind": "record" },
+    { "title": "THE UNEVEN CADENCE", "clauses": ["c6", "c7"], "kind": "record" },
+    { "title": "FIVE MOUNTS, FIVE PICTURES", "clauses": ["c8"], "kind": "record" },
+    { "title": "THE SEAT ON THE BACK", "clauses": ["c9", "c10"], "kind": "record" },
+    { "title": "THREE HIRED CLASSES, THREE FIGURES", "clauses": ["c11"], "kind": "record" },
+    { "title": "THE CRATED DONKEY", "clauses": ["c12"], "kind": "record" },
+    { "title": "THE TORCH-BEARING TENDER", "clauses": ["c12"], "kind": "record" },
+    { "title": "THE FALLBACK ROW STANDING", "clauses": ["c13"], "kind": "record" },
+    { "title": "THE CACHE KEY", "clauses": ["c7", "c14", "c15"], "kind": "record" }
+  ],
+  "design": [
+    { "clause": "c1", "version": "v3.51", "what": "the registry's budget raised to 600 KB (as v3.48 raised it to 98 KB): the hand-drawn cast carries twenty figures in three facings and six breeds at the courier's scale" },
+    { "clause": "c3", "version": "v3.50–v3.51", "what": "the people and the stable brought to the courier's 32×32 scale and drawn by hand; the 12×18 rig's 14×22 kit, 12×18 tender and 24–32 × 18–26 generated breeds retired" },
+    { "clause": "c5", "version": "v3.51", "what": "the hand-drawn law in place of the quantizer's cluster discipline: every frame one silhouette, closed by its outline" }
+  ]
+}

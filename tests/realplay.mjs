@@ -186,7 +186,7 @@ ok('death screen', await visible('deathOv'));
 await page.click('#deathContinue'); await page.waitForTimeout(250);
 ok('char-gen for the next porter', await visible('chargen'));
 await page.click('[data-cls="courier"]'); await page.click('#cgBegin'); await page.waitForTimeout(400);
-const compassCairn = await page.evaluate(() => document.getElementById('compassInner').textContent.includes('cairn'));
+const compassCairn = await page.evaluate(() => [...document.querySelectorAll('#compassInner .cMark')].some(m => /cairn/.test(m.title)));   // v3.45: a crowded cairn keeps its pin, its words on hover
 ok('cairn on the compass for the new porter', compassCairn);
 const grave = await page.evaluate(() => WL.S.graves[0] ? { x: WL.S.graves[0].x, y: WL.S.graves[0].y } : null);
 await walkPath(grave.x, grave.y, 120000);

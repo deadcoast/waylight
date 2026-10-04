@@ -1,0 +1,258 @@
+{
+  "suite": "postorders",
+  "version": "v3.38",
+  "record": {
+    "doc": "DESIGN.md",
+    "where": "The posted orders (v3.38 — the posts on the same store, the working world's mood, the survey)",
+    "count": 9,
+    "count_text": "postorders.mjs, 9 checks"
+  },
+  "clauses": [
+    {
+      "id": "c1",
+      "text": "three post rows on the ten-row table",
+      "figure": {
+        "record": "three post rows on the ten-row table",
+        "asserted": "exact",
+        "note": "MUSTER.POST.rows reads hours, training, keep, and the table holds ten rows"
+      }
+    },
+    {
+      "id": "c2",
+      "text": "twenty-one causes, a work pace per band",
+      "figure": {
+        "record": "twenty-one causes",
+        "asserted": "changed",
+        "note": "thirty-one causes at v3.49; the check asserts thirty-one, the five v3.38 causes among them with their values"
+      }
+    },
+    {
+      "id": "c3",
+      "text": "THE HOURS on the clock (a morning shift closes, a night one never starts, nights pay one more)",
+      "figure": {
+        "record": "nights pay one more",
+        "asserted": "exact",
+        "note": "a nights hand's shift pays the town 2 appreciation, the same round kept round the clock 1"
+      }
+    },
+    {
+      "id": "c4",
+      "text": "THE KEEP off the shelf (no provision, two rations, half the thanks, the table on the plate, the stall at the floor, wages resuming)",
+      "figure": {
+        "record": "two rations, half the thanks",
+        "asserted": "exact",
+        "note": "at the town's table: no provision, exactly two rations off the shelf, 1 appreciation where wages pay 2"
+      }
+    },
+    {
+      "id": "c5",
+      "text": "THE TRAINING split to Lumen at nought"
+    },
+    {
+      "id": "c6",
+      "text": "the working causes read at the greenhouse's latitude by night in the greyfall, an HONOURED town's thanks, the far line"
+    },
+    {
+      "id": "c7",
+      "text": "a DONE hauler coming in after the minute with the mail",
+      "figure": {
+        "record": "after the minute",
+        "asserted": "threshold",
+        "note": "the hauler comes in between 60 and 64 s of DONE (the world stepped two seconds at a time)"
+      }
+    },
+    {
+      "id": "c8",
+      "text": "the survey's pixels (a flag at each mark, the gold line along the chain, the green pip, the party's dot at the glyph's scale, the legend)"
+    },
+    {
+      "id": "c9",
+      "text": "the sheet, the lesson, the save"
+    },
+    {
+      "id": "c10",
+      "text": "A post hand walks under three rows on the same WORK_ORDERS table — `MUSTER.POST.rows = hours · training · keep` — read from the same `n.orders` store by the same `ordersOf`."
+    },
+    {
+      "id": "c11",
+      "text": "THE HOURS: round the clock, DAYS or NIGHTS — the shift clock only ticks in the hours the hand keeps, so a days hand rests at night with the clock held (the plate says *resting — the round keeps its hours*), and the lamp-lit round pays the town one appreciation more per shift because a town that sleeps easier thanks the hand that walks it.",
+      "figure": {
+        "record": "one appreciation more per shift",
+        "asserted": "exact",
+        "note": "the row reads nights 1, round the clock 0; a lamp-lit shift pays 2 where a round-the-clock shift pays 1"
+      }
+    },
+    {
+      "id": "c12",
+      "text": "THE TRAINING: the round's own verb, or CROSS-TRAIN — half the lesson to the round's verb and half to the hand's weakest skill, the note naming which.",
+      "figure": {
+        "record": "half the lesson",
+        "asserted": "exact",
+        "note": "cross-trained, Footwork takes half the round's lesson (to 0.01) and Lumenistry, at nought, the rest"
+      }
+    },
+    {
+      "id": "c13",
+      "text": "THE KEEP: wages from the bank as before, or THE TOWN'S TABLE — no provision drawn, two rations off the town's own shelf each shift, half the thanks; at the floor (ten rations) the round STALLS and the roll says the table is bare, exactly as an unpaid round stalls.",
+      "figure": {
+        "record": "two rations … half the thanks; at the floor (ten rations)",
+        "asserted": "exact",
+        "note": "the row reads table 2, ×0.5 and a floor of 10; with the shelf at 11 the round stalls with nothing taken"
+      }
+    },
+    {
+      "id": "c14",
+      "text": "`NPC.workOf` hands the roll a fourth sheet kind, `post`, and the muster roll renders it with the hand's stripe: shifts, the skill trained with its progress, the appreciation given."
+    },
+    {
+      "id": "c15",
+      "text": "A lesson, THE POSTED ORDERS, walks on the first post order set."
+    },
+    {
+      "id": "c16",
+      "text": "Five causes join the sixteen: working in the greyfall (−2, read at the hand's own feet through `Systems.rainAt`), working nights (−2, a field hand at night or a post hand keeping nights), far from home (−1, a route or a chain past 2.4 km from the town), a town that thanks them (+1, HONOURED or better), fed at the town's table (+1).",
+      "figure": {
+        "record": "−2 … −2 … −1 past 2.4 km … +1 … +1",
+        "asserted": "exact",
+        "note": "the rows read −2, −2, −1 beyond 2400, +1 at HONOURED, +1; out in the grey by night past 2.4 km the hauler sums −5, thanked −4"
+      }
+    },
+    {
+      "id": "c17",
+      "text": "A stalled hand is still out there in it — the weather counts, paid or not."
+    },
+    {
+      "id": "c18",
+      "text": "Every band carries a WORK PACE the field speed reads (BRIGHT × 1.1, LOW × 0.85, DONE × 0.7)",
+      "figure": {
+        "record": "BRIGHT × 1.1, LOW × 0.85, DONE × 0.7",
+        "asserted": "exact",
+        "note": "the bands' workMul read 1.1, 0.85, 0.7 and STEADY 1 (the rows' numbers; the field speed is not walked)"
+      }
+    },
+    {
+      "id": "c19",
+      "text": "a field hand DONE for the minute comes in to the fire off the job with a mail naming every cause — the same law as a walker sitting down."
+    },
+    {
+      "id": "c20",
+      "text": "Unpaid, in the greyfall, at night, far from home is that minute."
+    },
+    {
+      "id": "c21",
+      "text": "The legend names all three."
+    },
+    {
+      "id": "c22",
+      "text": "THE LESSON: the posted orders (39 pages)",
+      "doc": "FEATURES.md",
+      "figure": {
+        "record": "(39 pages)",
+        "asserted": "unpinned",
+        "note": "the lesson is read titled and walked; the manual's whole count is pinned by manual.mjs (97 at v3.51)"
+      }
+    }
+  ],
+  "checks": [
+    {
+      "title": "THE REGISTRY",
+      "clauses": [
+        "c1",
+        "c2",
+        "c10",
+        "c13",
+        "c14",
+        "c16",
+        "c18"
+      ],
+      "kind": "record"
+    },
+    {
+      "title": "THE HOURS, ON THE CLOCK",
+      "clauses": [
+        "c3",
+        "c11"
+      ],
+      "kind": "record"
+    },
+    {
+      "title": "THE KEEP, OFF THE TOWN'S SHELF",
+      "clauses": [
+        "c4",
+        "c13",
+        "c16"
+      ],
+      "kind": "record"
+    },
+    {
+      "title": "THE TRAINING, SPLIT TO LUMEN AT NOUGHT",
+      "clauses": [
+        "c5",
+        "c12"
+      ],
+      "kind": "record"
+    },
+    {
+      "title": "THE WORKING CAUSES",
+      "clauses": [
+        "c6",
+        "c16",
+        "c17"
+      ],
+      "kind": "record"
+    },
+    {
+      "title": "A DONE HAULER COMES IN AFTER THE MINUTE",
+      "clauses": [
+        "c7",
+        "c17",
+        "c19",
+        "c20"
+      ],
+      "kind": "record"
+    },
+    {
+      "title": "THE SURVEY'S PIXELS",
+      "clauses": [
+        "c8",
+        "c21"
+      ],
+      "kind": "record"
+    },
+    {
+      "title": "THE CREW SHEET'S POST PANE, AND THE LESSON",
+      "clauses": [
+        "c9",
+        "c10",
+        "c14",
+        "c15",
+        "c22"
+      ],
+      "kind": "record"
+    },
+    {
+      "title": "THE SAVE",
+      "clauses": [
+        "c9"
+      ],
+      "kind": "record"
+    }
+  ],
+  "design": [
+    {
+      "clause": "c2",
+      "version": "v3.40–v3.49",
+      "what": "mood causes added by the versions since (twenty-five at v3.44): thirty-one at v3.49"
+    },
+    {
+      "clause": "c8",
+      "version": "v3.49",
+      "what": "the plain names: the survey sheet is the Map; its pixels are read on the Map's valley view"
+    },
+    {
+      "clause": "c22",
+      "version": "v3.39–v3.51",
+      "what": "the manual has grown since: ninety-seven pages at v3.51"
+    }
+  ]
+}

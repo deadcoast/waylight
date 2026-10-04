@@ -1,0 +1,57 @@
+{
+  "suite": "faces",
+  "version": "v3.43",
+  "record": {
+      "doc": "DESIGN.md",
+      "where": "The face at the door (v3.43 — the grievance said to your face, the town's own who fall, the chief's return as a scene, the scar, the click into the roll) · Proof",
+      "count": 8,
+      "count_text": "faces.mjs, 8 checks"
+  },
+  "clauses": [
+    {"id": "f1", "text": "the registries (eight faces, distinct, served", "figure": {"record": "eight faces", "asserted": "exact", "note": "SPRITES.FACES holds eight, one per keeper, distinct rows and palettes"}},
+    {"id": "f2", "text": "Eight keepers, eight hand-drawn 16×16 busts on one alphabet", "figure": {"record": "16×16", "asserted": "exact", "note": "every bust 16×16 in its own palette"}},
+    {"id": "f3", "text": "The renderer serves them as cached portraits at any scale"},
+    {"id": "f4", "text": "the bare stake and the scar's rows in their palettes"},
+    {"id": "f5", "text": "the bare stake (`BARESTAKE`, 7×13); the scar (`SCAR`, 3×3) and the dressing (`DRESSING`, 4×3) in `SCAR_PAL`", "doc": "FEATURES.md", "figure": {"record": "7×13, 3×3, 4×3", "asserted": "exact", "note": "each read in its palette at its size"}},
+    {"id": "f6", "text": "five lines in every keeper's voice", "figure": {"record": "five lines", "asserted": "exact", "note": "ground, camp, given, remembered and made for each of the eight keepers"}},
+    {"id": "f7", "text": "the rows; the town design"},
+    {"id": "f8", "text": "the four lessons, fifty-five in all", "figure": {"record": "fifty-five", "asserted": "changed", "note": "every later version adds lessons; the check holds the v3.49 manual's floor (93 pages) and its four lessons"}},
+    {"id": "f9", "text": "the face at the door (the plate, the words, the say, once and then again when deeper, down on its own, made right in gold, every keeper at the terminal)"},
+    {"id": "f10", "text": "cut at a word past sixty-four characters, with a dash", "figure": {"record": "sixty-four characters", "asserted": "exact", "note": "the line said at the door is the first sentence cut at a word past 64, with a dash"}},
+    {"id": "f11", "text": "the plate goes down on its own after nine seconds", "figure": {"record": "nine seconds", "asserted": "changed", "note": "v3.44: while it offers the Walker's answer the plate holds twenty-two seconds (up at 10 s, down by 23 s); nine stands for what can no longer be answered (down by 10 s) — both read as bounds"}},
+    {"id": "f12", "text": "Made right, the face says THAT, in gold, at the door and on the terminal for three minutes", "figure": {"record": "three minutes", "asserted": "threshold", "note": "said at once, gone from the terminal 181 s on"}},
+    {"id": "f13", "text": "the town's own who fall (the one on NIGHTS fell, the one on DAYS was home; the stone, the ground, the mail, the card)"},
+    {"id": "f14", "text": "each has an even chance of falling", "figure": {"record": "an even chance", "asserted": "exact", "note": "ownFall.chance 0.5 in the registries; the die held under it"}},
+    {"id": "f15", "text": "the town is five likes colder for each of its own it lost standing for the Order", "figure": {"record": "five likes", "asserted": "exact", "note": "ownFall.likes 5; the Mill 40 → 35"}},
+    {"id": "f16", "text": "the chief's return (begun at the ring's edge, still gone while he walks"},
+    {"id": "f17", "text": "the line at six seconds", "figure": {"record": "six seconds", "asserted": "exact", "note": "nothing said at five seconds; his line at 6.0–6.2 s"}},
+    {"id": "f18", "text": "whole at seven and a half", "figure": {"record": "seven and a half", "asserted": "threshold", "note": "still gone at six; the rag down and the camp whole by 7.6 s"}},
+    {"id": "f19", "text": "bare a day", "figure": {"record": "a day", "asserted": "exact", "note": "the pole bare five seconds short of a day, gone five seconds past it"}},
+    {"id": "f20", "text": "A camp taken or pacified in the span never gets its scene."},
+    {"id": "f21", "text": "the scar (the ceiling, the medic's minute, the town's once a visit, lifted, healed, late)"},
+    {"id": "f22", "text": "the wind's ceiling stands at 85 until it is dressed, three times", "figure": {"record": "85, three times", "asserted": "exact", "note": "scar.stamMul 0.85 and dressings 3; the wind held at 85% of its cap (±0.5); a fourth dressing refused"}},
+    {"id": "f23", "text": "once a minute inside reach", "figure": {"record": "once a minute", "asserted": "exact", "note": "scar.dressEvery 60; not dressed at 55 s, dressed at 61 s"}},
+    {"id": "f24", "text": "Dressed thrice, the ceiling lifts and the scar closes in a day; undressed it hangs on and closes late, in two.", "figure": {"record": "a day; two", "asserted": "exact", "note": "healDays 1 and undressedDays 2: open two seconds short of a day, closed one past it; undressed open past a day, closed late past two"}},
+    {"id": "f25", "text": "the click into the roll (hover, pin, stays, let go, the gone row) by a real mouse on the sheet"},
+    {"id": "f26", "text": "the save"},
+    {"id": "f27", "text": "no errors"}
+  ],
+  "checks": [
+    {"title": "THE REGISTRIES", "clauses": ["f1", "f2", "f3", "f4", "f5", "f6", "f7", "f8", "f14", "f15", "f22", "f23", "f24"], "kind": "record"},
+    {"title": "THE FACE AT THE DOOR", "clauses": ["f9", "f10", "f11", "f12"], "kind": "record"},
+    {"title": "THE TOWN'S OWN WHO FALL", "clauses": ["f13", "f14", "f15"], "kind": "record"},
+    {"title": "THE CHIEF'S RETURN, AS A SCENE", "clauses": ["f16", "f17", "f18", "f19", "f20"], "kind": "record"},
+    {"title": "THE SCAR", "clauses": ["f21", "f22", "f23", "f24"], "kind": "record"},
+    {"title": "THE CLICK INTO THE ROLL", "clauses": ["f25"], "kind": "record"},
+    {"title": "THE SAVE", "clauses": ["f26"], "kind": "record"}
+  ],
+  "design": [
+    {"clause": "f8", "version": "v3.49", "what": "the manual grew with every version after v3.43 — 93 pages in v3.49, the floor the check holds"},
+    {"clause": "f11", "version": "v3.44", "what": "the door plate offers the Walker's answer and holds twenty-two seconds while it does; nine seconds for a grievance that cannot be answered"}
+  ],
+  "finish": {
+      "clauses": [
+          "f27"
+      ]
+  }
+}

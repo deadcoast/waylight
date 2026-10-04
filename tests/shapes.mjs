@@ -1,311 +1,342 @@
-/* shapes.mjs — v3.18 THE SHAPES OF WORK: circuits (one contract, many doors — every crate loads at
-   accept), convoys (the cargo is a person: their pace, your lantern, scrappers go for THEIR crates,
-   the grey roots their feet), salvage (a wreck in the deep grey, ×1.6 grey work). State-level,
-   driven through Systems.update and the real board/accept/deliver plumbing. */
-import { chromium } from 'playwright';
-const results = [];
-const ok = (name, cond, extra = '') => { results.push(`${cond ? 'PASS' : 'FAIL'}  ${name}${extra ? '  — ' + extra : ''}`); if (!cond) process.exitCode = 1; };
-const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium', args: ['--disable-background-networking'] });
-const page = await b.newPage({ viewport: { width: 1440, height: 860 } });
-await page.route(/fonts\.(googleapis|gstatic)\.com/, r => r.abort());
-const errors = [];
-page.on('pageerror', e => errors.push(String(e.message)));
-await page.goto('file:///home/claude/waylight/dist/test.html?debug', { waitUntil: 'domcontentloaded' });
-await page.waitForFunction(() => window.WL && WL.snapshot().baked, null, { timeout: 60000 });
-await page.evaluate(() => localStorage.clear());
-await page.click('#btnNew'); await page.waitForTimeout(150); await page.click('#btnBegin'); await page.waitForTimeout(250);
-await page.click('#briefGo'); await page.waitForTimeout(200); await page.click('#cgBegin'); await page.waitForTimeout(600);
-const ev = fn => page.evaluate(fn);
+/* shapes.mjs — v3.18 THE SHAPES OF WORK (v3.51 rebuild, mine: re-authored from its record in DESIGN.md — the v3.48 source was
+   lost; its figures sampled on the courier's grid). The same walk, different questions, unlocked the moment the Greenhouse
+   joins the wire: CIRCUIT (one contract, many doors — every leg's crates at accept, doors in order, the middle doors no
+   slip, the last door grading the whole chain ×1.35, abandoned legs lost toward their own doors), CONVOY (the cargo is a
+   person — a junior walker who follows, calls out when left, loses a crate to the scrappers first, freezes in the grey until
+   your lantern stands by, and counts only when you BOTH stand at the gate, then joins that town's fire), SALVAGE (grey work
+   is paid work — the town's worst shortage by name, a wreck in the deep grey, battered crates, ×1.6 judged against what the
+   wreck gave), and every shape surviving a save mid-shape. v3.31's fairness pass stands where it rewrote the escort: a junior
+   left behind trudges on at half pace, never warped to your back. */
+import { boot } from './lib/harness.mjs';
+
+const T = await boot();
+const { ev, ok, page } = T;
+
 await ev(() => {
-  WL.calm(); S.weather.state = 'clear'; S.weather.t = 99999;
-  for (let i = 0; i < 15 && S.cine; i++) WL.skipCine && WL.skipCine();
-  for (const id of DATA.stationOrder) S.stations[id].met = true;
-  S.flags.guideDone = true; S.orders.prioIdx = 99;   // past the taught arc — the shapes are mid-game work
-  const d = DATA.stations.haven; WL.tp([d.x - 120, d.y + 40]); S.moveTo = null;
+  /* the valley before the Greenhouse: Haven a two-star town with Elm, the Mill and the Quarry known to it */
+  for (const id of ['elm', 'mill']) { const st = S.stations[id]; st.connected = true; st.met = true; st.litT = 1; }
+  S.stations.quarry.met = true; S.stations.haven.stars = 2;
+  State.refreshSources();
+  S.banked.provisions = 60;
+  window.__shape = o => o.circuit ? 'circuit' : o.convoy ? 'convoy' : o.salvage ? 'salvage' : null;
+  window.__shapes = stId => Economy.ordersFor(stId).map(__shape).filter(Boolean);
+  window.__mark = () => S.mails[0];
+  window.__since = mk => { const i = S.mails.indexOf(mk); return i < 0 ? S.mails.slice() : S.mails.slice(0, i); };
+  window.__toasts = []; new MutationObserver(ms => { for (const m of ms) for (const n2 of m.addedNodes) if (n2.textContent) __toasts.push(n2.textContent); }).observe(document.getElementById('toasts'), { childList: true });
+  window.__says = []; const say0 = Render.say; Render.say = (x, y, text, ...rest) => { __says.push(text); return say0(x, y, text, ...rest); };
+  window.__labels = () => Render.labelBoxes().map(b => b.str);
 });
 
-/* 1. before the Greenhouse, the boards hold no shapes — however deep the standing */
-let r = await ev(() => {
-  S.stations.haven.stars = 3;
-  S.stations.elm.connected = true; S.stations.mill.connected = true;
-  S.stations.elm.stock.tools = 20; S.stations.mill.stock.textiles = 20; S.stations.quarry.stock.textiles = 20;
-  const board = Economy.ordersFor('haven');
-  return { shapes: !!S.flags.unlocks.shapes, n: board.filter(o => o.circuit || o.convoy || o.salvage).length };
+/* ================= 1 · THE LOCK, AND THE KEY ================= */
+let r = await ev(async () => {
+  const S0 = { elm: S.stations.elm.stock.tools, mill: S.stations.mill.stock.textiles };
+  S.stations.elm.stock.tools = 30; S.stations.mill.stock.textiles = 30;
+  const before = { shapes: __shapes('haven'), unlocked: !!S.flags.unlocks.shapes, stars: S.stations.haven.stars, known: DATA.stationOrder.filter(id => id !== 'haven' && (S.stations[id].connected || S.stations[id].met)).length };
+  const m0 = __mark();
+  const g = S.stations.green; g.connected = true; g.met = true; g.litT = 1; State.refreshSources();
+  WL.timeScale = 1; const t0 = performance.now(); while (!S.flags.unlocks.shapes && performance.now() - t0 < 3000) await __frames(2);
+  await __wait(1200);   // the slam follows a beat after the unlock
+  const mail = __since(m0).find(m => m.subj === 'New shapes of work');
+  return { before, unlocked: !!S.flags.unlocks.shapes, announce: document.getElementById('announce').textContent, toast: __toasts.some(t => /CIRCUIT/.test(t) && /CONVOY/.test(t) && /SALVAGE/.test(t)), mail: mail ? mail.body : null };
 });
-ok('before the Greenhouse joins, no circuit, convoy or salvage posts anywhere', !r.shapes && r.n === 0, JSON.stringify(r));
+ok('THE LOCK: before the Greenhouse joins the wire no board posts a shape — Haven a two-star town with three towns known to it posts no circuit, no convoy, no salvage',
+  r.before.shapes.length === 0 && !r.before.unlocked && r.before.stars === 2 && r.before.known >= 3, JSON.stringify(r.before));
+ok('THE UNLOCK: the moment the Greenhouse joins the wire the shapes open — NEW SHAPES OF WORK slammed across the screen, the boards\' teeth named in a toast, and a mail that explains each (circuits load every leg at once and pay at the last door, convoys walk a walker, salvage pays for grey work)',
+  r.unlocked && r.announce === 'NEW SHAPES OF WORK' && r.toast && !!r.mail && /CIRCUITS: every leg’s crates load at once/.test(r.mail) && /CONVOYS/.test(r.mail) && /SALVAGE/.test(r.mail), JSON.stringify({ unlocked: r.unlocked, announce: r.announce, toast: r.toast, mail: r.mail }));
 
-/* 2. the Greenhouse opens them — announced, and mailed */
+/* ================= 2 · THE CIRCUIT ================= */
 r = await ev(() => {
-  S.stations.green.connected = true; S.stations.green.litT = 1;
-  for (let i = 0; i < 4; i++) Systems.update(0.6, {});
-  return { shapes: !!S.flags.unlocks.shapes, mail: S.mails.some(m => /shapes of work/i.test(m.subj)) };
-});
-ok('the Greenhouse connect unlocks THE SHAPES OF WORK and the mail explains them', r.shapes && r.mail, JSON.stringify(r));
-
-/* 3. a circuit posts: one contract, many doors, nearest-chained */
-r = await ev(() => {
+  WL.timeScale = 0.0001;
+  const st = S.stations; st.elm.stock.tools = 30; st.mill.stock.textiles = 30; st.quarry.stock.textiles = 30;
   const cc = Economy.ordersFor('haven').find(o => o.circuit);
-  window._cc = cc;
-  return cc ? { legs: cc.legs.length, dests: cc.legs.map(l => l.to), items: cc.legs.map(l => l.item), distinct: new Set(cc.legs.map(l => l.to)).size } : null;
-});
-ok('a ★★ station with three known doors posts a CIRCUIT of 2-3 distinct legs', r && r.legs >= 2 && r.legs <= 3 && r.distinct === r.legs, JSON.stringify(r));
-
-/* 4. every door's crates load at accept — the pack is the puzzle */
-r = await ev(() => {
-  const cc = window._cc;
-  const before = S.cargo.length;
-  const o = Systems.acceptOrder(cc, false);
-  window._co = o;
-  const want = cc.legs.reduce((a, l) => a + l.n, 0);
-  return { got: S.cargo.length - before, want, kgTotal: o.kgTotal, to0: o.to === cc.legs[0].to, leg: o.leg };
-});
-ok('signing the circuit loads EVERY leg\'s crates at once', r.got === r.want && r.kgTotal > 0 && r.to0 && r.leg === 0, JSON.stringify(r));
-
-/* 5. only the current door will take the hand-over */
-r = await ev(() => {
-  const o = window._co;
-  return { at0: Systems.deliverablesAt(o.legs[0].to).length, at1: Systems.deliverablesAt(o.legs[1].to).length };
-});
-ok('doors open in order — the second door refuses what the first is owed', r.at0 === 1 && r.at1 === 0, JSON.stringify(r));
-
-/* 6. a middle door: crates land, stock fills, NO slip — the ledger waits */
-r = await ev(() => {
-  const o = window._co;
-  const d0 = o.legs[0].to;
-  const stockBefore = S.stations[d0].stock[o.legs[0].item];
-  WL.tp([DATA.stations[d0].x, DATA.stations[d0].y + 60]); S.moveTo = null;
-  const res = Systems.handleDelivery(d0);
-  return {
-    slips: res.results.length, leg: o.leg, to: o.to === o.legs[1].to,
-    gone: !o.legs[0].items.some(id => S.cargo.some(c => c.id === id)),
-    fed: S.stations[d0].stock[o.legs[0].item] > stockBefore,
-  };
-});
-ok('a middle door advances the circuit — stock fills, crates leave, no slip yet', r.slips === 0 && r.leg === 1 && r.to && r.gone && r.fed, JSON.stringify(r));
-
-/* 7. the last door settles the whole contract at ×1.35 */
-r = await ev(() => {
-  const o = window._co;
-  let final = null;
-  while (o.leg <= o.legs.length - 1) {
-    const d = o.legs[o.leg].to;
-    WL.tp([DATA.stations[d].x, DATA.stations[d].y + 60]); S.moveTo = null;
-    const res = Systems.handleDelivery(d);
-    if (res.results.length) { final = res.results[0]; break; }
+  if (!cc) return { none: true, shapes: __shapes('haven') };
+  const H = DATA.stations.haven; let px = H.x, py = H.y, nn = true;
+  const rest = cc.legs.map(l => l.to);
+  for (let i = 0; i < cc.legs.length; i++) {   // each door the nearest of those left, from where the last one stood
+    const near = rest.slice(i).sort((a, b) => U.dist(px, py, DATA.stations[a].x, DATA.stations[a].y) - U.dist(px, py, DATA.stations[b].x, DATA.stations[b].y))[0];
+    if (near !== cc.legs[i].to) nn = false; px = DATA.stations[cc.legs[i].to].x; py = DATA.stations[cc.legs[i].to].y;
   }
-  return final ? { circuit: final.circuit && final.circuit.legs, paymul: final.paymul, likes: final.likes, kg: final.kg, kgTotal: window._co.kgTotal, grade: final.grade } : null;
+  const wants = cc.legs.every(l => DATA.stations[l.to].needs.includes(l.item) && DATA.stations.haven.makes.includes(l.item) && Economy.needMood(l.to, l.item) !== 'thriving');
+  WL.tp('haven'); UI.openStation('haven'); UI.gotoTab('orders');
+  const card = [...document.querySelectorAll('#stationBody .orderCard')].find(el => /CIRCUIT/.test(el.querySelector('.wbTag') ? el.querySelector('.wbTag').textContent : ''));
+  if (card) card.querySelector('[data-accept]').id = '__ccAccept';
+  return { legs: cc.legs.map(l => [l.to, l.item, l.n]), nn, wants, card: card ? card.textContent.replace(/\s+/g, ' ').slice(0, 120) : null };
 });
-ok('the last door grades the whole walk and pays ×1.35 — one contract, every door counted',
-  r && r.circuit >= 2 && r.paymul === 1.35 && r.likes > 0 && Math.abs(r.kg - r.kgTotal) < 0.01, JSON.stringify(r));
+ok('THE CIRCUIT, POSTED: a two-star station with three towns known to it posts one contract through two or three doors that want what it makes, nearest door first from wherever the last one stood — a card of its own on the board, tagged CIRCUIT',
+  !r.none && r.legs.length >= 2 && r.legs.length <= 3 && r.nn && r.wants && /CIRCUIT/.test(r.card || '') && /One contract, \d doors/.test(r.card || ''), JSON.stringify(r));
+const legs0 = r.legs;
 
-/* 8. giving a circuit up loses every remaining door's crates toward their own doors */
+await page.click('#__ccAccept');
+await page.waitForTimeout(300);
 r = await ev(() => {
-  S.cargo = [];
-  S.stations.elm.stock.tools = 20; S.stations.mill.stock.textiles = 20; S.stations.quarry.stock.textiles = 20;   // the doors want again
-  const cc = Economy.ordersFor('haven').find(o => o.circuit);
-  if (!cc) return null;
-  const o = Systems.acceptOrder(cc, false);
+  document.getElementById('stationClose').click();
+  const o = S.orders.active.find(x => x.circuit); if (!o) return { none: true };
+  const want = o.legs.reduce((a, l) => a + l.n, 0), onBack = o.legs.every(l => l.items.length === l.n && l.items.every(id => S.cargo.some(c => c.id === id)));
+  const kg = o.legs.reduce((a, l) => a + l.items.reduce((b, id) => b + S.cargo.find(c => c.id === id).kg, 0), 0);
+  window.__cc = o.idNum;
+  /* the clock the last door will grade by, read the moment the contract is signed: the summed chain of doors (Haven, then
+     each door from the one before it) — and, to set it apart, the clock of the first door alone */
+  { const H = DATA.stations.haven, pad = DATA.T.parPad, floor = DATA.T.parFloor, prem = o.premium ? 0.8 : 1; let secs = 0, px = H.x, py = H.y;
+    for (const l of o.legs) { const d2 = DATA.stations[l.to]; secs += World.pathTime(px, py, d2.x, d2.y).seconds; px = d2.x; py = d2.y; }
+    const f = DATA.stations[o.legs[0].to];
+    window.__ccPar = { chain: Math.max(floor, secs * pad) * prem, first: Math.max(floor, World.pathTime(H.x, H.y, f.x, f.y).seconds * pad) * prem }; }
+  UI.updateTray();
+  return { crates: want, onBack, kg: +kg.toFixed(1), kgTotal: +o.kgTotal.toFixed(1), tray: document.getElementById('orderTray').textContent.replace(/\s+/g, ' ') };
+});
+ok('EVERY LEG AT ACCEPT: signing the circuit (a real click on its Accept) loads every leg\'s crates NOW — every door\'s crates on the back before the boots move, the contract\'s whole weight counted — and the tray reads door 1 of the chain',
+  !r.none && r.onBack && r.crates >= 3 && r.kg === r.kgTotal && /CIRCUIT — door 1 of \d/.test(r.tray), JSON.stringify(r));
+
+r = await ev(async () => {
+  /* the second door first: it takes nothing — the doors open in order */
+  const o = S.orders.active.find(x => x.idNum === __cc), second = o.legs[1].to;
+  WL.tp(second); WL.instantPar();
+  const got = Systems.deliverablesAt(second).some(x => x.idNum === __cc), res = Systems.handleDelivery(second).results.filter(x => x.order && x.order.idNum === __cc);
+  const still = o.legs.every(l => l.items.every(id => S.cargo.some(c => c.id === id))) && o.leg === 0;
+  /* the first door: the hand-over ceremony, the town's stock filled, LEG 1/N — ONWARD, and no slip */
+  const first = o.legs[0], stock0 = S.stations[first.to].stock[first.item];
+  WL.tp(first.to); WL.timeScale = 1;
+  UI.openStation(first.to);
+  const ceremony = !!S.handover;
+  WL.skipHandover(); await __wait(400);
+  const said = __says.includes(`LEG 1/${o.legs.length} — ONWARD`), toast = __toasts.some(t => new RegExp(`CIRCUIT\\s*Door 1 of ${o.legs.length} closed — onward to`).test(t));
+  const slip = !document.getElementById('results').classList.contains('hidden');
+  const out = { second, got, res: res.length, still, ceremony, leg: o.leg, to: o.to, gone: first.items.every(id => !S.cargo.some(c => c.id === id)), stock: +(S.stations[first.to].stock[first.item] - stock0).toFixed(1), said, toast, slip, tray: document.getElementById('orderTray').textContent.replace(/\s+/g, ' ') };
+  WL.timeScale = 0.0001;
+  const cl = document.getElementById('stationClose'); if (!document.getElementById('stationOv').classList.contains('hidden')) cl.click();
+  return out;
+});
+ok('THE DOORS IN ORDER: walked to the second door first, the circuit hands over nothing there (the tray still on door one); the first door takes its crates with the full hand-over ceremony, fills the town\'s stock, says LEG 1/N — ONWARD, and the tray moves on to door two',
+  !r.got && r.res === 0 && r.still && r.ceremony && r.leg === 1 && r.gone && r.stock > 0 && r.said && /CIRCUIT — door 2 of \d/.test(r.tray), JSON.stringify(r));
+ok('THE MIDDLE DOOR: no slip — the ledger waits for the last door; the toast only closes the door and names the next',
+  r.toast && !r.slip && r.to === legs0[1][0], JSON.stringify({ toast: r.toast, slip: r.slip, next: r.to }));
+
+r = await ev(async () => {
+  /* the rest of the doors, in order; the last grades the whole contract. The crates still to hand over walk in at their own
+     condition — the middle doors' at 64, the last door's at 52, the first door's as it was handed over — so a grade read off
+     one door alone cannot pass for the average of every door */
+  const o = S.orders.active.find(x => x.idNum === __cc), n = o.legs.length, conds = [];
+  for (let i = o.leg; i < n; i++) for (const id of o.legs[i].items) S.cargo.find(c => c.id === id).cond = i === n - 1 ? 52 : 64;
+  let res = null;
+  for (let i = o.leg; i < n; i++) {
+    const l = o.legs[i]; conds.push(l.items.map(id => S.cargo.find(c => c.id === id).cond).reduce((a, v) => a + v, 0) / l.items.length);
+    WL.tp(l.to); WL.instantPar();
+    const out = Systems.handleDelivery(l.to).results; if (i === n - 1) res = out.find(x => x.order && x.order.idNum === __cc);
+  }
+  if (!res) return { none: true };
+  UI.queueResults([res]);
+  const route = document.getElementById('resultRoute').textContent, rows = document.getElementById('scoreRows').textContent.replace(/\s+/g, ' ');
+  document.getElementById('resultsClose').click();
+  const doors = [...o.condAcc, conds[conds.length - 1]], mean = doors.reduce((a, v) => a + v, 0) / doors.length;   // every door's condition, the last door's own crates the last of them
+  return { paymul: res.paymul, legs: res.circuit && res.circuit.legs, kg: +res.kg.toFixed(1), kgTotal: +o.kgTotal.toFixed(1), par: +o.par.toFixed(3), parChain: +__ccPar.chain.toFixed(3), parFirst: +__ccPar.first.toFixed(3),
+    cond: +res.cond.toFixed(3), mean: +mean.toFixed(3), doors: doors.map(v => +v.toFixed(1)), condAcc: o.condAcc.map(Math.round), route, row: /CIRCUIT — \d doors, one contract\s*×1\.35/.test(rows), announce: document.getElementById('announce').textContent, names: o.legs.map(l => DATA.stations[l.to].name) };
+});
+ok('THE LAST DOOR: the final door grades the whole contract — par over the summed chain (the clock read off the walk Haven → every door in turn when the contract was signed, longer than the first door\'s alone), condition averaged across every door (the doors handed over at different conditions, the grade their mean, not the last door\'s own), the total weight carried, ×1.35 (CIRCUIT CLOSED — EVERY DOOR) — and the slip\'s route line names every door in order',
+  !r.none && r.paymul === 1.35 && r.legs === r.names.length && r.kg === r.kgTotal && r.condAcc.length === r.names.length - 1 && r.route === `Haven → ${r.names.join(' → ')} · CIRCUIT` && r.row && r.announce === 'CIRCUIT CLOSED — EVERY DOOR'
+  && Math.abs(r.par - r.parChain) < 0.01 && r.parChain > r.parFirst + 1 && r.doors.length === r.names.length && new Set(r.doors.map(Math.round)).size > 1 && Math.abs(r.cond - r.mean) < 0.01, JSON.stringify(r));
+
+r = await ev(() => {
+  /* a second circuit, given up at once: every leg's crates become lost cargo bound for their OWN door */
+  const st = S.stations; st.elm.stock.tools = 30; st.mill.stock.textiles = 30; st.quarry.stock.textiles = 30; S.time += 5;
+  WL.tp('haven');
+  const cc = Economy.ordersFor('haven').find(o => o.circuit); if (!cc) return { none: true };
+  Systems.acceptOrder(cc, false);
+  const o = S.orders.active.find(x => x.circuit);
+  const map = o.legs.map(l => ({ to: l.to, ids: l.items.slice() }));
   Systems.abandonOrder(o.idNum);
-  const wrong = [];
-  for (const l of cc.legs) for (const it of S.cargo) if (l.items && l.items.includes(it.id) && it.lostTo !== l.to) wrong.push(it.name);
-  const lost = S.cargo.filter(c => c.lostTo).length;
-  const want = cc.legs.reduce((a, l) => a + l.n, 0);
-  S.cargo = [];
-  return { lost, want, wrong: wrong.length };
+  const lost = map.map(m => ({ to: m.to, lostTo: m.ids.map(id => (S.cargo.find(c => c.id === id) || {}).lostTo) }));
+  const ok2 = lost.every(l => l.lostTo.every(t => t === l.to));
+  for (const m of map) for (const id of m.ids) State.removeCargo(id);
+  return { lost, ok2, gone: !S.orders.active.includes(o) };
 });
-ok('an abandoned circuit turns every remaining crate into lost cargo bound for its OWN door', r && r.lost === r.want && r.wrong === 0, JSON.stringify(r));
+ok('THE CIRCUIT GIVEN UP: abandoning a circuit turns each remaining leg\'s crates into lost cargo bound for its own door — every door keeps its claim on what was meant for it',
+  !r.none && r.ok2 && r.gone && r.lost.length >= 2 && new Set(r.lost.map(l => l.to)).size === r.lost.length, JSON.stringify(r));
 
-/* 9. a convoy posts on a route the pathfinder found, and the walker falls in */
+/* ================= 3 · THE CONVOY ================= */
+r = await ev(async () => {
+  S.time += 100; WL.tp('haven');
+  const cv = Economy.ordersFor('haven').find(o => o.convoy); if (!cv) return { none: true };
+  const H = DATA.stations.haven, D = DATA.stations[cv.to], p = World.pathTime(H.x, H.y, D.x, D.y, true, Systems.walkOpts(true));
+  let grey = 0; for (const [x, y] of p.path || []) grey = Math.max(grey, World.mistAt(x, y));
+  UI.openStation('haven'); UI.gotoTab('orders');
+  const card = [...document.querySelectorAll('#stationBody .orderCard')].find(el => /CONVOY/.test(el.textContent));
+  const text = card ? card.textContent.replace(/\s+/g, ' ') : null;
+  document.getElementById('stationClose').click();
+  Systems.acceptOrder(cv, false);
+  const c = S.convoy, o = S.orders.active.find(x => x.convoy);
+  window.__cv = o.idNum;
+  await __wait(60);   // the toast lands in the page's own time
+  return { to: cv.to, connected: S.stations[cv.to].connected, found: p.found, grey: +grey.toFixed(2), card: text && text.slice(0, 90), name: c && c.n.name, crates: c && c.crates, skills: c && Math.max(...Object.values(c.n.skills)), announced: __toasts.some(t => /falls in behind you/.test(t)) };
+});
+ok('THE CONVOY, POSTED: the cargo is a person — a card of its own (CONVOY, walk a walker) for a connected town the pathfinder can find without the deep grey; accepted, a junior walker of the Order (generated, named, no skill above 2 — that is the point) shoulders three crates and falls in behind you',
+  !r.none && r.connected && r.found && r.grey <= 0.68 && /CONVOY/.test(r.card || '') && !!r.name && r.crates === 3 && r.skills <= 2 && r.announced, JSON.stringify(r));
+
+r = await ev(async () => {
+  const c = S.convoy; WL.tp([c.x + 150, c.y + 10]); S.moveTo = null; WL.timeScale = 1;
+  const d0 = U.dist(c.x, c.y, S.px, S.py); await __wait(1200);
+  const follow = { d0: Math.round(d0), d1: Math.round(U.dist(c.x, c.y, S.px, S.py)), moving: c.moving || U.dist(c.x, c.y, S.px, S.py) < 50 };
+  /* left behind past 220: they call out, and trudge on at half their pace — never warped to your back */
+  WL.tp([c.x + 420, c.y]); const x0 = c.x, s0 = __says.length; await __wait(1000);
+  const lag = { waiting: c.waiting, said: __says.slice(s0).some(t => ['Wait— your legs are longer!', 'I can’t match that pace!', 'Walker, the crates!'].includes(t)), crept: Math.round(c.x - x0), full: Math.round(NPC.speedOf(c.n)), label: __labels().some(s => /^WAITING — /.test(s)), guide: (Guide.current() || {}).id, maxStep: 0 };
+  /* stride by stride: no step longer than a stride */
+  let last = [c.x, c.y], maxStep = 0; for (let i = 0; i < 20; i++) { await __frames(1); maxStep = Math.max(maxStep, U.dist(last[0], last[1], c.x, c.y)); last = [c.x, c.y]; }
+  lag.maxStep = +maxStep.toFixed(1); lag.warped = U.dist(c.x, c.y, S.px, S.py) < 100;
+  WL.timeScale = 0.0001;
+  return { follow, lag };
+});
+ok('THE FOLLOW: the junior walks to you at their own pace — a Walker 150 units ahead has them closing the gap within a second',
+  r.follow.d1 < r.follow.d0 - 60, JSON.stringify(r.follow));
+ok('THE LAG (v3.31, the fairness pass: never frozen, never warped): drift past 220 units and the junior calls out ("Wait— your legs are longer!"), WAITING under their feet and the Guide turned to them — and trudges on at half their pace, stride by stride, never warped to your back',
+  r.lag.waiting && r.lag.said && r.lag.label && r.lag.guide === 'convoy' && r.lag.crept > 0 && r.lag.crept < r.lag.full * 0.75 && r.lag.maxStep < 12 && !r.lag.warped, JSON.stringify(r.lag));
+
+r = await ev(async () => {
+  /* scrappers go for THEIR crates first: inside a camp's ground, with the Walker a mark too — a crate of the Walker's own on
+     the back, standing inside the claim — a knife nearer the junior goes for the junior's crates and leaves the Walker's */
+  const cd = DATA.camps.find(c => !S.camps[c.id].pacified) || DATA.camps[0], c = S.convoy, cs = S.camps[cd.id];
+  c.x = cd.x + cd.r * 0.5; c.y = cd.y; c.frozen = false; c.waiting = false; c.stag = 0; c.crates = 3;
+  let W = null;
+  for (const [dx, dy] of [[70, 110], [70, -110], [110, 70], [110, -70], [40, 130], [40, -130]]) { const t = World.terrainAt(c.x + dx, c.y + dy); if (!t.blocked && !t.water) { W = [c.x + dx, c.y + dy]; break; } }
+  WL.tp(W || [c.x + 30, c.y + 20]); S.moveTo = null;
+  const bait = State.makeItem('textiles'); State.addCargo(bait);   // the Walker's own crate: a mark for any knife that wants one
+  cs.runners.length = 0; const run = { x: c.x - 80, y: c.y + 10, wa: 1, state: 'patrol', cd: 0, cls: 'knife' }; cs.runners.push(run);
+  const marks = { walkerIn: U.dist(S.px, S.py, cd.x, cd.y) < cd.r * 0.85, juniorIn: U.dist(c.x, c.y, cd.x, cd.y) < cd.r, carrying: S.cargo.some(x => x.cat !== 'tool'),
+    toJunior: Math.round(U.dist(run.x, run.y, c.x, c.y)), toWalker: Math.round(U.dist(run.x, run.y, S.px, S.py)) };
+  const drops0 = S.drops.length; WL.timeScale = 1;
+  const t0 = performance.now(); while (c.crates === 3 && performance.now() - t0 < 5000) await __frames(1);
+  cs.runners.length = 0; cs.pacified = true;   // the moment of the catch the camp's knives are held off the board: the crate on the ground is the Walker's to recover before any knife collects it
+  const knocked = { crates: c.crates, dropped: S.drops.length - drops0, told: __toasts.some(t => /Scrappers knocked a crate off/.test(t)) };
+  const baitKept = S.cargo.some(x => x.id === bait.id) && !S.drops.some(d => d.item.id === bait.id);
+  State.removeCargo(bait.id);
+  const dr = S.drops.find(d => d.item.convoy === __cv);
+  cs.runners.length = 0; WL.timeScale = 0.0001;
+  window.__cvCamp = cd.id;
+  return { camp: cd.id, marks, baitKept, knocked, crate: dr ? { name: dr.item.name, gold: !!dr.item.convoy } : null, at: dr ? [Math.round(dr.x), Math.round(dr.y)] : null };
+});
+const knock = r;
+/* recover it off the ground (E) and hand it back at their side (E) — real presses */
+await ev(() => { const dr = S.drops.find(d => d.item.convoy === __cv); if (dr) WL.tp([dr.x, dr.y]); S.moveTo = null; WL.timeScale = 1; });
+await page.waitForTimeout(250); await page.keyboard.press('KeyE'); await page.waitForTimeout(250);
+const held = await ev(() => S.cargo.some(c => c.convoy === __cv));
+await ev(() => { const c = S.convoy; WL.tp([c.x + 30, c.y]); S.moveTo = null; });
+await page.waitForTimeout(250); await page.keyboard.press('KeyE'); await page.waitForTimeout(250);
+r = await ev(() => { const out = { crates: S.convoy.crates, onBack: S.cargo.some(c => c.convoy === __cv), thanked: __says.includes('Got it. Thank you. Really.') }; S.camps[__cvCamp].pacified = false; S.camps[__cvCamp].runners.length = 0; return out; });
+await ev(() => { WL.timeScale = 0.0001; });
+ok('THE KNOCK AND THE HAND-BACK: inside a camp\'s ground the scrappers go for the junior\'s crates first — the softer mark: with the Walker a mark too (a crate of their own on the back, inside the claim), a knife nearer the junior takes the junior\'s crate and leaves the Walker\'s where it rides — and a catch knocks a gold-banded crate loose (their load three to two, the toast says so); recovered off the ground (E) and handed back at their side (E), their load is whole again ("Got it. Thank you. Really.")',
+  knock.marks.walkerIn && knock.marks.juniorIn && knock.marks.carrying && knock.marks.toJunior < knock.marks.toWalker && knock.baitKept
+  && knock.knocked.crates === 2 && knock.knocked.dropped >= 1 && knock.knocked.told && knock.crate && knock.crate.gold && held && r.crates === 3 && !r.onBack && r.thanked, JSON.stringify({ knock, held, back: r }));
+
+r = await ev(async () => {
+  /* the grey roots junior feet: a wraith within 260 in mist freezes them until your lantern stands within reach */
+  let spot = null; for (let y = 2400; y < 6000 && !spot; y += 60) for (let x = 800; x < 7600 && !spot; x += 60) if (World.mistAt(x, y) > 0.5 && World.classAt(x, y) === World.MEADOW && !World.terrainAt(x, y).blocked) spot = [x, y];
+  const c = S.convoy; c.x = spot[0]; c.y = spot[1]; c.frozen = false; c.stag = 0; c.waiting = false;
+  WL.tp([spot[0] + 200, spot[1]]); S.moveTo = null; S.wraiths.length = 0; Render.cam.x = spot[0] + 100; Render.cam.y = spot[1];   // the camera there with them, both in the frame
+  S.wraiths.push({ id: U.uid(), x: spot[0] - 150, y: spot[1] - 60, alert: 0, state: 'drift', cd: 5, ph: 0 });
+  WL.timeScale = 1; await __wait(400);
+  const frozen = { frozen: c.frozen, label: __labels().some(s => /^FROZEN — /.test(s)), guide: (Guide.current() || {}).head || null };
+  const x0 = c.x; S.wraiths.length = 0; await __wait(600); const stuck = Math.round(Math.abs(c.x - x0));
+  WL.tp([c.x + 40, c.y]); S.wraiths.length = 0;
+  let freedAt = null; const t1 = performance.now(); while (performance.now() - t1 < 1500) { await __frames(1); if (!c.frozen) { freedAt = Math.round(performance.now() - t1); break; } }   // the grey keeps sending its own; the moment the lantern arrives is the moment read
+  const freed = { frozen: c.frozen, at: freedAt, said: __says.includes('…okay. Okay. Staying close.') };
+  WL.timeScale = 0.0001;
+  return { mist: +World.mistAt(spot[0], spot[1]).toFixed(2), frozen, stuck, freed };
+});
+ok('THE FREEZE: a wraith within 260 of the junior in the mist freezes them mid-stride — FROZEN under their feet, the Guide sends you to them — and they stay rooted with the wraith gone, until your lantern stands beside them; then they move again',
+  r.frozen.frozen && r.frozen.label && /frozen in the grey/.test(r.frozen.guide || '') && r.stuck === 0 && r.freed.frozen === false && r.freed.said, JSON.stringify(r));
+
+r = await ev(async () => {
+  /* the gate: the junior alone at the door is not arrival; both of you, and it counts */
+  const c = S.convoy, o = S.orders.active.find(x => x.idNum === __cv), D = DATA.stations[o.to];
+  c.x = D.x + 20; c.y = D.y + 40; c.frozen = false; c.waiting = false; c.stag = 0; c.crates = 3;
+  WL.tp([D.x + 600, D.y + 300]); S.moveTo = null; WL.timeScale = 1;
+  await __wait(300); const alone = !!S.convoy;
+  const appr0 = S.stations[o.from].appr || 0, likes0 = S.likes, name = c.n.name, pool0 = S.npcs.filter(n => n.at === o.to && n.state === 'pool').length;
+  WL.tp([D.x + 30, D.y + 50]); c.x = D.x + 20; c.y = D.y + 40;
+  const t0 = performance.now(); while (S.convoy && performance.now() - t0 < 3000) await __frames(2);
+  await __wait(300);
+  const n = S.npcs.find(x => x.name === name);
+  const slip = document.getElementById('resultRoute').textContent;
+  const out = { alone, through: !S.convoy, appr: (S.stations[o.from].appr || 0) - appr0, likes: S.likes - likes0, joined: !!n && n.state === 'pool' && n.at === o.to, foot: n ? (n.trainXp || {}).foot || 0 : 0, footLv: n ? n.skills.foot : null, announce: document.getElementById('announce').textContent, slip };
+  const rc = document.getElementById('resultsClose'); if (!document.getElementById('results').classList.contains('hidden')) rc.click();
+  WL.timeScale = 0.0001;
+  return out;
+});
+ok('ARRIVING TOGETHER: the junior at the gate with the Walker far off is not an arrival — both at the gate and it counts: luxury pay (likes, where letters pay none), +10 appreciation to the town that asked, CONVOY THROUGH from the Dispatch, and the walker joins the destination\'s fire, hireable, already road-trained (+26 Footwork)',
+  r.alone && r.through && r.appr === 10 && r.likes > 0 && r.joined && (r.foot >= 26 || r.footLv >= 1) && r.announce === 'CONVOY THROUGH' && /CONVOY THROUGH/.test(r.slip), JSON.stringify(r));
+
+/* ================= 4 · SALVAGE ================= */
 r = await ev(() => {
-  const cv = Economy.ordersFor('haven').find(o => o.convoy);
-  if (!cv) return null;
-  const o = Systems.acceptOrder(cv, false);
-  window._cvo = o;
-  return { to: cv.to, connected: S.stations[cv.to].connected, escort: !!S.convoy, crates: S.convoy && S.convoy.crates, items: o.items.length, near: S.convoy && U.dist(S.convoy.x, S.convoy.y, DATA.stations.haven.x, DATA.stations.haven.y) < 120 };
+  /* the Greenhouse short of something: its worst stock under seventy names the prize */
+  const g = S.stations.green; for (const k of Object.keys(g.stock)) g.stock[k] = 80; g.stock.seeds = 22; S.time += 200;
+  const sv = Economy.ordersFor('green').find(o => o.salvage); if (!sv) return { none: true };
+  const G = DATA.stations.green, d = U.dist(G.x, G.y, sv.site.x, sv.site.y);
+  WL.tp('green'); UI.openStation('green'); UI.gotoTab('orders');
+  const card = [...document.querySelectorAll('#stationBody .orderCard')].find(el => /SALVAGE/.test(el.textContent));
+  const text = card ? card.textContent.replace(/\s+/g, ' ') : '';
+  document.getElementById('stationClose').click();
+  const calm = (() => { for (const k of Object.keys(g.stock)) g.stock[k] = 90; S.time += 200; return Economy.ordersFor('green').some(o => o.salvage); })();
+  g.stock.seeds = 22; S.time += 200;
+  window.__sv = Economy.ordersFor('green').find(o => o.salvage);
+  return { item: sv.item, name: DATA.goodsInfo[sv.item].name, dist: Math.round(d), mistBase: +World.mistBase(sv.site.x, sv.site.y).toFixed(2), card: text.slice(0, 160), named: text.includes(DATA.goodsInfo[sv.item].name), calm };
 });
-ok('a CONVOY posts to a connected door and the junior walker falls in — three crates, none on your pack',
-  r && r.connected && r.escort && r.crates === 3 && r.items === 0 && r.near, JSON.stringify(r));
+ok('THE SALVAGE, NAMED: a town short of something (its worst stock under seventy) posts its top shortage by name — the Greenhouse, out of seed, posts a wreck run for Seeds, a card of its own (SALVAGE, ×1.6 — grey work); a comfortable town sends nobody into the grey',
+  !r.none && r.item === 'seeds' && r.named && /SALVAGE/.test(r.card) && /×1\.6/.test(r.card) && r.calm === false, JSON.stringify(r));
 
-/* 10. their pace, your lantern: they follow — and past the lag line they CALL and trudge at
-   half pace (v3.31 FAIRNESS: the freeze is gone with the warps — going back is still faster) */
+r = await ev(async () => {
+  const sv = __sv; Systems.acceptOrder(sv, false);
+  const o = S.orders.active.find(x => x.salvage); window.__svId = o.idNum;
+  const G = DATA.stations.green, d = U.dist(G.x, G.y, o.site.x, o.site.y);
+  WL.timeScale = 1; await __wait(300);
+  const guide = Guide.target(), aimed = !!guide && Math.round(guide.x) === Math.round(o.site.x) && Math.round(guide.y) === Math.round(o.site.y);
+  /* out to the site: the wreck stands there while the run holds it */
+  WL.tp([o.site.x + 90, o.site.y + 40]); S.moveTo = null; Render.setZoom(2); Render.cam.x = o.site.x; Render.cam.y = o.site.y; await __wait(400); await __frames(3);
+  const label = __labels().includes('THE WRECK'), paint = ['#d8d2bd', '#ffd98f'].reduce((s2, h) => s2 + __near(o.site.x, o.site.y, __hex(h), 6, 60), 0);
+  Render.setZoom(null); WL.timeScale = 0.0001;
+  return { dist: Math.round(d), mistBase: +World.mistBase(o.site.x, o.site.y).toFixed(2), empty: o.items.length === 0, aimed, label, paint };
+});
+ok('THE SITE IN THE GREY: the wreck stands 900-1400 units out where the mist\'s base runs past half — accepted empty-handed, the Guide aims at the site, and out there the wreck is drawn (the tipped cart, its gold crates) and labelled THE WRECK while the run holds it',
+  r.dist >= 900 && r.dist <= 1400 && r.mistBase > 0.5 && r.empty && r.aimed && r.label && r.paint > 20, JSON.stringify(r));
+
+/* E at the wreck: a real press */
+await ev(() => { const o = S.orders.active.find(x => x.idNum === __svId); WL.tp([o.site.x + 10, o.site.y + 10]); S.moveTo = null; WL.timeScale = 1; });
+await page.waitForTimeout(300); await page.keyboard.press('KeyE'); await page.waitForTimeout(300);
 r = await ev(() => {
-  const c = S.convoy;
-  WL.tp([c.x + 150, c.y]); S.moveTo = null;
-  const d0 = U.dist(c.x, c.y, S.px, S.py);
-  for (let i = 0; i < 20; i++) Systems.update(0.1, {});
-  const d1 = U.dist(c.x, c.y, S.px, S.py);
-  WL.tp([c.x + 480, c.y]); S.moveTo = null;
-  for (let i = 0; i < 10; i++) Systems.update(0.1, {});
-  const cx0 = c.x;
-  for (let i = 0; i < 10; i++) Systems.update(0.1, {});
-  return { d0: Math.round(d0), d1: Math.round(d1), waiting: c.waiting, crept: Math.round(Math.abs(c.x - cx0)) };
+  const o = S.orders.active.find(x => x.idNum === __svId), its = o.items.map(id => S.cargo.find(c => c.id === id)).filter(Boolean);
+  WL.timeScale = 0.0001;
+  return { looted: o.looted, n: its.length, kg: its.map(c => c.kg), cond: its.map(c => c.cond), names: its.map(c => c.name), gold: its.every(c => !!c.orderId), foundCond: Math.round(o.foundCond) };
 });
-ok('the escort closes at full stride in range; past the lag line they CALL and trudge at HALF pace — never frozen, never warped',
-  r.d1 < r.d0 - 40 && r.waiting && r.crept >= 30 && r.crept <= 90, JSON.stringify(r));
+ok('THE WRECK\'S LOAD: E at the wreck loads two or three Salvaged crates — eleven to seventeen kilos each, fifty-five to eighty per cent, honest about their history — bound to the run (gold, mission cargo)',
+  r.looted && r.n >= 2 && r.n <= 3 && r.kg.every(k => k >= 11 && k <= 17) && r.cond.every(c => c >= 55 && c <= 80) && r.names.every(n => /^Salvaged /.test(n)) && r.gold, JSON.stringify(r));
 
-/* 11. scrappers go for THEIR crates — the knock drops a gold crate */
 r = await ev(() => {
-  const c = S.convoy;
-  const camp = DATA.camps[0];
-  c.x = camp.x + 40; c.y = camp.y; c.frozen = false; c.waiting = false; c.stag = 0;
-  WL.tp([camp.x + 190, camp.y]); S.moveTo = null;   // you, outside their claws; the junior inside
-  const cs = S.camps[camp.id]; cs.pacified = false;
-  if (!cs.runners.length) Systems.update(0.05, {});
-  const rr = cs.runners[0];
-  rr.x = c.x + 20; rr.y = c.y; rr.cd = 0; rr.carry = null;
-  const before = c.crates;
-  Systems.update(0.06, {});
-  const drop = S.drops.find(d => d.item.convoy);
-  window._cvdrop = drop && drop.id;
-  for (const r2 of cs.runners) r2.cd = 99;   // hold the claws: the next check tests the hand-back, not a race for the drop
-  return { crates: c.crates, before, drop: !!drop, gold: drop && !!drop.item.convoy, staggered: c.stag > 0 };
+  /* home: ×1.6 on top of the shortage multiplier, condition judged against what the wreck gave */
+  const o = S.orders.active.find(x => x.idNum === __svId);
+  WL.tp('green'); WL.instantPar();
+  const res = Systems.handleDelivery('green').results.find(x => x.order && x.order.idNum === __svId);
+  if (!res) return { none: true };
+  UI.queueResults([res]);
+  const rows = document.getElementById('scoreRows').textContent.replace(/\s+/g, ' '), route = document.getElementById('resultRoute').textContent;
+  document.getElementById('resultsClose').click();
+  return { paymul: res.paymul, needMul: res.needMul, ptsC: res.ptsC, cond: Math.round(res.cond), found: Math.round(o.foundCond), grey: /Grey work — out of the wreck\s*×1\.6/.test(rows), against: /Condition — against what the wreck gave/.test(rows), route };
 });
-ok('a scrapper reaches the escort: a crate is knocked loose as GOLD ground cargo', r.before === 3 && r.crates === 2 && r.drop && r.gold && r.staggered, JSON.stringify(r));
+ok('×1.6 AGAINST THE WRECK: walked home no worse than the wreck gave them, the crates grade full stars for condition (judged against what the wreck gave, not the factory) and the slip pays ×1.6 on top of the shortage\'s own multiplier',
+  !r.none && r.paymul === 1.6 && r.needMul > 1 && r.ptsC === 4 && r.cond === r.found && r.grey && r.against && /· SALVAGE/.test(r.route), JSON.stringify(r));
 
-/* 12. recover it, hand it back */
+/* ================= 5 · THE SAVE, MID-SHAPE ================= */
 r = await ev(() => {
-  const c = S.convoy;
-  const drop = S.drops.find(d => d.id === window._cvdrop);
-  if (drop) { State.addCargo(drop.item); S.drops.splice(S.drops.indexOf(drop), 1); }   // picked up off the ground
-  WL.tp([c.x + 20, c.y]); S.moveTo = null;
-  c.stag = 0;
-  const act = Systems.getInteractions().find(i => /Hand the crate back/.test(i.label));
-  if (act) act.fn();
-  return { prompt: !!act, crates: c.crates, held: S.cargo.some(cc => cc.convoy) };
+  /* a circuit at its second door and a convoy at two crates of three, saved and loaded */
+  const st = S.stations; st.elm.stock.tools = 30; st.mill.stock.textiles = 30; st.quarry.stock.textiles = 30; S.time += 5; WL.tp('haven');
+  for (const o of [...S.orders.active]) Systems.abandonOrder(o.idNum);
+  S.cargo = S.cargo.filter(c => c.cat === 'tool');
+  const cc = Economy.ordersFor('haven').find(o => o.circuit); Systems.acceptOrder(cc, false);
+  const o = S.orders.active.find(x => x.circuit); WL.tp(o.legs[0].to); WL.instantPar(); Systems.handleDelivery(o.legs[0].to);
+  S.time += 100; WL.tp('haven');
+  const cv = Economy.ordersFor('haven').find(x => x.convoy); Systems.acceptOrder(cv, false); S.convoy.crates = 2;
+  const before = { leg: o.leg, legs: o.legs.length, to: o.to, onBack: o.legs.slice(1).every(l => l.items.every(id => S.cargo.some(c => c.id === id))), crates: S.convoy.crates, junior: S.convoy.n.name, cvTo: S.orders.active.find(x => x.convoy).to };
+  State.save(); const loaded = State.load();
+  const o2 = S.orders.active.find(x => x.circuit), c2 = S.convoy;
+  const after = { leg: o2 && o2.leg, legs: o2 && o2.legs.length, to: o2 && o2.to, onBack: !!o2 && o2.legs.slice(1).every(l => l.items.every(id => S.cargo.some(c => c.id === id))), crates: c2 && c2.crates, junior: c2 && c2.n.name, cvTo: (S.orders.active.find(x => x.convoy) || {}).to };
+  return { loaded, before, after, same: JSON.stringify(before) === JSON.stringify(after) };
 });
-ok('recovered crate hands back at their side — three on their back again', r.prompt && r.crates === 3 && !r.held, JSON.stringify(r));
+ok('THE SAVE, MID-SHAPE: a circuit standing at its second door (the first handed over, the rest of its crates on the back) and a convoy down to two crates of three both survive a save and a load, exactly where they stood',
+  r.loaded && r.same && r.before.leg === 1, JSON.stringify(r));
 
-/* 13. the grey roots their feet; your lantern breaks it */
-r = await ev(() => {
-  const c = S.convoy;
-  // stand them somewhere the mist actually holds
-  let spot = null;
-  for (let R = 400; R < 3000 && !spot; R += 100) for (let a = 0; a < 12; a++) {
-    const x = c.x + Math.cos(a) * R, y = c.y + Math.sin(a) * R;
-    if (World.mistAt(x, y) > 0.4 && !World.terrainAt(x, y).blocked && !World.terrainAt(x, y).water) { spot = [x, y]; break; }
-  }
-  if (!spot) return null;
-  c.x = spot[0]; c.y = spot[1]; c.frozen = false; c.waiting = false; c.stag = 0;
-  WL.tp([spot[0] + 150, spot[1]]); S.moveTo = null;
-  S.wraiths.push({ id: U.uid(), x: spot[0] + 80, y: spot[1], alert: 0, state: 'drift', cd: 0, ph: 0 });
-  Systems.update(0.05, {});
-  const frozen = c.frozen;
-  const cx0 = c.x;
-  for (let i = 0; i < 8; i++) Systems.update(0.1, {});
-  const held = Math.abs(c.x - cx0) < 2;
-  WL.tp([c.x + 40, c.y]); S.moveTo = null;
-  Systems.update(0.05, {});
-  const after = c.frozen;
-  S.wraiths = [];
-  return { frozen, held, after };
-});
-ok('a wraith near the escort in mist FREEZES them; standing beside them breaks it', r && r.frozen && r.held && !r.after, JSON.stringify(r));
-
-/* 14. arrive TOGETHER: pay, appreciation, and a hireable walker joins the town */
-r = await ev(() => {
-  const o = window._cvo, c = S.convoy;
-  const D = DATA.stations[o.to];
-  const apprBefore = S.stations[o.from].appr || 0;
-  const likesBefore = S.likes;
-  const npcId = c.n.id;
-  c.x = D.x + 60; c.y = D.y + 60; c.frozen = false; c.waiting = false; c.stag = 0;
-  WL.tp([D.x + 80, D.y + 80]); S.moveTo = null;
-  Systems.update(0.05, {});
-  const joined = S.npcs.find(n => n.id === npcId);
-  return {
-    done: !S.orders.active.some(x => x.idNum === o.idNum), convoy: !!S.convoy,
-    likes: S.likes - likesBefore, appr: (S.stations[o.from].appr || 0) - apprBefore,
-    joined: !!joined && joined.state === 'pool' && joined.at === o.to,
-    slip: !document.getElementById('results').classList.contains('hidden') && /CONVOY/.test(document.getElementById('resultRoute').textContent),
-  };
-});
-ok('arriving together completes the convoy — luxury pay, +10 appreciation, and the walker joins the town\'s fire',
-  r.done && !r.convoy && r.likes > 0 && r.appr === 10 && r.joined && r.slip, JSON.stringify(r));
-await ev(() => { const el = document.getElementById('results'); el.classList.add('hidden'); });
-
-/* 15. salvage posts at a grey-adjacent town, naming its worst shortage; the wreck is real */
-r = await ev(() => {
-  S.stations.foundry.stock.food = 12;
-  const sv = Economy.ordersFor('foundry').find(o => o.salvage);
-  if (!sv) return null;
-  let worst = null, wv = 101;
-  for (const g of DATA.stations.foundry.needs) { const v = S.stations.foundry.stock[g]; if (v < wv) { wv = v; worst = g; } }
-  const o = Systems.acceptOrder(sv, false);
-  window._svo = o;
-  const F = DATA.stations.foundry;
-  const d = U.dist(o.site.x, o.site.y, F.x, F.y);
-  return { named: sv.item === worst, mist: World.mistBase(o.site.x, o.site.y), d: Math.round(d), par: Math.round(o.par) };
-});
-ok('SALVAGE names the town\'s worst shortage and the wreck lies 900-1400u out in the deep grey',
-  r && r.named && r.mist > 0.5 && r.d >= 900 && r.d <= 1450 && r.par > 60, JSON.stringify(r));
-
-/* 16. the wreck loads 2-3 battered gold crates — heavy, and honest about it */
-r = await ev(() => {
-  const o = window._svo;
-  WL.tp([o.site.x + 20, o.site.y]); S.moveTo = null;
-  const act = Systems.getInteractions().find(i => /Search the wreck/.test(i.label));
-  if (act) act.fn();
-  const its = o.items.map(id => S.cargo.find(c => c.id === id)).filter(Boolean);
-  return {
-    prompt: !!act, looted: o.looted, n: its.length,
-    kgOk: its.every(c => c.kg >= 11 && c.kg <= 17),
-    condOk: its.every(c => c.cond >= 55 && c.cond <= 80),
-    named: its.every(c => /^Salvaged /.test(c.name)),
-    gold: its.every(c => c.orderId === o.idNum),
-  };
-});
-ok('the wreck gives 2-3 salvaged crates — 11-17 kg, 55-80% condition, marked gold for the run',
-  r.prompt && r.looted && r.n >= 2 && r.n <= 3 && r.kgOk && r.condOk && r.named && r.gold, JSON.stringify(r));
-
-/* 17. grey work pays ×1.6, judged against what the wreck gave — and the town eats */
-r = await ev(() => {
-  const o = window._svo;
-  const F = DATA.stations.foundry;
-  const stockBefore = S.stations.foundry.stock[o.item];
-  WL.tp([F.x, F.y + 60]); S.moveTo = null;
-  const res = Systems.handleDelivery('foundry');
-  const s = res.results.find(x => x.salvage);
-  return s ? { paymul: s.paymul, likes: s.likes, ptsC: s.ptsC, fed: S.stations.foundry.stock[o.item] > stockBefore, grade: s.grade } : null;
-});
-ok('the salvage slip pays ×1.6 and grades condition against the wreck, not the factory',
-  r && r.paymul === 1.6 && r.likes > 0 && r.ptsC >= 3 && r.fed, JSON.stringify(r));
-
-/* 18. the shapes survive a real save and reload */
-await ev(() => {
-  S.cargo = [];
-  document.getElementById('results') && document.getElementById('results').classList.add('hidden');
-  S.stations.elm.stock.tools = 20; S.stations.mill.stock.textiles = 20;
-  const cc = Economy.ordersFor('haven').find(o => o.circuit);
-  const o = Systems.acceptOrder(cc, false);
-  // walk the first door so the saved circuit is mid-contract
-  const d0 = o.legs[0].to;
-  WL.tp([DATA.stations[d0].x, DATA.stations[d0].y + 60]); S.moveTo = null;
-  Systems.handleDelivery(d0);
-  const cv = Economy.ordersFor('haven').find(x => x.convoy);
-  if (cv) Systems.acceptOrder(cv, false);
-  if (S.convoy) S.convoy.crates = 2;
-  window._saveShape = { leg: o.leg, ccId: o.idNum, cvCrates: S.convoy && S.convoy.crates };
-  State.save();
-  localStorage.setItem('_shapeProbe', JSON.stringify(window._saveShape));
-});
-await page.reload({ waitUntil: 'domcontentloaded' });
-await page.waitForFunction(() => window.WL && WL.snapshot().baked, null, { timeout: 60000 });
-await page.click('#btnContinue');
-await page.waitForTimeout(900);
-r = await ev(() => {
-  const probe = JSON.parse(localStorage.getItem('_shapeProbe'));
-  for (let i = 0; i < 8 && S.cine; i++) WL.skipCine && WL.skipCine();
-  const o = S.orders.active.find(x => x.idNum === probe.ccId);
-  return {
-    circuit: !!o && o.circuit && o.leg === probe.leg && o.legs.length >= 2,
-    itemsHeld: !!o && o.items.every(id => S.cargo.some(c => c.id === id)),
-    convoy: !!S.convoy && S.convoy.crates === probe.cvCrates && !!S.convoy.n && !S.convoy.frozen,
-  };
-});
-ok('a mid-contract circuit and a mid-road convoy survive save → reload → continue', r.circuit && r.itemsHeld && r.convoy, JSON.stringify(r));
-
-ok('no page errors across the whole suite', errors.length === 0, errors.slice(0, 3).join(' | '));
-console.log('\n=== SHAPES (v3.18: circuits · convoys · salvage) ===');
-for (const line of results) console.log(line);
-console.log(`${results.filter(x => x.startsWith('PASS')).length}/${results.length} passed`);
-await b.close();
+await T.finish('the shapes of work');

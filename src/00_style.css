@@ -105,6 +105,10 @@ canvas#game { position:absolute; inset:0; width:100%; height:100%; display:block
 .memCard .memCls { font:11.5px var(--ui); color:var(--bone-dim); margin-top:1px; }
 .memCard .memNums { font:700 11px var(--mono); color:var(--bone-dim); margin-top:5px; }
 .memCard .memFate { font:italic 12px var(--disp); color:var(--bone-faint); margin-top:4px; }
+/* v3.44 — the scars carried to the stone, on the card */
+.memScars { display:flex; align-items:center; gap:3px; margin-top:4px; font:11px var(--ui); color:#c9553a; }
+.memScars img { image-rendering:pixelated; }
+.memScars span { margin-left:5px; color:var(--bone-faint); }
 .memCard .memStamp { font:800 9px var(--mono); letter-spacing:.2em; color:var(--gold); margin-top:7px; border-top:1px solid var(--line2); padding-top:6px; }
 .memCard.unraised .memStamp { color:var(--bone-faint); }
 
@@ -180,6 +184,24 @@ canvas#game { position:absolute; inset:0; width:100%; height:100%; display:block
 .buff { font:700 10px var(--ui); letter-spacing:.08em; color:var(--gold); border:1px solid var(--line); padding:2px 7px; background:rgba(255,201,120,.07); }
 
 #social { position:absolute; right:18px; top:16px; text-align:right; }
+/* ---------- v3.52 THE PAPERS ROW — the six papers the keys open, a click away from the field: a hand-drawn glyph each
+   (SPRITES.HUDGLYPH) on the paper of the rail's plates; its own name and key under the row while the pointer is on it;
+   lit while that paper is open ---------- */
+#papersRow { position:absolute; right:18px; top:102px; display:flex; gap:8px; }
+#hud > #papersRow { pointer-events:auto; }
+.paperBtn { position:relative; width:30px; height:30px; cursor:pointer; background:var(--panel);
+  box-shadow:-2px 0 0 var(--line2), 2px 0 0 var(--line2), 0 -2px 0 var(--line2), 0 2px 0 var(--line2), 0 4px 0 rgba(0,0,0,.5), inset 1px 1px 0 rgba(255,236,190,.06); }
+.paperBtn img { position:absolute; left:3px; top:3px; width:24px; height:24px; image-rendering:pixelated; display:block; pointer-events:none; }
+.paperBtn:hover { background:#18202b;
+  box-shadow:-2px 0 0 var(--line), 2px 0 0 var(--line), 0 -2px 0 var(--line), 0 2px 0 var(--line), 0 4px 0 rgba(0,0,0,.5), inset 1px 1px 0 rgba(255,236,190,.08); }
+.paperBtn.on { box-shadow:-2px 0 0 var(--gold), 2px 0 0 var(--gold), 0 -2px 0 var(--gold), 0 2px 0 var(--gold), 0 4px 0 rgba(0,0,0,.5), inset 1px 1px 0 rgba(255,236,190,.08); }
+.paperBtn:active { transform:translateY(2px);
+  box-shadow:-2px 0 0 var(--line), 2px 0 0 var(--line), 0 -2px 0 var(--line), 0 2px 0 var(--line), 0 2px 0 rgba(0,0,0,.5), inset 1px 1px 0 rgba(0,0,0,.2); }
+#papersLabel { position:absolute; right:18px; top:142px; font:700 10px var(--ui); letter-spacing:.14em; text-transform:uppercase; color:var(--bone-dim);
+  white-space:nowrap; opacity:0; transition:opacity .12s; pointer-events:none; }
+#papersLabel.on { opacity:.95; }
+#papersLabel .pk { display:inline-block; margin-left:7px; padding:1px 5px; font:700 9px var(--mono); letter-spacing:.06em; color:var(--gold); background:#0b1017;
+  box-shadow:-1px 0 0 var(--line2), 1px 0 0 var(--line2), 0 -1px 0 var(--line2), 0 1px 0 var(--line2); }
 #likesRow { font:800 20px var(--disp); color:var(--gold-hot); }
 #likesRow .num { font-size:22px; }
 #titleRow { font:13px var(--ui); color:var(--bone-dim); margin-top:1px; }
@@ -189,9 +211,46 @@ canvas#game { position:absolute; inset:0; width:100%; height:100%; display:block
 #dayRow.night { color:#9aa4ff; }
 #keeperLine { font:italic 13.5px var(--disp); color:var(--gold-hot); margin-top:7px; max-width:520px; line-height:1.45; opacity:.92; }
 #keeperLine b { font-style:normal; color:var(--bone-dim); font:700 10px var(--ui); letter-spacing:.12em; text-transform:uppercase; margin-right:6px; }
+/* v3.43 — the keeper's face at the terminal, and the grievance in their mouth */
+#keeperLine { display:flex; align-items:flex-start; gap:10px; }
+#keeperLine .keeperFace { flex:none; width:48px; height:48px; image-rendering:pixelated; border:2px solid var(--line); box-shadow:var(--chunk); background:#10161f; }
+#keeperLine .keeperWords.grief { color:var(--rust); }
+#keeperLine .keeperWords.grief b { color:var(--rust); }
+/* the face at the door: the HUD plate as you arrive */
+#keeperSay { position:absolute; left:50%; bottom:78px; transform:translateX(-50%); z-index:24; display:flex; gap:12px; align-items:center; padding:10px 16px 10px 10px; max-width:min(760px, 90vw); border-left:3px solid var(--rust); animation:panelIn .18s ease-out; }
+#keeperSay.made { border-left-color:var(--gold); }
+#keeperSay img { flex:none; width:64px; height:64px; image-rendering:pixelated; border:2px solid var(--line); background:#10161f; }
+#keeperSay .ksName { font:700 10px var(--ui); letter-spacing:.12em; text-transform:uppercase; color:var(--bone-dim); }
+#keeperSay .ksName span { color:var(--bone-faint); letter-spacing:.06em; }
+#keeperSay .ksLine { font:italic 14px/1.4 var(--disp); color:var(--gold-hot); margin-top:3px; }
+#keeperSay .ksLine.grief { color:#ffb09a; }
+#keeperSay .ksLine.made { color:var(--gold-hot); }
+/* v3.44 — the Walker's word on the plate: your own face beside the keeper's, the two answers, and what you said */
+#keeperSay.word { border-left-color:#e0c298; }
+#keeperSay .ksLine.word { color:var(--bone); }
+#keeperSay .ksWord { display:flex; align-items:center; gap:8px; margin-top:8px; padding-top:7px; border-top:1px solid var(--line); flex-wrap:wrap; }
+#keeperSay .ksWord img.ksWalker { width:48px; height:48px; border-color:#e0c298; }
+#keeperSay .ksWord .ksYou { font:700 10px var(--ui); letter-spacing:.12em; text-transform:uppercase; color:#e0c298; }
+#keeperSay .ksWord .miniBtn { display:inline-flex; align-items:center; gap:6px; padding:5px 9px; }
+#keeperSay .ksWord img.mkImg { width:14px; height:14px; border:none; background:none; flex:none; }   /* v3.51: a mark at two screen pixels a texel — whole texels, never 16/7 */
+#keeperSay .ksWord .miniBtn.gold { color:var(--gold-hot); }
+#keeperSay .ksWord.said .ksYou { text-transform:none; letter-spacing:.02em; font:italic 12.5px var(--disp); }
+#keeperSay.open { pointer-events:auto; }
+.mkImg { image-rendering:pixelated; vertical-align:-3px; }
+.needRow.grv .grvWord { display:flex; gap:4px; margin-left:auto; }
+.needRow.grv .grvWord .miniBtn { display:inline-flex; align-items:center; gap:4px; }
+.needRow.grv .grvWord .miniBtn.gold { color:var(--gold-hot); }
+/* the camp's roll on the survey sheet */
+#mapTip .crRow { display:grid; grid-template-columns:21px 70px 1fr; gap:8px; align-items:center; padding:3px 0; font:12px var(--ui); color:var(--bone-dim); }
+#mapTip .crRow img { image-rendering:pixelated; }
+#mapTip .crRow b { color:var(--bone); font-size:12.5px; }
+/* v3.44 — the pinned roll answers the mouse: its road line is a walk */
+#mapTip.roll.pinned { pointer-events:auto; }
+#mapTip .crRow.crRoad { cursor:pointer; border-top:1px solid var(--line); margin-top:4px; padding-top:6px; }
+#mapTip .crRow.crRoad:hover b, #mapTip .crRow.crRoad:hover span { color:var(--gold-hot); }
 
 #compass { position:absolute; left:50%; top:10px; transform:translateX(-50%);
-  width:min(520px, 62vw); height:44px; overflow:hidden;
+  width:min(520px, 62vw); height:50px; overflow:hidden;
   -webkit-mask-image:linear-gradient(90deg,transparent,#000 15%,#000 85%,transparent);
   mask-image:linear-gradient(90deg,transparent,#000 15%,#000 85%,transparent); }
 #compassInner { position:absolute; top:0; height:100%; }
@@ -201,6 +260,14 @@ canvas#game { position:absolute; inset:0; width:100%; height:100%; display:block
   font:700 10px var(--ui); letter-spacing:.06em; white-space:nowrap; }
 .cMark .pin { display:block; width:0; height:0; margin:0 auto 1px;
   border-left:5px solid transparent; border-right:5px solid transparent; border-top:6px solid currentColor; }
+/* v3.40 — the wedge on the compass: a back's pip, dim in its slot, bright out of it. The REAR RAIL
+   under the strip (a glass over your shoulder: straight behind is the centre); a back ahead rides the
+   marks' row at its bearing */
+.cBack { position:absolute; top:34px; transform:translateX(-50%); text-align:center; font:700 7.5px var(--mono); letter-spacing:.06em; white-space:nowrap; opacity:.5; pointer-events:auto; cursor:pointer; }
+.cBack:hover { opacity:1; text-decoration:underline; }
+.cBack.fore { top:17px; }
+.cBack.off { opacity:1; }
+.cBack i { display:block; width:5px; height:5px; margin:0 auto 1px; box-shadow:0 0 0 1px rgba(0,0,0,.6); }
 
 #orderTray { position:absolute; right:18px; bottom:18px; width:250px; display:flex; flex-direction:column; gap:6px; }
 .trayCard { background:var(--panel) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4'%3E%3Crect width='4' height='4' fill='%230f141b'/%3E%3Crect x='0' y='0' width='1' height='1' fill='%23131a23'/%3E%3Crect x='2' y='2' width='1' height='1' fill='%23131a23'/%3E%3Crect x='2' y='0' width='1' height='1' fill='%23111721'/%3E%3Crect x='0' y='2' width='1' height='1' fill='%23111721'/%3E%3C/svg%3E") repeat; background-size:4px 4px; image-rendering:pixelated;
@@ -221,7 +288,7 @@ canvas#game { position:absolute; inset:0; width:100%; height:100%; display:block
 
 #toasts { position:absolute; left:50%; top:148px; transform:translateX(-50%); display:flex; flex-direction:column; gap:6px; align-items:center; z-index:30; }
 .toast { background:var(--panel2); border:2px solid var(--line); padding:8px 16px; font:600 14px var(--ui);
-  color:var(--bone); max-width:480px; text-align:center; animation:toastIn .3s ease-out; box-shadow:var(--chunk); }
+  color:var(--bone); max-width:var(--toastMax, 480px); text-align:center; animation:toastIn .3s ease-out; box-shadow:var(--chunk); }
 .toast.gold { color:var(--gold-hot); border-color:var(--gold); }
 .toast.rust { border-color:var(--rust); }
 .toast .tag { display:block; margin-bottom:2px; }
@@ -245,6 +312,8 @@ canvas#game { position:absolute; inset:0; width:100%; height:100%; display:block
 /* ---------- the Guide: what to do now, where, and which key ---------- */
 #guide { position:absolute; left:50%; top:66px; transform:translateX(-50%); display:flex; align-items:center; gap:14px;
   padding:9px 18px 9px 14px; border-left:3px solid var(--gold); max-width:min(640px, 80vw); z-index:20; }
+#guide.low { left:18px; transform:none; }   /* v3.52: too narrow a middle — the Guide under the vitals (UI.fitBand) */
+#guide.noDir .gDir { display:none; }   /* v3.52: a line with nowhere to point keeps no empty arrow column */
 #guide .gDir { display:flex; flex-direction:column; align-items:center; min-width:44px; }
 #guideArrow { display:inline-block; width:26px; height:26px; line-height:0; color:var(--gold); transition:transform .15s linear; }
 #guideArrow svg { display:block; }
@@ -270,7 +339,7 @@ canvas#game { position:absolute; inset:0; width:100%; height:100%; display:block
   background:rgba(5,7,11,.72); animation:fadeIn .2s; }
 @keyframes fadeIn { from { opacity:0; } }
 .sheet { width:min(860px, 94vw); max-height:92vh; display:flex; flex-direction:column; }
-.sheet header { display:flex; align-items:baseline; justify-content:space-between; padding:18px 22px 12px; border-bottom:1px solid var(--line); }
+.sheet header { display:flex; align-items:baseline; justify-content:space-between; gap:28px; padding:18px 22px 12px; border-bottom:1px solid var(--line); }   /* v3.49: a long subtitle wraps a gutter short of the right column, never against it */
 /* the nameplate — every document announces itself from a riveted plate */
 .sheet header h2 { font:600 26px var(--disp); color:var(--bone); letter-spacing:.01em;
   display:inline-block; background:#161d27; padding:2px 14px 4px; margin:2px 2px 6px 0;
@@ -332,10 +401,10 @@ canvas#game { position:absolute; inset:0; width:100%; height:100%; display:block
 .wbTag { display:inline-block; font:800 9px var(--mono); letter-spacing:.14em; color:#5a6270;
   border:1px solid #3a4048; padding:1px 5px; margin:0 8px 3px 0; vertical-align:2px; }
 .orderCard.prio .wbTag, .orderCard.crit .wbTag { color:var(--gold); border-color:var(--line); }
-.orderCard:hover { border-color:rgba(255,201,120,.45); background:rgba(255,201,120,.03); }
+.orderCard:hover { border-color:rgba(255,201,120,.45); box-shadow:inset 0 0 0 999px rgba(255,201,120,.03); }   /* v3.51: the tint laid over the paper, never instead of it */
 .orderCard.taken { animation:cardTaken .35s ease-out forwards; }
 @keyframes cardTaken { 40% { border-color:var(--gold); background:rgba(255,201,120,.22); } 100% { opacity:0; transform:translateX(26px); } }
-.orderCard.prio { border-color:var(--gold); background:rgba(255,201,120,.05); }
+.orderCard.prio { border-color:var(--gold); box-shadow:inset 0 0 0 999px rgba(255,201,120,.05); }   /* v3.51: the gold card keeps the paper's grain under its tint (a background shorthand had wiped the dither tile) */
 .orderCard .top { display:flex; justify-content:space-between; align-items:baseline; gap:10px; }
 .orderCard h4 { font:600 16px var(--disp); color:var(--bone); }
 .orderCard .constraint { font:700 10px var(--ui); letter-spacing:.1em; text-transform:uppercase; color:var(--lumen); border:1px solid rgba(111,227,210,.35); padding:1px 6px; margin-left:6px; }
@@ -353,6 +422,11 @@ canvas#game { position:absolute; inset:0; width:100%; height:100%; display:block
 .market { display:grid; grid-template-columns:1.4fr 1fr; gap:14px; padding:10px 12px 12px; margin-bottom:12px; border:1px solid var(--line2); background:rgba(255,255,255,.02); }
 .needRow { display:grid; grid-template-columns:110px 1fr auto; gap:8px 10px; align-items:center; padding:4px 0; font:12.5px var(--ui); color:var(--bone-dim); }
 .needRow .nm { color:var(--bone); }
+/* v3.42 — the grievances plate on the board */
+.market.grievances { grid-template-columns:1fr; border-color:rgba(217,107,79,.45); }
+.needRow.grv { grid-template-columns:1fr; }
+.needRow.grv .nm { display:flex; align-items:center; gap:8px; font-weight:600; }
+.needRow.grv .grvLine { font:12px var(--ui); color:var(--bone-dim); }
 .needRow .bar { height:6px; background:rgba(0,0,0,.5); border:none; position:relative; margin:0 1px;
   box-shadow:-1px 0 0 var(--line2), 1px 0 0 var(--line2), 0 -1px 0 var(--line2), 0 1px 0 var(--line2), inset 0 1px 0 rgba(0,0,0,.5); }
 .needRow .bar i { display:block; height:100%; background:var(--ok); transition:width .4s; }
@@ -398,6 +472,47 @@ canvas#game { position:absolute; inset:0; width:100%; height:100%; display:block
 #likesTotal { text-align:center; font:600 30px var(--disp); color:var(--gold-hot); padding:8px 0 2px; }
 #resultFoot { text-align:center; padding-top:10px; }
 #starUpNote { text-align:center; font:600 16px var(--disp); color:var(--gold); padding:4px 0; }
+/* v3.51: on a window under ~940 px the slip, WHAT IT MOVED and all, fits without a scroll (at 800 it hid Carry on) */
+@media (max-height: 940px) {
+  #results .sheet header { padding:12px 22px 8px; }
+  #results #gradeWrap { padding:2px 0 0; }
+  #results #gradeStamp { font-size:72px; }
+  #results #gradeRing { width:100px; height:100px; margin:-50px 0 0 -50px; }
+  #results .scoreRows { margin:4px 0; }
+  #results .scoreRows .rowline { padding:4px 2px; }
+  #results #likesTotal { font-size:24px; padding:4px 0 0; }
+  #results #resultFoot { padding-top:6px; }
+  #results .movedRows { margin:6px 0 0; }
+  #results .movedRows .mvRow { padding:4px 0 3px; }
+  #results .slipFoot .docFoot { margin-top:6px; }
+}
+/* v3.52: the slip's foot — Carry on and the file line — stands under the body, never scrolled away */
+#results .slipBody { flex:1 1 auto; min-height:0; padding-bottom:8px; }
+#results .slipFoot { flex:none; padding:0 22px 14px; }
+#results .slipFoot .docFoot { margin-top:10px; }
+/* v3.52: on a short window a slip with WHAT IT MOVED on it lies in two columns — the grade and its rows on the left, the
+   grade's line, the pay and what the walk moved on the right — so it reads whole, without a scroll, on a laptop's window */
+@media (max-height: 800px) and (min-width: 720px) {
+  #results.moved .sheet { width:min(960px, 96vw); }
+  #results.moved .slipCols { display:grid; grid-template-columns:minmax(0, 1fr) minmax(0, 1fr); column-gap:28px; align-items:start; }
+  #results.moved .slipR > .hairline { display:none; }
+  #results.moved .slipR #gradeLine { margin-top:8px; }
+  #results.moved .slipR .movedRows { margin-top:10px; }
+}
+/* v3.52: shorter still (a laptop with its browser's bars), the two columns draw closer: the stamp, the pay, every row */
+@media (max-height: 660px) and (min-width: 720px) {
+  #results.moved .sheet header { padding:8px 22px 6px; }
+  #results.moved #gradeStamp { font-size:56px; }
+  #results.moved #gradeRing { width:80px; height:80px; margin:-40px 0 0 -40px; }
+  #results.moved .scoreRows .rowline { padding:3px 2px; }
+  #results.moved .slipR #gradeLine { margin-top:4px; margin-bottom:4px; }
+  #results.moved #likesTotal { font-size:21px; padding:2px 0 0; }
+  #results.moved #starUpNote { font-size:14px; padding:2px 0; }
+  #results.moved .slipR .movedRows { margin-top:6px; padding:5px 10px 3px; }
+  #results.moved .movedRows .mvRow { padding:2px 0; }
+  #results.moved .slipFoot { padding:0 22px 10px; }
+  #results.moved .slipFoot .docFoot { margin-top:6px; padding-top:6px; }
+}
 
 /* ---------- map · the Survey Sheet ---------- */
 #mapWrap { position:fixed; inset:0; z-index:40; background:rgba(5,7,11,.9); display:flex; flex-direction:column; }
@@ -427,6 +542,8 @@ canvas#game { position:absolute; inset:0; width:100%; height:100%; display:block
   color:var(--bone-faint); border:0; cursor:pointer; }
 .viewBtn.on { background:var(--gold); color:#0a0e14; }
 .viewBtn:not(.on):hover { color:var(--bone); }
+.viewBtn.mapClose { color:var(--bone-dim); display:inline-flex; align-items:center; gap:6px; }   /* v3.52: the map folds away by a click */
+.viewBtn.mapClose .k { margin:0; min-width:14px; padding:1px 5px; font-size:10px; }
 /* v3.26 — the briefing table: the continent at the lean, the real middle scale */
 #contWrap { flex:1; position:relative; overflow:hidden; background:#05070b; cursor:grab; }
 #contWrap:active { cursor:grabbing; }
@@ -468,6 +585,7 @@ canvas#game { position:absolute; inset:0; width:100%; height:100%; display:block
   font:600 11px var(--mono); letter-spacing:2px; color:var(--bone-faint); pointer-events:none; }
 canvas#map { position:absolute; inset:0; width:100%; height:100%; }
 #mapTip { position:absolute; pointer-events:none; padding:8px 12px; font:13px var(--ui); display:none; max-width:240px; }
+#mapTip.roll { max-width:380px; }   /* v3.43: the camp's roll needs the room */
 #mapTip h5 { font:600 15px var(--disp); color:var(--gold-hot); }
 
 /* ---------- title ---------- */
@@ -478,10 +596,17 @@ canvas#map { position:absolute; inset:0; width:100%; height:100%; }
 
 #logo .sub { font:12px var(--ui); letter-spacing:.42em; text-transform:uppercase; color:var(--bone-dim); margin-top:10px; }
 #titleMenu { position:relative; display:flex; flex-direction:column; gap:10px; margin-top:44px; width:250px; }
-#titleFoot { position:absolute; bottom:18px; width:100%; text-align:center; font:11.5px var(--ui); color:var(--bone-faint); letter-spacing:.06em; }
-#introCard { position:relative; max-width:520px; padding:26px 30px; text-align:center; }
+#titleFoot { position:absolute; bottom:18px; width:100%; text-align:center; font:11.5px var(--ui); color:var(--bone-faint); letter-spacing:.06em; pointer-events:none; }   /* v3.52: a line of type never eats a click */
+#titleScreen:has(#introCard:not(.hidden)) #titleFoot { visibility:hidden; }   /* v3.52: the card has the screen to itself */
+#introCard { position:relative; max-width:520px; padding:26px 30px; text-align:center; display:flex; flex-direction:column; align-items:center; max-height:calc(100vh - 32px); }
+#introCard .introText { overflow-y:auto; min-height:0; }   /* v3.52: on a short window the story scrolls and Start stays in view */
+#introCard #btnBegin { flex:none; margin-top:4px; }
 #introCard p { font:16px/1.7 var(--disp); color:var(--bone); margin-bottom:14px; }
 #introCard p b { color:var(--gold); }
+@media (max-height: 760px) {
+  #introCard { padding:18px 28px; }
+  #introCard p { font-size:14.5px; line-height:1.55; margin-bottom:9px; }
+}
 
 /* ---------- build bar ---------- */
 #buildBar { position:absolute; left:50%; bottom:70px; transform:translateX(-50%); display:flex; gap:8px; padding:10px; z-index:20;
@@ -498,8 +623,16 @@ canvas#map { position:absolute; inset:0; width:100%; height:100%; }
 .buildOpt .k { margin:0 0 4px; }
 
 /* ---------- cargo panel ---------- */
-#cargoPanel { position:absolute; right:18px; top:96px; width:264px; z-index:15; padding:12px 14px; pointer-events:auto; }
+#cargoPanel { position:absolute; right:18px; top:158px; width:264px; z-index:15; padding:12px 14px; pointer-events:auto;
+  display:flex; flex-direction:column; }   /* v3.52: under the papers row; no taller than the room above the tray (UI.fitBand), the list scrolling */
+#cargoList { flex:1 1 auto; min-height:0; overflow-y:auto; }
+#cargoPanel .panelFoot { flex:none; display:flex; justify-content:flex-end; margin-top:8px; padding-top:7px; border-top:1px solid var(--line); }   /* v3.52: CLOSE at the foot, clear of the earn feed */
+#cargoPanel .panelFoot .panelClose { float:none; padding:3px 0; }
 #cargoPanel h3 { font:600 17px var(--disp); margin-bottom:2px; }
+.panelClose { float:right; font:700 10px var(--mono); letter-spacing:1.2px; color:var(--bone-faint); background:transparent; border:0; padding:3px 0 3px 8px; cursor:pointer;
+  display:inline-flex; align-items:center; gap:5px; }   /* v3.52: the pack put down by a click */
+.panelClose:hover { color:var(--bone); }
+.panelClose .k { margin:0; min-width:12px; padding:1px 5px; font-size:10px; }
 #cargoPanel .tag { display:block; margin-bottom:6px; }
 #cargoList .rowline { padding:6px 0; }
 #cargoList h4 { font-size:13.5px; }
@@ -561,6 +694,18 @@ canvas#map { position:absolute; inset:0; width:100%; height:100%; }
 
 /* ---------- settings/pause/help ---------- */
 #pause .sheet, #helpOv .sheet { width:min(520px,92vw); }
+/* v3.52: Resume stands under the settings, never scrolled away; on a short window the settings lie in two columns */
+#pause .sheetBody { flex:1 1 auto; min-height:0; }
+#pause .pauseFoot { flex:none; padding:10px 22px 16px; text-align:center; border-top:1px solid rgba(233,226,208,.07); }
+@media (max-height: 900px) and (min-width: 860px) {
+  #pause .sheet { width:min(940px, 96vw); }
+  #pause .pauseRows { display:grid; grid-template-columns:minmax(0, 1fr) minmax(0, 1fr); column-gap:30px; }
+}
+@media (max-height: 640px) {
+  #pause .sheet header { padding:10px 22px 8px; }
+  #pause .setRow { padding:6px 2px; }
+  #pause .pauseFoot { padding:8px 22px 10px; }
+}
 .setRow { display:flex; justify-content:space-between; align-items:center; padding:10px 2px; border-bottom:1px solid rgba(233,226,208,.07); }
 /* pixel groove slider — the native control retired */
 input[type=range] { -webkit-appearance:none; appearance:none; width:150px; height:16px; margin:0 2px; background:transparent; cursor:pointer; }
@@ -589,7 +734,7 @@ input[type=range]::-moz-range-thumb { width:12px; height:14px; border:none; bord
 #saveNote.show { opacity:.8; }
 
 /* ---------- v3.20: the EARN FEED — every coin is SEEN landing ---------- */
-#earnFeed { position:absolute; right:18px; top:104px; display:flex; flex-direction:column; gap:5px; align-items:flex-end; z-index:18; pointer-events:none; }
+#earnFeed { position:absolute; right:18px; top:166px; display:flex; flex-direction:column; gap:5px; align-items:flex-end; z-index:18; pointer-events:none; }
 .earnChip { display:flex; align-items:center; gap:7px; padding:4px 10px 4px 7px; background:var(--panel2);
   font:800 14px var(--mono); animation:earnIn .28s cubic-bezier(.2,1.5,.4,1); }
 .earnChip canvas { image-rendering:pixelated; display:block; }
@@ -609,7 +754,6 @@ input[type=range]::-moz-range-thumb { width:12px; height:14px; border:none; bord
 
 @media (max-width:760px) {
   #compass { display:none; }
-  #guide { top:12px; max-width:92vw; }
   #toasts { top:96px; }
   #cargoPanel { width:220px; }
   #orderTray { width:200px; }
@@ -650,8 +794,8 @@ input[type=range]::-moz-range-thumb { width:12px; height:14px; border:none; bord
 .moodle.good { color:var(--ok); }
 @keyframes moodlePulse { 50% { filter:brightness(1.6); } }
 
-/* ---------- companion chip → v3.37 THE WEDGE CARD ---------- */
-#compChip { position:absolute; left:18px; bottom:150px; display:flex; gap:10px; align-items:stretch; padding:7px 9px 6px 7px; pointer-events:auto; cursor:pointer; transition:border-color .15s, background .15s; max-width:330px; }
+/* ---------- companion chip → v3.37 THE WEDGE CARD (v3.51: it stands above the rail's four prompts, which had covered its foot) ---------- */
+#compChip { position:absolute; left:18px; bottom:176px; display:flex; gap:10px; align-items:stretch; padding:7px 9px 6px 7px; pointer-events:auto; cursor:pointer; transition:border-color .15s, background .15s; max-width:330px; }
 #compChip:hover { border-color:var(--gold); background:rgba(255,201,120,.08); }
 #compChip .st b { color:var(--gold); }
 #compChip .nm { font:600 13px var(--disp); color:var(--bone); line-height:1.1; }
@@ -666,13 +810,14 @@ input[type=range]::-moz-range-thumb { width:12px; height:14px; border:none; bord
 #compChip .wcBtn { font:800 8px var(--mono); letter-spacing:.12em; color:var(--gold); background:rgba(0,0,0,.25); border:1px solid var(--line); padding:2px 5px; cursor:pointer; margin-left:auto; }
 #compChip .wcBtn.dim { color:var(--bone-faint); margin-left:0; padding:2px 6px; }
 #compChip .wcBtn:hover { border-color:var(--gold); color:var(--gold-hot); }
-#wcTab { position:absolute; left:18px; bottom:150px; pointer-events:auto; cursor:pointer; font:800 8.5px var(--mono); letter-spacing:.14em; color:var(--bone-dim); padding:4px 8px; border:1px solid var(--line2); }
+#wcTab { position:absolute; left:18px; bottom:176px; pointer-events:auto; cursor:pointer; font:800 8.5px var(--mono); letter-spacing:.14em; color:var(--bone-dim); padding:4px 8px; border:1px solid var(--line2); }
 #wcTab:hover { color:var(--gold); border-color:var(--gold); }
 
 /* ---------- char-gen ---------- */
 #cgTop { display:flex; gap:16px; align-items:flex-start; }
 #cgPortrait { border:3px solid #d8d2bd; background:#10161f; box-shadow:var(--chunk); }   /* the enlistment photo, stapled square */
-#skillsPortrait, #deathPortrait { background:#10161f; }
+#skillsPortrait, #deathPortrait { background:#10161f; image-rendering:pixelated; }   /* v3.44: the texel bust, whole pixels */
+.memCard .memPortrait img { image-rendering:pixelated; }
 #cgName { font:600 22px var(--disp); color:var(--bone); background:rgba(0,0,0,.3); border:1px solid var(--line2); padding:6px 10px; width:280px; }
 #cgName:focus { outline:none; border-color:var(--gold); }
 #cgClasses { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
@@ -786,6 +931,11 @@ input[type=range]::-moz-range-thumb { width:12px; height:14px; border:none; bord
 .fmNote b { font-style:normal; color:var(--bone-dim); }
 .fmSearchWrap { margin:6px 0 10px; }
 .fmLesson { padding:8px 2px 9px; border-bottom:1px solid rgba(233,226,208,.06); }
+/* v3.44 — the wound's page: rig plates under the text */
+.fmPlates { display:flex; gap:14px; margin-top:8px; flex-wrap:wrap; }
+.fmPlates figure { margin:0; display:flex; flex-direction:column; align-items:center; gap:4px; max-width:132px; }
+.fmPlates img { image-rendering:pixelated; border:2px solid var(--line); background:#10161f; }
+.fmPlates figcaption { font:10.5px/1.3 var(--ui); color:var(--bone-faint); text-align:center; }
 .fmLesson .fmTitle { font:600 14px var(--disp); color:var(--bone); display:flex; align-items:baseline; gap:8px; }
 .fmLesson .fmTitle .fmPg { font:800 9px var(--mono); letter-spacing:.14em; color:var(--bone-faint); margin-left:auto; }
 .fmLesson .fmText { font:13px/1.55 var(--ui); color:var(--bone-dim); margin-top:3px; }
@@ -804,6 +954,7 @@ input[type=range]::-moz-range-thumb { width:12px; height:14px; border:none; bord
 .fmSlot .fmSlotN { font:800 9px var(--mono); letter-spacing:.2em; color:var(--bone-faint); }
 .fmSlot.cur .fmSlotN { color:var(--gold); }
 .fmSlot .fmSlotName { font:600 15px var(--disp); color:var(--bone); margin-top:2px; }
+.fmSlot .fmSlotFace { float:right; image-rendering:pixelated; border:2px solid #d8d2bd; background:#10161f; margin:2px 0 4px 8px; }   /* v3.45: the slot's walker, in their coat */
 .fmSlot .fmSlotSub { font:11.5px var(--ui); color:var(--bone-dim); margin-top:2px; line-height:1.45; }
 .fmSlot .fmSlotSub b { color:var(--bone); }
 .fmSlot.empty .fmSlotName { color:var(--bone-faint); font-style:italic; }
@@ -826,7 +977,8 @@ input[type=range]::-moz-range-thumb { width:12px; height:14px; border:none; bord
 #titleMenu { width:390px; }
 /* paper scale — the reading surfaces only; the world and the HUD meters stay */
 :root { --paperZoom: 1; }
-.sheet, #prompts, #toasts, #guide, #cargoPanel, #contPanel { zoom: var(--paperZoom); }
+.sheet, #prompts, #contPanel { zoom: var(--paperZoom); }
+#toasts, #guide, #cargoPanel, #papersLabel { zoom: var(--hudZoom, var(--paperZoom)); }   /* v3.52: the top band's papers at the paper scale, or as near it as the window's width allows (UI.fitBand); the papers row is pixel art like the vitals and keeps whole texels */
 .sheet { max-height: calc(92vh / var(--paperZoom)); }
 .miniBtn.on { color:var(--gold-hot); box-shadow:-1px 0 0 var(--gold), 1px 0 0 var(--gold), 0 -1px 0 var(--gold), 0 1px 0 var(--gold), 0 1px 0 rgba(0,0,0,.5), inset 0 1px 0 rgba(0,0,0,.25); transform:translateY(2px); }
 
@@ -841,7 +993,14 @@ input[type=range]::-moz-range-thumb { width:12px; height:14px; border:none; bord
 .muPlate.sel { border-left-color:var(--gold); background:rgba(255,201,120,.07); box-shadow:inset 0 1px 0 rgba(255,201,120,.12); }
 .muPlate.companion { border-left-color:var(--gold); }
 .muPlate.recover { opacity:.7; }
-.muFig { flex:none; width:48px; height:70px; display:flex; align-items:flex-end; justify-content:center; background:#10161f; border:2px solid #d8d2bd; box-shadow:var(--chunk); }
+.muFig { flex:none; width:66px; height:96px; display:flex; align-items:flex-end; justify-content:center; background:#10161f; border:2px solid #d8d2bd; box-shadow:var(--chunk); }
+/* v3.45 — the hand's face beside their figure on the plate */
+.muFig:has(.muFace) { width:118px; gap:2px; align-items:center; }
+.muFig .muFace { margin:0; border-right:1px solid rgba(216,210,189,.25); }
+.muScore { display:flex; flex-wrap:wrap; align-items:center; gap:2px 6px; margin-top:5px; font:11px var(--ui); color:var(--bone-faint); }
+.muScore span { flex-basis:100%; padding-left:20px; }
+.muScore img { image-rendering:pixelated; flex:none; }
+.muScore b { color:#e0654a; font-size:10.5px; letter-spacing:.08em; }
 .muFig img { image-rendering:pixelated; display:block; margin-bottom:3px; }
 .muPlate.recover .muFig img { filter:grayscale(1); }
 .muBody { flex:1; min-width:0; }
@@ -886,3 +1045,126 @@ input[type=range]::-moz-range-thumb { width:12px; height:14px; border:none; bord
 .muKids { display:inline-flex; flex-wrap:wrap; gap:2px 10px; }
 .muKid { display:inline-flex; align-items:center; gap:2px; font:12px var(--ui); color:var(--bone-dim); }
 .muTreeHint { font:italic 10px var(--disp); color:var(--bone-faint); letter-spacing:0; text-transform:none; margin-left:8px; }
+
+/* v3.45 — the hands' faces on the cards: whole pixels at 2×, framed like the file photo */
+img.handFace { image-rendering:pixelated; vertical-align:-10px; border:2px solid rgba(216,210,189,.55); background:#10161f; margin-right:4px; }
+img.handFace.mending { filter:grayscale(1); opacity:.8; }
+#cgPortrait { image-rendering:pixelated; box-sizing:content-box; }   /* v3.51: the frame outside the photo — the bust at five screen pixels a texel, never squeezed into its own border (it was 74 of 80) */
+/* v3.45 — the compass's ring pin, and the shut door on the plate and the board */
+.cMark.ring { top:13px; display:flex; align-items:center; gap:4px; }
+.cMark .cPin { display:block; image-rendering:pixelated; }
+/* v3.45 — a mark that must stay but whose words would land on a placed label: the pin, bare, at its bearing; the words on hover */
+.cMark.bare { pointer-events:auto; cursor:help; }
+.ksShut { display:inline-flex; align-items:center; gap:5px; font:700 10.5px var(--ui); letter-spacing:.1em; color:#e0654a; border:1px solid rgba(224,101,74,.5); padding:4px 8px; }
+#keeperSay.parley { border-left-color:#c9553a; }
+#keeperSay.parley .ksName { color:#e0654a; }
+/* v3.45 — the town's book on the terminal and in the Ledger tab; the slip's made-right and errand lines */
+#bookLine img.mkImg { width:14px; height:14px; vertical-align:-3px; margin:0 5px 0 4px; }   /* v3.49: a mark stands a breath off its words */
+.bookRow.broken h4 { color:#e0654a; }
+.bookRow.kept h4, .bookRow.errand h4, .bookRow.opened h4 { color:var(--gold-hot); }
+.rowline.letter.made span { color:var(--gold-hot); }
+.rowline.letter.grief span { color:#ffb09a; }
+/* v3.45 — the kin's errand on the memorial card */
+.memKin { display:flex; align-items:center; gap:4px; margin-top:4px; font:11px var(--ui); color:var(--gold-hot); }
+.memKin img { image-rendering:pixelated; }
+.memKin span { margin-right:8px; }
+
+/* v3.45 — THE WHOLE-PIXEL LAW for every framed portrait: the frame sits OUTSIDE the image (content-box), so a face drawn
+   at k px a texel is shown at exactly k px a texel. Under the global border-box the 2 px frame ate 4 px of the image and
+   the keepers' faces (v3.43) and the Walker's (v3.44) were quietly scaled off the grid. */
+#keeperLine .keeperFace, #keeperSay img, img.handFace, .muFig .muFace, .fmSlot .fmSlotFace { box-sizing:content-box; }
+#bookLine .bookStatus { white-space:nowrap; margin-top:2px; }
+
+/* ---------- v3.46 THE WORD CARRIED ---------- */
+#keeperSay.line { border-left-color:#e0c298; }
+#keeperSay .lineFaces { display:grid; grid-template-columns:repeat(2, 32px); gap:4px; flex:none; }
+#keeperSay .lineFaces img.lineFace { width:32px; height:32px; box-sizing:content-box; border:2px solid var(--line); background:#10161f; image-rendering:pixelated; }
+#keeperSay .ksWord .miniBtn.on { border-color:var(--gold); box-shadow:inset 0 0 0 1px var(--gold); }
+#keeperLine .keepsakeRow { display:flex; align-items:center; gap:5px; margin-top:6px; font:12px var(--ui); font-style:normal; color:var(--bone-dim); }
+#keeperLine .keepsakeRow img { image-rendering:pixelated; flex:none; }
+#bookLine .bookWire { display:flex; align-items:center; gap:4px; margin-top:2px; white-space:nowrap; }
+#bookLine .bookHeard { margin:1px 0 0 18px; font-size:.92em; letter-spacing:.04em; }
+.muScore.settled b { color:var(--gold-hot); }
+.muScore.paid b { color:#e0c298; }
+/* v3.47 THE WORD ANSWERED — the road's gift on the board, a plate's kicked stones */
+.orderCard.roadGift .wbTag, .orderCard.relayKit .wbTag { color: var(--gold-hot); }   /* v3.48: the relay kit's card beside the road's gift */
+.orderCard.roadGift h4 img.mkImg, .orderCard.relayKit h4 img.mkImg { width: 14px; height: 14px; vertical-align: -2px; margin-right: 4px; image-rendering: pixelated; }
+.muScore.kicked b { color: var(--rust); }
+/* v3.49 THE WIRE CUT — a cut post's terminal is one plate: the boarded board beside what to carry; the splice coil's card */
+.shutPlate { display: flex; gap: 16px; align-items: flex-start; padding: 14px 16px; border: 1px solid rgba(224,101,74,.35); background: rgba(224,101,74,.06); border-radius: 3px; }
+.shutPlate img { image-rendering: pixelated; flex: none; }
+.shutPlate h4 { color: #e0654a; letter-spacing: .08em; margin: 2px 0 8px; font: 700 12px var(--ui); }
+.shutPlate h4 img.mkImg { width: 14px; height: 14px; vertical-align: -2px; margin-right: 4px; image-rendering: pixelated; }
+.shutPlate .desc { margin: 0 0 6px; }
+.orderCard.spliceCoil { border-color: rgba(224,101,74,.55); box-shadow: inset 0 0 0 999px rgba(224,101,74,.05); }   /* v3.51: over the paper's grain */
+.orderCard.spliceCoil .wbTag { color: var(--gold-hot); border-color: rgba(224,101,74,.55); }
+.muScore.stays b { color: var(--gold-hot); }   /* v3.49: the hand who stayed — whose day, in gold */
+/* v3.49 THE STORAGE TAB — one filter row, two columns (your back · the lockers), every item an icon, a name and its weight,
+   grouped under coloured heads, mission items first and gold */
+.stChips { display: flex; flex-wrap: wrap; gap: 6px; margin: 2px 0 12px; }
+.stChip { font: 600 11px var(--ui); letter-spacing: .04em; color: var(--bone-dim); background: rgba(255,255,255,.03); border: 1px solid rgba(216,210,189,.18); border-radius: 12px; padding: 3px 10px; cursor: pointer; }
+.stChip b { color: var(--bone-faint); margin-left: 3px; font-weight: 600; }
+.stChip.on { color: #17130b; background: var(--bone-dim); border-color: var(--bone-dim); }
+.stChip.on b { color: #3a3428; }
+.stChip.mission { border-color: rgba(255,217,143,.45); color: var(--gold-hot); }
+.stChip.mission.on { background: var(--gold-hot); color: #241708; }
+.stChip.mat:not(.on) { color: #9fb6c9; } .stChip.goods:not(.on) { color: #d8c9a8; } .stChip.gear:not(.on) { color: #a5c6e4; } .stChip.tool:not(.on) { color: #b8b29d; } .stChip.food:not(.on) { color: #a8d494; }
+.stChip:hover:not(.on) { border-color: rgba(216,210,189,.4); }
+.stCols { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
+.stCol { min-width: 0; border: 1px solid var(--line2); background: rgba(255,255,255,.015); padding: 8px 10px 10px; }
+.stHead { display: grid; grid-template-columns: 1fr auto; gap: 5px 10px; align-items: center; padding-bottom: 8px; border-bottom: 2px solid var(--line); }
+.stHead > div { display: flex; align-items: baseline; gap: 8px; }
+.stHead b { font: 700 13px var(--ui); color: var(--bone); letter-spacing: .04em; }
+.stHead .num { font-size: 11px; color: var(--bone-dim); }
+.stHead .miniBtn { grid-column: 2; grid-row: 1 / span 2; }
+.stLoad { grid-column: 1; height: 5px; background: rgba(0,0,0,.5); box-shadow: -1px 0 0 var(--line2), 1px 0 0 var(--line2), 0 -1px 0 var(--line2), 0 1px 0 var(--line2); }
+.stLoad i { display: block; height: 100%; background: #a5c2d3; }
+.stGroup { display: flex; justify-content: space-between; align-items: baseline; margin: 10px 2px 3px; padding-bottom: 2px; border-bottom: 1px solid rgba(216,210,189,.10); font: 700 10px var(--ui); letter-spacing: .14em; text-transform: uppercase; color: var(--bone-faint); }
+.stGroup b { font-weight: 600; color: var(--bone-faint); }
+.stGroup.mission { color: var(--gold-hot); border-bottom-color: rgba(255,217,143,.25); }
+.stGroup.mat { color: #9fb6c9; } .stGroup.goods { color: #d8c9a8; } .stGroup.gear { color: #a5c6e4; } .stGroup.tool { color: #b8b29d; } .stGroup.food { color: #a8d494; }
+.stRow { display: grid; grid-template-columns: 30px 1fr auto; gap: 8px; align-items: center; padding: 5px 4px; border-radius: 2px; }
+.stRow:hover { background: rgba(255,255,255,.035); }
+.stIcon { image-rendering: pixelated; }
+.stMain { min-width: 0; }
+.stName.missionTx { color: var(--gold-hot); }
+.stName { font: 600 13px var(--ui); color: var(--bone); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.stMeta { display: flex; align-items: center; gap: 6px; font: 11px var(--ui); color: var(--bone-faint); margin-top: 1px; }
+.stCond { display: inline-block; width: 40px; height: 4px; background: rgba(0,0,0,.5); margin-left: 2px; }
+.stCond i { display: block; height: 100%; }
+.stEmpty { font: italic 12px var(--ui); color: var(--bone-faint); padding: 12px 2px 4px; }
+.stRow .miniBtn[disabled], .stHead .miniBtn[disabled] { opacity: .4; cursor: default; }
+@media (max-width: 720px) { .stCols { grid-template-columns: 1fr; } }
+/* v3.49 THE WHEEL — the level, said once as it changes */
+#zoomNote { position: absolute; right: 18px; top: 140px; font: 700 11px var(--mono); letter-spacing: .12em; color: var(--bone-dim); opacity: 0; transition: opacity .3s; pointer-events: none; }
+#zoomNote.on { opacity: .85; }
+
+/* v3.51 WHAT IT MOVED — the slip's own column: what the delivery changed besides the pay, each line with the mark of what moved */
+.movedRows { margin:10px 0 2px; padding:7px 10px 5px; border:1px solid rgba(233,226,208,.12); background:rgba(255,217,143,.03); }
+.movedRows .mvHead { font:700 10px var(--ui); letter-spacing:.16em; color:var(--bone-dim); padding-bottom:3px; border-bottom:1px solid rgba(233,226,208,.1); }
+.movedRows .mvRow { display:grid; grid-template-columns:14px 1fr auto; gap:9px; align-items:center; padding:6px 0 5px; border-bottom:1px solid rgba(233,226,208,.06); font:12.5px/1.35 var(--ui); color:var(--bone); }
+.movedRows .mvRow:last-child { border-bottom:0; }
+.movedRows .mvRow img { image-rendering:pixelated; }
+.movedRows .mvRow b { font-weight:700; color:var(--gold-hot); }
+.movedRows .mvRow .mvText { color:var(--bone-dim); }
+.movedRows .mvBar { position:relative; width:60px; height:6px; background:rgba(233,226,208,.10); box-shadow:inset 0 0 0 1px rgba(0,0,0,.35); }
+.movedRows .mvBar i { position:absolute; left:0; top:0; bottom:0; background:var(--bone-faint); }
+.movedRows .mvBar em { position:absolute; top:0; bottom:0; background:var(--gold); }
+.movedRows .mvNum { font:600 11px var(--ui); color:var(--gold-hot); letter-spacing:.04em; white-space:nowrap; }
+
+/* v3.51 THE STANDINGS IN THE PAY — the line over the cards: what this town pays for what is walked in, and why */
+.standLine { display:flex; align-items:center; gap:8px; margin:8px 0 10px; padding:7px 10px; border:1px solid rgba(255,217,143,.18); background:rgba(255,217,143,.04); font:12px var(--ui); color:var(--bone-dim); }
+.standLine b { font:800 9px var(--mono); letter-spacing:.14em; color:var(--gold-hot); white-space:nowrap; }
+.standLine .standWhy { flex:1; min-width:0; }
+.standLine .rust, .standWhy .rust { color:var(--rust); }
+.mult.standUp { color:var(--gold-hot); }
+.mult .mkImg { width:14px; height:14px; margin-right:3px; }
+/* v3.51 THE SURPLUS ON THE BOARD — the bank's freight: its own tag in the Order's gold */
+.orderCard.surplusCard .wbTag { color:var(--gold-hot); border-color:var(--line); }
+.orderCard.surplusCard { border-left:2px solid rgba(255,201,120,.5); }
+
+/* v3.51 THE BUS MAP — under every window in the manual, what it does for your deliveries */
+.fmPaper .fmName .fmMark { margin-right:9px; vertical-align:-2px; }
+.fmPaper .fmRowGl { image-rendering:pixelated; flex:none; margin-left:-4px; box-shadow:-1px 0 0 var(--line2), 1px 0 0 var(--line2), 0 -1px 0 var(--line2), 0 1px 0 var(--line2); background:var(--panel); }   /* v3.52: the papers row's button, beside its key */
+.fmPaper .fmLoop { display:block; margin-top:3px; font:12px/1.45 var(--ui); color:var(--bone); }
+.fmPaper .fmLoop b { font:800 8.5px var(--mono); letter-spacing:.14em; color:var(--gold-hot); margin-right:6px; }

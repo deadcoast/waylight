@@ -1,0 +1,61 @@
+{
+  "suite": "word",
+  "version": "v3.44",
+  "record": {
+      "doc": "DESIGN.md",
+      "where": "The word at the door (v3.44 — the Walker's answer, the kin in the square, the new chief's grudge, the scar on the stone, the road to the ring) · Proof",
+      "count": 11,
+      "count_text": "word.mjs, 11 checks"
+  },
+  "clauses": [
+    {"id": "w1", "text": "the registries (the Walker's face bound to the look, six marks", "figure": {"record": "six marks", "asserted": "exact", "note": "six 7×7 marks in MARK_PAL, all distinct"}},
+    {"id": "w2", "text": "the Walker has a bust on the keepers' own 16×16 alphabet", "figure": {"record": "16×16", "asserted": "exact", "note": "WALKER_FACE 16×16 in its palette, bound at draw time to the coat cut"}},
+    {"id": "w3", "text": "the kin, the new chief distinct from the first"},
+    {"id": "w4", "text": "the kin (14×22, TOWN_PAL, a grey shawl and a lantern held low); the new chief (three frames, RAID_PAL — beard, hide vest, spear, the rag)", "doc": "FEATURES.md", "figure": {"record": "14×22; three frames", "asserted": "unpinned", "note": "v3.51 redrew both on the courier's grid; the check reads the kin's frames against its own height and the new chief against the first from every side"}},
+    {"id": "w5", "text": "the ring pin, the sworn glyph, three rig plates", "figure": {"record": "three rig plates", "asserted": "exact", "note": "the bolt, the scar and the dressing, three distinct plates at 60×72 for scale 3"}},
+    {"id": "w6", "text": "the ring pin (a stake with a rust pennant, 7×11)", "figure": {"record": "7×11", "asserted": "exact", "note": "RINGPIN 7×11 in the stake's palette"}},
+    {"id": "w7", "text": "the rows, the doctrine, thirty-two keeper lines", "figure": {"record": "thirty-two keeper lines", "asserted": "exact", "note": "promise, sorry, broken and kept for each of the eight keepers, thirty-two distinct"}},
+    {"id": "w8", "text": "twenty-five causes, sixty lessons", "figure": {"record": "twenty-five causes, sixty lessons", "asserted": "changed", "note": "later versions add causes and lessons: the check pins the 31 causes of v3.49 (the stones' two among them) and holds the v3.49 manual's floor (93 pages)"}},
+    {"id": "w9", "text": "the promise kept (the plate by a real click, the rail, the string, the guide, the board, the greeting, the town waiting, kept over made right, a like warmer, the face)"},
+    {"id": "w10", "text": "the town WAITS the word's two days instead of remembering", "figure": {"record": "two days", "asserted": "exact", "note": "word.promiseDays 2: waiting past the grievance's own days; broken one second past two"}},
+    {"id": "w11", "text": "kept inside the span, the door pays two over the making-right and the town is a like warmer", "figure": {"record": "two over, a like warmer", "asserted": "exact", "note": "word.kept 2 and keptLikes 1: appreciation up by made + 2 + the run's own, likes up one"}},
+    {"id": "w12", "text": "the word broken"},
+    {"id": "w13", "text": "the span run out, the word is BROKEN and the town remembers at six likes for good", "figure": {"record": "six likes", "asserted": "exact", "note": "word.brokenMemory 6; the Quarry 40 → 34"}},
+    {"id": "w14", "text": "the apology from the board by a real click"},
+    {"id": "w15", "text": "An APOLOGY (the open hand) pays five appreciation now", "figure": {"record": "five appreciation", "asserted": "exact", "note": "word.sorryCost 5, paid at the click"}},
+    {"id": "w16", "text": "the kin (two named, the slower clock, the mood, the sheet, home in a day)"},
+    {"id": "w17", "text": "two minutes longer on the clock for every stone, up to three", "figure": {"record": "two minutes, up to three", "asserted": "exact", "note": "kin.slowPerStone 120 and maxStones 3: two stones → eight minutes, five stones capped at three"}},
+    {"id": "w18", "text": "keeps the place for a day", "figure": {"record": "a day", "asserted": "exact", "note": "kin.days 1; gone a day and a second on"}},
+    {"id": "w19", "text": "the kin SEEN by pixel on the game canvas"},
+    {"id": "w20", "text": "their lanterns punching their own holes in the night"},
+    {"id": "w21", "text": "the grudge end to end (your hand, the new man's kit, no target without a post, the next night not the same one, the say, the sheet, the storm from his camp with him in front, paid, cooled)"},
+    {"id": "w22", "text": "three days with no post to storm and it cools", "figure": {"record": "three days", "asserted": "exact", "note": "grudge.days 3; cooled a second past three days"}},
+    {"id": "w23", "text": "the scar to the stone (the record, the plates, the card, the notches by pixel)"},
+    {"id": "w24", "text": "the stone itself is notched in the scar's red, up to three", "figure": {"record": "up to three", "asserted": "unpinned", "note": "three notches read against one and none on the same stone; a fourth is not tried"}},
+    {"id": "w25", "text": "the road to the ring by a real click on the pinned plate and by the engine's own door"},
+    {"id": "w26", "text": "plans the walk to the ring's near edge (r + 130, outside the loaded pack's danger ring)", "doc": "FEATURES.md", "figure": {"record": "r + 130", "asserted": "threshold", "note": "the walk set within forty of r + 130 from the camp"}},
+    {"id": "w27", "text": "the save"},
+    {"id": "w28", "text": "no errors"}
+  ],
+  "checks": [
+    {"title": "THE REGISTRIES", "clauses": ["w1", "w2", "w3", "w4", "w5", "w6", "w7", "w8", "w10", "w11", "w13", "w15", "w17", "w18", "w22"], "kind": "record"},
+    {"title": "THE PROMISE KEPT", "clauses": ["w9", "w10", "w11"], "kind": "record"},
+    {"title": "THE WORD BROKEN", "clauses": ["w12", "w13"], "kind": "record"},
+    {"title": "THE APOLOGY FROM THE BOARD", "clauses": ["w14", "w15"], "kind": "record"},
+    {"title": "THE KIN IN THE SQUARE", "clauses": ["w16", "w17", "w18"], "kind": "record"},
+    {"title": "THE KIN, SEEN", "clauses": ["w19", "w20"], "kind": "record"},
+    {"title": "THE NEW CHIEF'S GRUDGE", "clauses": ["w21", "w22"], "kind": "record"},
+    {"title": "THE SCAR CARRIED TO THE STONE", "clauses": ["w23", "w24"], "kind": "record"},
+    {"title": "THE ROAD TO THE RING", "clauses": ["w25", "w26"], "kind": "record"},
+    {"title": "THE SAVE", "clauses": ["w27"], "kind": "record"}
+  ],
+  "design": [
+    {"clause": "w4", "version": "v3.51", "what": "the kin and the second chief redrawn by hand on the courier's grid, three facings with the breath and four steps"},
+    {"clause": "w8", "version": "v3.49", "what": "the mood and the manual grew with every version after v3.44 — 31 causes and 93 pages in v3.49"}
+  ],
+  "finish": {
+      "clauses": [
+          "w28"
+      ]
+  }
+}

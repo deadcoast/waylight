@@ -1,0 +1,63 @@
+{
+  "suite": "campsown",
+  "version": "v3.41",
+  "record": {
+      "doc": "DESIGN.md",
+      "where": "The camps' own (v3.41 — the raiders by trade, the parcels addressed, the square's own, the count bought) · Proof",
+      "count": 9,
+      "count_text": "campsown.mjs, 9 checks"
+  },
+  "clauses": [
+    {"id": "c1", "text": "the registries (rows, rolls"},
+    {"id": "c2", "text": "the kit's geometry and palette coverage with three distinct frames", "figure": {"record": "three distinct frames", "asserted": "changed", "note": "v3.51 drew the camps' own and the town's own in three facings, each with the idle, the breath and four steps — the check asserts six distinct frames in every facing"}},
+    {"id": "c3", "text": "Three 14×22 figures in the raiders' own palette", "figure": {"record": "14×22", "asserted": "unpinned", "note": "v3.51 put the figures on the courier's grid; the check reads every frame against the figure's own w×h, not a size"}},
+    {"id": "c4", "text": "the kinds, the recruit and sale rows"},
+    {"id": "c5", "text": "the seventeenth pair, the lessons", "figure": {"record": "the seventeenth pair", "asserted": "exact", "note": "REP.RELATIONS.base holds seventeen pairs, diefenbunker|waylight among them"}},
+    {"id": "c6", "text": "THREE LESSONS: the camps' own, the square stands its own, the count bought (47 pages)", "doc": "FEATURES.md", "figure": {"record": "47 pages", "asserted": "changed", "note": "every later version adds lessons; the check holds the v3.49 manual's floor (93 pages) and its three lessons"}},
+    {"id": "c7", "text": "the BOWMAN (range 230 at a post: stands off and looses every 6 s, pinning one shield's arm for 5 s; on the road an arrow inside 260 that staggers 0.9 and cuts 3)", "doc": "FEATURES.md", "figure": {"record": "230, every 6 s, 5 s, inside 260, 0.9, 3", "asserted": "exact", "note": "the bowman's row in the registries; on the road a cut of 3 and the shot's cooldown at 6; at the post he stands off at 230"}},
+    {"id": "c8", "text": "the RAM (two knocks — the first only staggers him, up in 0.9 s; walks at 0.78; takes a fire at 0.6 of the wait)", "doc": "FEATURES.md", "figure": {"record": "two knocks, 0.9 s, 0.78, 0.6 of the wait", "asserted": "exact", "note": "the ram's row; his shrug up in 0.9, his walk at 0.78 of a knife's from the same ground, the fire taken at 0.6 of the wait where a knife has not"}},
+    {"id": "c9", "text": "in a storm his rally halves the knives' downtime", "doc": "FEATURES.md", "figure": {"record": "halves", "asserted": "exact", "note": "chief.stats.rally 0.5; the ram down for downFor × 0.5 while the chief stands"}},
+    {"id": "c10", "text": "Pass Camp a chief and two knives, Ridge Camp a bowman, a ram and a knife, Ash Camp all four"},
+    {"id": "c11", "text": "The road sends the knives in the roll's order and never the chief"},
+    {"id": "c12", "text": "the parcels addressed (forty trips to Elm and none to the Mill — thirty-nine parcels follow", "figure": {"record": "thirty-nine parcels follow", "asserted": "threshold", "note": "the economy draws on its own die: forty packed on that traffic must give at least 31 to Elm, and the law itself is read off two thousand draws"}},
+    {"id": "c13", "text": "the addressee is drawn by that count plus one", "figure": {"record": "that count plus one", "asserted": "exact", "note": "two thousand draws after forty trips land 41 in 44 on Elm (±0.025) and 1 in 44 on every other lit door"}},
+    {"id": "c14", "text": "one run per door; the board's line; the shelf keeping the rest; the keeper's line; two parcels read on the slip; the derived count"},
+    {"id": "c15", "text": "the pip as a door"},
+    {"id": "c16", "text": "a click opens the muster roll on that back's plate. Nothing happens with another sheet open."},
+    {"id": "c17", "text": "the square standing its own (none before four minutes, one after, two after the next, two at most", "figure": {"record": "four minutes, two at most", "asserted": "exact", "note": "none at 210 s, one at 240 s, two at 480 s and still two at 720 s"}},
+    {"id": "c18", "text": "a garrisoned town brought back to forty likes sends one of its own under the pennant every four minutes, two at most", "figure": {"record": "forty likes", "asserted": "exact", "note": "rise.recruitAt 40 in the registries"}},
+    {"id": "c19", "text": "the tithe unchanged; not thin at two and two; home below thirty; restless at three; back above the line; released", "figure": {"record": "thirty", "asserted": "exact", "note": "rise.ownLeaveBelow 30 in the registries; at 25 likes they go home"}},
+    {"id": "c20", "text": "drawn in the square at ±58, 86 with the round shields", "doc": "FEATURES.md", "figure": {"record": "±58, 86", "asserted": "threshold", "note": "the round shields found within forty of (±58, 86 − 20) against the same frame with them home"}},
+    {"id": "c21", "text": "the camps' own on the road (Ridge by roll, Pass two knives; the bowman's arrow once per cooldown; the ram's shrug and fall; the slower walk)"},
+    {"id": "c22", "text": "A storm brings the first three."},
+    {"id": "c23", "text": "the storm with the kit (the chief named in the toast; the bowman standing off and pinning, one arm on the full cadence"},
+    {"id": "c24", "text": "the ram shrugging then down for half the span under the chief's rally; the chief's pace; the break, the run, HELD with the mail"},
+    {"id": "c25", "text": "a second storm LOST to the ram at six-tenths", "figure": {"record": "six-tenths", "asserted": "exact", "note": "the ram takes the fire at takeAfter × 0.6 where a knife at the same wait has not"}},
+    {"id": "c26", "text": "the count bought (both gates, the offer, the price, the contract, the ledger reason, no season, sold once)"},
+    {"id": "c27", "text": "BUY THE COUNT (60 metal + 20 ceramic)", "doc": "FEATURES.md", "figure": {"record": "60 metal + 20 ceramic", "asserted": "exact", "note": "the sale row in the registries; a real click takes 60 metal and 20 ceramic off the bank"}},
+    {"id": "c28", "text": "makes the camp a watchpost by contract — two shields at the fire", "figure": {"record": "two shields", "asserted": "exact", "note": "taken.shields === 2, taken.via 'society'"}},
+    {"id": "c29", "text": "the stencil kept with the Order's lamp under the tongue: COUNTED — SOLD TO THE ORDER"},
+    {"id": "c30", "text": "the save"},
+    {"id": "c31", "text": "the save carries the town's own, the addressed shelves, the traffic ledger, a camp's sale; the runners come back by the roll", "doc": "FEATURES.md"}
+  ],
+  "checks": [
+    {"title": "THE REGISTRIES", "clauses": ["c1", "c2", "c3", "c4", "c5", "c6", "c7", "c8", "c9", "c10", "c18", "c19", "c27"], "kind": "record"},
+    {"title": "THE PARCELS ADDRESSED", "clauses": ["c12", "c13", "c14"], "kind": "record"},
+    {"title": "THE PIP IS A DOOR", "clauses": ["c15", "c16"], "kind": "record"},
+    {"title": "THE SQUARE STANDS ITS OWN", "clauses": ["c17", "c18", "c19", "c20"], "kind": "record"},
+    {"title": "THE CAMPS' OWN ON THE ROAD", "clauses": ["c7", "c8", "c10", "c11", "c21"], "kind": "record"},
+    {"title": "THE STORM WITH THE KIT", "clauses": ["c7", "c8", "c9", "c22", "c23", "c24", "c25"], "kind": "record"},
+    {"title": "THE COUNT BOUGHT", "clauses": ["c26", "c27", "c28", "c29"], "kind": "record"},
+    {"title": "THE SAVE", "clauses": ["c30", "c31"], "kind": "record"}
+  ],
+  "design": [
+    {"clause": "c2", "version": "v3.51", "what": "the cast drawn by hand on the courier's grid: three facings, each with the idle, the breath and four steps"},
+    {"clause": "c3", "version": "v3.51", "what": "the camps' own and the town's own redrawn on the courier's 32×32 grid at the courier's height"},
+    {"clause": "c6", "version": "v3.49", "what": "the manual grew with every version after v3.41 — 93 pages in v3.49, the floor the check holds"},
+    {"clause": "c16", "version": "v3.49", "what": "the muster roll is Crew (the plain names); a click on a pip opens Crew on that back's plate"},
+    {"clause": "c19", "version": "v3.42", "what": "the rising counts only the town's own standing this hour, by THE HOURS they keep (nights by default) — two and two is not thin by night, thin by day"}
+  ],
+  "finish": {
+      "clauses": []
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "suite": "lamps",
+  "version": "v3.13",
+  "record": {
+    "doc": "DESIGN.md",
+    "where": "v3.13 — LIGHT BEHAVES (a retraction, then the fix)",
+    "count": 9,
+    "count_text": "`tests/lamps.mjs`, 9 checks"
+  },
+  "clauses": [
+    { "id": "c1", "text": "Everything dark is now a layer: the night palette, and the quiet's grey dim (the day field was split — its warm bands are paint, drawn straight to the ground and never touched; its dim bands joined the darkness layer)" },
+    { "id": "c2", "text": "Every local light — the walker's lantern, a generator, a watchtower, a camp fire, the peddler's cart, a lumen bloom, a companion in the dark — erases banded holes in that layer on the terrain's own texel grid: a solid heart, two hems of ordered dither, nothing else", "figure": { "record": "two hems", "asserted": "exact", "note": "the heart gone, a mid hem half gone, an outer hem mostly intact, the night whole past them" } },
+    { "id": "c3", "text": "What shows through a hole is the ground's real colours" },
+    { "id": "c4", "text": "no partial alpha anywhere — a texel of night is either gone or intact, and falloff is carried entirely by dither coverage" },
+    { "id": "c5", "text": "The old glow discs are dead; emitters keep a bloom a few texels wide at the flame itself, nothing on the ground" },
+    { "id": "c6", "text": "ground inside the lantern pool is ×7.3 the brightness of the same meadow 260 u away", "figure": { "record": "×7.3", "asserted": "threshold", "note": "at least ×4 on the suite's own unlit meadow at full night (measured ×5.32 there; the record's ×7.3 was its own meadow's)" } },
+    { "id": "c7", "text": "reads as green-led terrain with zero painted-gold pixels", "figure": { "record": "zero painted-gold pixels", "asserted": "exact", "note": "not one warm, bright pixel on the ground in the lamp's reach" } },
+    { "id": "c8", "text": "the falloff steps 0.05 → 0.60 → 1.00 through the hems", "figure": { "record": "0.05 → 0.60 → 1.00", "asserted": "threshold", "note": "the heart at most 0.05 intact, the mid hem 0.35–0.65, the outer hem 0.65–0.9, the night beyond at least 0.99, rising in that order" } },
+    { "id": "c9", "text": "A generator carves the same pool at its camp" },
+    { "id": "c10", "text": "by day the lantern clears the grey dim off the ground the walker holds" },
+    { "id": "c11", "text": "on station-lit ground there is nothing to punch" }
+  ],
+  "checks": [
+    { "title": "THE SPLIT", "clauses": ["c1"], "kind": "record" },
+    { "title": "THE POOL, MEASURED", "clauses": ["c6"], "kind": "record" },
+    { "title": "THROUGH THE HOLE, THE GROUND ITSELF", "clauses": ["c3", "c5", "c7"], "kind": "record" },
+    { "title": "THE HEMS", "clauses": ["c2", "c4", "c8"], "kind": "record" },
+    { "title": "NO PARTIAL ALPHA", "clauses": ["c4"], "kind": "record" },
+    { "title": "THE TEXEL GRID IS THE WORLD'S", "clauses": ["c2"], "kind": "record" },
+    { "title": "EVERY LAMP ITS OWN HOLE", "clauses": ["c2", "c9"], "kind": "record" },
+    { "title": "BY DAY THE LANTERN CLEARS THE GREY DIM", "clauses": ["c10"], "kind": "record" },
+    { "title": "ON STATION-LIT GROUND THERE IS NOTHING TO PUNCH", "clauses": ["c11"], "kind": "record" }
+  ],
+  "design": []
+}

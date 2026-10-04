@@ -1,0 +1,48 @@
+{
+  "suite": "continent",
+  "version": "v3.26",
+  "record": {
+    "doc": "DESIGN.md",
+    "where": "The Darklands table (v3.26 — the scale ladder made honest)",
+    "count": 9,
+    "count_text": "Verification: `tests/continent.mjs` (9 checks"
+  },
+  "clauses": [
+    { "id": "c1", "text": "the three-tab ladder with engine exclusivity" },
+    { "id": "c2", "text": "THE GREYMARCH (survey sheet) → THE DARKLANDS (the briefing table) → THE KNOWN WORLD" },
+    { "id": "c3", "text": "reopen-where-you-left" },
+    { "id": "c4", "text": "same-bake windowing with the subject framed on real land" },
+    { "id": "c5", "text": "The terrain is sampled from the SAME planet bake the globe renders (Globe.elevAt) windowed around the Greymarch pin — one truth about the world" },
+    { "id": "c6", "text": "painted-density floor (thousands of samples: bone/gold/sea all present)" },
+    { "id": "c7", "text": "a stippled grey-blue sea (a surface, never a hole)" },
+    { "id": "c8", "text": "live yaw" },
+    { "id": "c9", "text": "Drag turns the table" },
+    { "id": "c10", "text": "≥20 fps floor",
+      "figure": { "record": "≥20 fps", "asserted": "exact", "note": "the best one-second window of three seconds with the table running holds 20 frames or more" } },
+    { "id": "c11", "text": "60 fps with every layer on",
+      "figure": { "record": "60 fps", "asserted": "threshold", "note": "the check asserts the record's own floor of 20 frames a second, not 60" } },
+    { "id": "c12", "text": "footprint mapping" },
+    { "id": "c13", "text": "its light coverage as gold stipple that grows with S.cov, station pips (lit gold / dark grey) that scale as the table is leaned into, rust rings on un-quieted camps, the walker a white pulse" },
+    { "id": "c14", "text": "uncharted-on-table" },
+    { "id": "c15", "text": "The uncharted region pins live on this table — the recon system's future ground drawn where it will happen" },
+    { "id": "c16", "text": "halo corners + glow + demotion caption" },
+    { "id": "c17", "text": "The canvas now carries padding past the halo (PADF 0.26) so the atmosphere ends where IT ends — corners verified empty, glow verified alive between disc and edge",
+      "figure": { "record": "PADF 0.26", "asserted": "threshold", "note": "the canvas side is at least 2.5 disc radii (0.26 gives 2.52); the pad factor itself is not read" } },
+    { "id": "c18", "text": "the caption owns the new station" },
+    { "id": "c19", "text": "the farthest the glass pulls back · an ornament of the survey, for now" }
+  ],
+  "checks": [
+    { "title": "THE LADDER (v3.49", "clauses": ["c1", "c2"], "kind": "record" },
+    { "title": "REOPEN WHERE YOU LEFT", "clauses": ["c3"], "kind": "record" },
+    { "title": "ONE TRUTH", "clauses": ["c4", "c5"], "kind": "record" },
+    { "title": "THE PAINTED FLOOR", "clauses": ["c6", "c7"], "kind": "record" },
+    { "title": "THE YAW, LIVE", "clauses": ["c8", "c9"], "kind": "record" },
+    { "title": "THE FRAME RATE", "clauses": ["c10", "c11"], "kind": "record" },
+    { "title": "THE FOOTPRINT", "clauses": ["c12", "c13"], "kind": "record" },
+    { "title": "THE UNCHARTED, ON THE TABLE", "clauses": ["c14", "c15"], "kind": "record" },
+    { "title": "THE GLOBE, DEMOTED AND PADDED", "clauses": ["c16", "c17", "c18", "c19"], "kind": "record" }
+  ],
+  "design": [
+    { "clause": "c2", "version": "v3.49", "what": "the plain names: the tabs read Valley · Region · World and the windows Map, Region map, World map — the Greymarch, the Darklands and the Known World ride under them as subtitles" }
+  ]
+}

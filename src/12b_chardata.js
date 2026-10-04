@@ -72,6 +72,7 @@ const CHAR = (() => {
   const CAUSES = {
     scrappers: 'beaten down by scrappers', wraith: 'taken by the Grey', bleed: 'bled out on the road',
     cold: 'froze under greyfall', starve: 'starved between stations', water: 'lost to the river',
+    fall: 'fell on the road', reaper: 'cut down where the Reapers walk', cannibal: 'taken at the edge of the Hollow Fires',   // v3.51: every cause the body can die of says it in words (fall printed as "fall")
   };
 
   /* ---------- new items (merged into DATA.items at boot) ---------- */
@@ -219,3 +220,5 @@ const CHAR = (() => {
 
 /* merge expansion items into the base item table */
 Object.assign(DATA.items, CHAR.ITEMS2);
+
+

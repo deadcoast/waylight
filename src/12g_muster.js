@@ -151,8 +151,40 @@ const MUSTER = (() => {
         hard: { name: 'Hard', line: 'the run pushed — runs come faster, and eat twice for it' },
       }, def: 'steady', mul: { steady: 1, hard: 0.7 }, eat: { steady: 1, hard: 2 },
     },
+    /* ---------- v3.38 THE POSTED ORDERS: a post hand's round policy, on the same store ---------- */
+    hours: {
+      name: 'THE HOURS', line: 'when a post hand works the round',
+      choices: {
+        full: { name: 'Round the clock', line: 'every shift, day and night — the whole wage, the whole gain' },
+        days: { name: 'Days', line: 'daylight shifts only — half the rounds, half the wage; the night is theirs' },
+        nights: { name: 'Nights', line: 'the lamp-lit round only — half the rounds, half the wage, and a town that sleeps easier thanks them more' },
+      }, def: 'full', appr: { full: 0, days: 0, nights: 1 },
+    },
+    training: {
+      name: 'THE TRAINING', line: 'what the round teaches',
+      choices: {
+        round: { name: 'The round\'s verb', line: 'every shift sharpens the skill the round is named for' },
+        cross: { name: 'Cross-train', line: 'half the lesson to the round\'s verb, half to their weakest skill — a rounder back, slower' },
+      }, def: 'round',
+    },
+    keep: {
+      name: 'THE KEEP', line: 'who feeds a post hand',
+      choices: {
+        wages: { name: 'Wages', line: 'a provision a shift from the bank — the Order pays its own' },
+        table: { name: 'The town\'s table', line: 'the town feeds them from its own rations — no wage, a shelf lighter each shift, and thinner thanks' },
+      }, def: 'wages', apprMul: { wages: 1, table: 0.5 }, food: { wages: 0, table: 2 }, foodFloor: 10,
+    },
   };
+  /* v3.40 THE LETTERS — the post hand's own tree: which POST the round carries. The post subtree
+     carries three kinds now (letters, the riders' dispatch, parcels), so the marks mean something:
+     letters ON lets a runner fill the bag twice as fast; parcels ON lets a parcels round pack the
+     town's own parcels into runs for the board. The dispatch is the Order's own and rides regardless. */
+  TREES.post = { name: 'THE LETTERS', line: 'which post the round carries', def: { post: true }, root: 'post' };
   /* which rows a job walks under — the registry entry IS the job's orders sheet */
+  const POST = { rows: ['hours', 'training', 'keep'], tree: 'post' };
+  /* v3.42 — the town's own on the roll: a garrison's recruit answers to THE HOURS alone (the square's
+     reading of full/days/nights lives on the storm doctrine's rise row) */
+  const SQUARE = { rows: ['hours'], tree: null };
   const FIELD = {
     hauler: { rows: ['load'], tree: 'haul' },
     presser: { rows: ['marks'] },
@@ -167,12 +199,12 @@ const MUSTER = (() => {
      their own line so the plate can say WHY without a second table. */
   const MOOD = {
     bands: [[-99, 'DONE', '#e0654a'], [-7, 'LOW', '#d9a06b'], [-4, 'WORN', '#b8b29d'], [-1, 'STEADY', '#c9c3a8'], [4, 'BRIGHT', '#ffd98f']],
-    fx: {
-      DONE: { steadyMul: 0.5, reachMul: 0.7, quits: true },
-      LOW: { steadyMul: 0.7, reachMul: 0.85 },
-      WORN: { steadyMul: 1, reachMul: 1 },
-      STEADY: { steadyMul: 1, reachMul: 1 },
-      BRIGHT: { steadyMul: 1.3, reachMul: 1.15 },
+    fx: {   /* v3.38: workMul is the pace a field hand works at — a DONE hand comes in, the same law as a walker sitting down */
+      DONE: { steadyMul: 0.5, reachMul: 0.7, workMul: 0.7, quits: true },
+      LOW: { steadyMul: 0.7, reachMul: 0.85, workMul: 0.85 },
+      WORN: { steadyMul: 1, reachMul: 1, workMul: 1 },
+      STEADY: { steadyMul: 1, reachMul: 1, workMul: 1 },
+      BRIGHT: { steadyMul: 1.3, reachMul: 1.15, workMul: 1.1 },
     },
     causes: {
       hungry: { v: -6, line: 'hungry' },
@@ -191,6 +223,27 @@ const MUSTER = (() => {
       company: { v: 1, line: 'walking in company', party: 2 },
       seasoned: { v: 1, line: 'seasoned beside you', km: 10 },
       longOut: { v: -1, line: 'long out of a fire', after: 900 },
+      /* v3.38 — the working world's own weather: what a field hand or a post hand feels */
+      greyfall: { v: -2, line: 'working in the greyfall' },
+      nightWork: { v: -2, line: 'working nights' },
+      far: { v: -1, line: 'far from home', beyond: 2400 },
+      thanked: { v: 1, line: 'a town that thanks them', apprLv: 3 },
+      table: { v: 1, line: 'fed at the town\'s table' },
+      /* v3.42 — the town's own: in their own square, under their own roof at night or not */
+      ownSquare: { v: 2, line: 'stands in their own square' },
+      ownClock: { v: -2, line: 'round the clock — away from their fields' },
+      /* v3.44 — the stones at the field's edge: one of their own fell standing this square, or more */
+      stone: { v: -1, line: 'a stone at the field\'s edge — one of their own' },
+      stones: { v: -3, line: 'the stones at the field\'s edge — their own, more than one' },
+      /* v3.45 — a camp's knives put them down on the road: they want it settled */
+      score: { v: 1, line: 'a score to settle' },
+      settled: { v: 2, line: 'a score settled' },   // v3.46: walked to the camp and said
+      /* v3.47 — the stones they set, seen standing on the road past the ring; a night kept at a camp's ring */
+      cairn: { v: 1, line: 'saw their stones standing' },
+      watched: { v: 2, line: 'stood the watch at a ring' },
+      /* v3.49 — the camp's own stone set beside theirs; a hand who stayed on for a stone's day */
+      kstone: { v: 2, line: 'the knives set a stone beside theirs' },
+      stays: { v: 1, line: 'stayed on for a stone\'s day' },
     },
     quitAfter: 60,   // seconds DONE before a companion sits down at the next fire
     fireR: 120,      // how near a lit town counts as a fire
@@ -201,5 +254,7 @@ const MUSTER = (() => {
     },
   };
 
-  return { ORDERS, TREES, TREE_DEFAULT, PRESETS, STATIONS, STATION_FX, HOLD_SCREEN, CALL, WORK_ORDERS, FIELD, ROAD, TRAIL_DONE, MOOD };
+  return { ORDERS, TREES, TREE_DEFAULT, PRESETS, STATIONS, STATION_FX, HOLD_SCREEN, CALL, WORK_ORDERS, FIELD, ROAD, POST, SQUARE, TRAIL_DONE, MOOD };
 })();
+
+

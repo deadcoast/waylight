@@ -1,0 +1,57 @@
+{
+  "suite": "remembering",
+  "version": "v3.42",
+  "record": {
+      "doc": "DESIGN.md",
+      "where": "The remembering (v3.42 — the survey's marks, a chief who remembers, the town's own on the roll, the grievance, the bolt) · Proof",
+      "count": 8,
+      "count_text": "remembering.mjs, 8 checks"
+  },
+  "clauses": [
+    {"id": "m1", "text": "the registries (the rows, the marks' geometry, the palettes, the counts)"},
+    {"id": "m2", "text": "seven hand-drawn 7×7 marks in one palette", "figure": {"record": "seven 7×7 marks", "asserted": "exact", "note": "seven marks, every one 7×7 in MARK_PAL, all distinct"}},
+    {"id": "m3", "text": "the red rag on a stake (7×13, the camp's own memorial)", "doc": "FEATURES.md", "figure": {"record": "7×13", "asserted": "exact", "note": "RAGSTAKE 7×13 in its palette"}},
+    {"id": "m4", "text": "the bolt overlay (5×5) in the shoulder", "doc": "FEATURES.md", "figure": {"record": "5×5", "asserted": "exact", "note": "ARROW_IN 5×5 in its palette"}},
+    {"id": "m5", "text": "FOUR LESSONS: the grievance, the bolt, the chief gone, the town's own on the roll (51 pages); two mood causes (23)", "doc": "FEATURES.md", "figure": {"record": "51 pages; two mood causes (23)", "asserted": "changed", "note": "later versions add lessons and causes: the check holds the v3.49 manual's floor (93 pages) and pins the 31 causes of v3.49, the two of v3.42 among them"}},
+    {"id": "m6", "text": "the survey read by its pixels"},
+    {"id": "m7", "text": "The test reads the sheet's pixels: the rag's red, the plank's brown, the blade's steel and the fire's gold under Ash Camp; the fire out and the stake's wood once the chief has fallen; the tongue under a counted Ridge."},
+    {"id": "m8", "text": "Three screen pixels a texel", "figure": {"record": "three screen pixels a texel", "asserted": "exact", "note": "every texel of the marks read off the sheet at 3 px a texel (95% in their own colours)"}},
+    {"id": "m9", "text": "the chief who remembers (the fall, the short road, the storm without him, the courting at the nearest door by the clock, the sheet, the span)"},
+    {"id": "m10", "text": "marks the camp `chiefLost` for a day", "doc": "FEATURES.md", "figure": {"record": "a day", "asserted": "exact", "note": "storm.seen.mourn 1 in the registries; still gone five seconds inside the span, coming up one second past it"}},
+    {"id": "m11", "text": "the Unlit are a step warmer against the Order for it"},
+    {"id": "m12", "text": "The span passed, a chief comes up again and the stake comes down."},
+    {"id": "m13", "text": "the town's own on the roll (records, the roll and the pane, the cover by the hour, the mood, a period's love and thanks and drum, the sheet, home when the love falls)"},
+    {"id": "m14", "text": "The count on the garrison (`h.own`) is derived from the roll, never a second number."},
+    {"id": "m15", "text": "a mood that reads their own square (+2, and −2 round the clock)", "figure": {"record": "+2, and −2 round the clock", "asserted": "exact", "note": "MOOD causes ownSquare +2 and ownClock −2 in the registries, each read on the right recruit"}},
+    {"id": "m16", "text": "full wears the town's love −1 and slows the Unlit's drum 12 s, days grows the thanks +1, nights slows the drum 12 s", "doc": "FEATURES.md", "figure": {"record": "−1, 12 s, +1, 12 s", "asserted": "unpinned", "note": "the check reads each period against the hoursFx row's own values (the row holds −1, 12, +1, 12); the numbers themselves are not asserted"}},
+    {"id": "m17", "text": "the grievance (raised, deepened, given, made right twice, remembered, the board)"},
+    {"id": "m18", "text": "the door it was addressed to raises a grievance in its own words: −4 appreciation", "figure": {"record": "−4 appreciation", "asserted": "exact", "note": "grievance.ground 4 in the registries; the door 20 → 16"}},
+    {"id": "m19", "text": "A runner carrying it into a camp deepens it (−4 more)", "figure": {"record": "−4 more", "asserted": "exact", "note": "grievance.camp 4; the door down 8 in all"}},
+    {"id": "m20", "text": "giving the run up makes what is still on the pack a grievance too (−6, and lost toward its door)", "figure": {"record": "−6", "asserted": "exact", "note": "grievance.given 6"}},
+    {"id": "m21", "text": "the door thanks you MORE than it would have (+8)", "figure": {"record": "+8", "asserted": "exact", "note": "grievance.made 8, as lost cargo and on the run"}},
+    {"id": "m22", "text": "Left two days it becomes the town's memory: three likes gone for good", "figure": {"record": "two days, three likes", "asserted": "exact", "note": "grievance.fadeDays 2 and memory 3; the town 30 → 27 likes"}},
+    {"id": "m23", "text": "the bolt (the wind, the seep, the three pulls, a far medic no medic)"},
+    {"id": "m24", "text": "the wind comes back at half pace", "figure": {"record": "half pace", "asserted": "exact", "note": "arrow.stamMul 0.5; the wind's return measured at half (±0.02)"}},
+    {"id": "m25", "text": "a seep of 0.12/s", "doc": "FEATURES.md", "figure": {"record": "0.12/s", "asserted": "exact", "note": "arrow.seep 0.12 in the registries; measured 0.12 (±0.02) against the same second without the bolt"}},
+    {"id": "m26", "text": "pulled by a field medic walking with you inside 90 in 2.5 s for nothing (their note, +mend), by a lit town's hands at the terminal, or by your own hand — the prompt, standing still 2.4 s, for 4 health", "doc": "FEATURES.md", "figure": {"record": "inside 90, 2.5 s, 2.4 s, 4 health", "asserted": "exact", "note": "the arrow row in the registries; a medic at 200 pulls nothing, at 30 in a breath; your own pull costs four health"}},
+    {"id": "m27", "text": "the save"}
+  ],
+  "checks": [
+    {"title": "THE REGISTRIES", "clauses": ["m1", "m2", "m3", "m4", "m5", "m10", "m15", "m18", "m19", "m20", "m21", "m22", "m24", "m25", "m26"], "kind": "record"},
+    {"title": "THE SURVEY READ BY ITS PIXELS", "clauses": ["m6", "m7", "m8"], "kind": "record"},
+    {"title": "A CHIEF WHO REMEMBERS", "clauses": ["m9", "m10", "m11", "m12"], "kind": "record"},
+    {"title": "THE TOWN'S OWN ON THE ROLL", "clauses": ["m13", "m14", "m15", "m16"], "kind": "record"},
+    {"title": "THE GRIEVANCE", "clauses": ["m17", "m18", "m19", "m20", "m21", "m22"], "kind": "record"},
+    {"title": "THE BOLT", "clauses": ["m23", "m24", "m25", "m26"], "kind": "record"},
+    {"title": "THE SAVE", "clauses": ["m27"], "kind": "record"}
+  ],
+  "design": [
+    {"clause": "m5", "version": "v3.49", "what": "the manual and the mood grew with every version after v3.42 — 93 pages and 31 causes in v3.49"},
+    {"clause": "m12", "version": "v3.43", "what": "the chief's return is a scene: the new man walks in from the ring's edge (the camp still short while he walks), takes the rag down, and the pole stands bare beside the fire a day"},
+    {"clause": "m13", "version": "v3.49", "what": "the muster roll is Crew (the plain names)"},
+    {"clause": "m23", "version": "v3.43", "what": "a pulled bolt leaves a scar (the check sees it after the medic's pull and the town's)"}
+  ],
+  "finish": {
+      "clauses": []
+  }
+}

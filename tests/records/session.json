@@ -1,0 +1,39 @@
+{
+  "suite": "session",
+  "version": "v3.0",
+  "record": {
+    "doc": "DESIGN.md",
+    "where": "Three lessons, all kept (v2.3 → v3.0) · Balance (the session bot)",
+    "count": null,
+    "uncounted": "the record counts the balance session beside the suites (\"plus the 30-game-minute balance session above\") and never states its checks"
+  },
+  "clauses": [
+    { "id": "c1", "text": "a greedy bot must not find a degenerate loop" },
+    { "id": "c2", "text": "tests/session.mjs plays 30 game-minutes at 4× clock with real walking and real orders" },
+    { "id": "c3", "text": "and teleports only where a player would lay a ladder (logged)" },
+    { "id": "c4", "text": "then stood at the Mill forever with nothing deliverable" },
+    { "id": "c5", "text": "the bot carried mailbags Haven ⇄ Elm for twenty minutes" },
+    { "id": "c6", "text": "Fix: mailbags refill slowly, pay half", "figure": { "record": "pay half", "asserted": "changed", "note": "the post takes no fee (v3.16): every letter handed over in the session paid nothing" } },
+    { "id": "c7", "text": "Fix: thriving needs are not posted" },
+    { "id": "c8", "text": "49 deliveries", "figure": { "record": "49 deliveries", "asserted": "threshold", "note": "at least 20 handed over in the thirty game-minutes" } },
+    { "id": "c9", "text": "six stations connected (Haven, Elm, the Mill, the Greenhouse, the Quarry, Relay Hill)", "figure": { "record": "six stations", "asserted": "threshold", "note": "at least four on the wire, Haven, Elm and the Mill among them" } },
+    { "id": "c10", "text": "stars 3/3/2/1/1/0", "figure": { "record": "3/3/2/1/1/0", "asserted": "threshold", "note": "at least two stations starred" } },
+    { "id": "c11", "text": "zero deaths, zero scrapper knocks", "figure": { "record": "zero deaths, zero scrapper knocks", "asserted": "exact", "note": "no death, no grave, no knock in the session" } },
+    { "id": "c12", "text": "no repeated decision anywhere in the log" },
+    { "id": "c13", "text": "and the decision mix keeps changing as the wire saturates the core" },
+    { "id": "c14", "text": "Two river legs were teleported with a note; a player lays a ladder there", "figure": { "record": "Two river legs", "asserted": "threshold", "note": "at most twelve teleports, each logged with its why, and every leg stepped across one with no route on foot without a crossing laid — a river leg" } }
+  ],
+  "checks": [
+    { "title": "THE SESSION IS WALKED", "clauses": ["c2", "c8"], "kind": "record" },
+    { "title": "THE WIRE GROWS", "clauses": ["c9", "c10"], "kind": "record" },
+    { "title": "NOBODY DIES", "clauses": ["c11"], "kind": "record" },
+    { "title": "THE OVERLOADED STALL STAYS CLOSED", "clauses": ["c1", "c4"], "kind": "record" },
+    { "title": "THE LETTER SHUTTLE STAYS CLOSED", "clauses": ["c1", "c5", "c6"], "kind": "record" },
+    { "title": "THE FULL-STATION SHUTTLE STAYS CLOSED", "clauses": ["c1", "c7"], "kind": "record" },
+    { "title": "NO DECISION REPEATS ITSELF", "clauses": ["c1", "c12", "c13"], "kind": "record" },
+    { "title": "TELEPORTS ONLY WHERE A LADDER WOULD GO", "clauses": ["c3", "c14"], "kind": "record" }
+  ],
+  "design": [
+    { "clause": "c6", "version": "v3.16", "what": "the service rule: letters take no fee, ever — the mailbag still fills at the town's own pen's pace" }
+  ]
+}

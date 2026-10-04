@@ -1,0 +1,337 @@
+{
+  "suite": "holdings2",
+  "version": "v3.39",
+  "record": {
+    "doc": "DESIGN.md",
+    "where": "The losable holdings (v3.39 — towns taken by force, a post that can fall, the grey banners' wars)",
+    "count": 8,
+    "count_text": "holdings2.mjs, 8 checks"
+  },
+  "clauses": [
+    {
+      "id": "c1",
+      "text": "the registries; THE STORMING gated then funded"
+    },
+    {
+      "id": "c2",
+      "text": "the arrival's garrison with the love gone, the relations, the season, the mail, the lesson"
+    },
+    {
+      "id": "c3",
+      "text": "held ground eating six rations in two periods, the drum at the season's rate, the hottest town never the pick while garrisoned, the square's grey, RELEASE",
+      "figure": {
+        "record": "six rations in two periods",
+        "asserted": "exact",
+        "note": "two periods of the tithe clock take exactly six rations, 40 → 34 on the shelf"
+      }
+    },
+    {
+      "id": "c4",
+      "text": "THE POST STORMED and LOST against two shields with the ring reverting and the dearer retake"
+    },
+    {
+      "id": "c5",
+      "text": "STAND THE POST holding at three, the walker with a back holding at two, four refused and holding by hand, the sheet's rows"
+    },
+    {
+      "id": "c6",
+      "text": "the two wars with the larder biting, not biting, hushed, and the needs resolving from the live world"
+    },
+    {
+      "id": "c7",
+      "text": "and the needs resolving from the live world; the save"
+    },
+    {
+      "id": "c8",
+      "text": "A risen town now takes a third answer beside the quell and the parley: the column goes THROUGH the door."
+    },
+    {
+      "id": "c9",
+      "text": "Five shields, 90 metal and 30 provisions, gated on the mountain road like the taking.",
+      "figure": {
+        "record": "Five shields, 90 metal and 30 provisions",
+        "asserted": "exact",
+        "note": "the row reads them; a real click pays exactly 90 metal and 30 provisions and five shields march"
+      }
+    },
+    {
+      "id": "c10",
+      "text": "The arrival does not restore the light; it TAKES the town"
+    },
+    {
+      "id": "c11",
+      "text": "the lamp goes back up under a GARRISON of two shields (drawn in the square under Farkeep's grey pennant, the plate reading GARRISONED — THE REPUBLIC)",
+      "figure": {
+        "record": "a GARRISON of two shields",
+        "asserted": "exact",
+        "note": "the held town stands exactly two shields (the row's garrison 2), drawn flanking the square"
+      }
+    },
+    {
+      "id": "c12",
+      "text": "forty likes go out with the Unlit's banner",
+      "figure": {
+        "record": "forty likes",
+        "asserted": "exact",
+        "note": "the town's likes fall from 60 to exactly 20"
+      }
+    },
+    {
+      "id": "c13",
+      "text": "three relations move (Farkeep↔the Unlit, the Unlit↔Waylight, the Keepers↔Waylight)",
+      "figure": {
+        "record": "three relations",
+        "asserted": "exact",
+        "note": "farkeep|rebels −2, rebels|waylight −1, flamekeepers|waylight −1, the ledger naming the storming"
+      }
+    },
+    {
+      "id": "c14",
+      "text": "the garrison EATS: three rations off the town's own shelf every two minutes, counted on the sheet",
+      "figure": {
+        "record": "three rations … every two minutes",
+        "asserted": "exact",
+        "note": "the row reads 3 food every 120 s; two periods eat six, and the garrisoned row reads the six eaten"
+      }
+    },
+    {
+      "id": "c15",
+      "text": "A garrisoned town cannot rise — the rebellion's pick skips it, which is what the garrison is for."
+    },
+    {
+      "id": "c16",
+      "text": "`unlitReprisal`, a second reprisal row fired by the verb — for ten minutes the Unlit's drum beats × 1.5 in every town with a lamp to douse.",
+      "figure": {
+        "record": "for ten minutes … × 1.5",
+        "asserted": "exact",
+        "note": "the season opens at 600 s; the pressure clock runs ×1.5 (to 0.01) with it against without"
+      }
+    },
+    {
+      "id": "c17",
+      "text": "RELEASE THE GARRISON on the banner sheet frees the town: ten likes come back at once",
+      "figure": {
+        "record": "ten likes",
+        "asserted": "exact",
+        "note": "a real click on RELEASE gives back exactly ten likes"
+      }
+    },
+    {
+      "id": "c18",
+      "text": "and the town's own choice returns with it"
+    },
+    {
+      "id": "c19",
+      "text": "In the camps' season of reprisal a held watchpost is rolled once a night: three knives come for the ground.",
+      "figure": {
+        "record": "three knives",
+        "asserted": "exact",
+        "note": "the row reads 3; the mail reads 3 knives against 2 shields, and against 3"
+      }
+    },
+    {
+      "id": "c20",
+      "text": "The post HOLDS when its shields, and the walker standing the fire inside 260 units with every fed back beside them, match the knives — the mail names them.",
+      "figure": {
+        "record": "inside 260 units",
+        "asserted": "exact",
+        "note": "the row reads 260; the walker stands the fire well inside it with one fed back, and the post holds at two shields"
+      }
+    },
+    {
+      "id": "c21",
+      "text": "It FALLS otherwise: the ring is the camps' again with its runners back, the salvage scattered, the grey pennant lying in the ring for ten minutes with the pole across it",
+      "figure": {
+        "record": "for ten minutes",
+        "asserted": "exact",
+        "note": "the row reads 600 s; the pennant and THE POST FELL stand on the ground and are gone a second after it"
+      }
+    },
+    {
+      "id": "c22",
+      "text": "the nearest town six likes poorer, a stone likelier (0.6), the mail and a lesson",
+      "figure": {
+        "record": "six likes poorer, a stone likelier (0.6)",
+        "asserted": "exact",
+        "note": "the nearest town falls from 40 to 34; the row's stone chance reads 0.6, above the held post's"
+      }
+    },
+    {
+      "id": "c23",
+      "text": "STAND THE POST on the sheet puts another shield at the fire (40 metal, 10 provisions) up to four",
+      "figure": {
+        "record": "(40 metal, 10 provisions) up to four",
+        "asserted": "exact",
+        "note": "a real click pays exactly 40 metal and 10 provisions for a third shield; at four the button is dark and the verb refused"
+      }
+    },
+    {
+      "id": "c24",
+      "text": "the sheet shows SHIELDS n/4 and the season's warning"
+    },
+    {
+      "id": "c25",
+      "text": "A post lost once costs × 1.5 to take again",
+      "figure": {
+        "record": "× 1.5",
+        "asserted": "exact",
+        "note": "the retake's metal, wood and provisions are each the taking's ×1.5, rounded"
+      }
+    },
+    {
+      "id": "c26",
+      "text": "the sheet prints the price and the day it fell"
+    },
+    {
+      "id": "c27",
+      "text": "`larderRaid` (raiders → the Hollow Fires, by night, a larder a live camp can reach)"
+    },
+    {
+      "id": "c28",
+      "text": "the fire burns LOW for seven minutes",
+      "figure": {
+        "record": "for seven minutes",
+        "asserted": "exact",
+        "note": "the row reads 420 s; the raided larder's plate reads RAIDED — BURNS LOW"
+      }
+    },
+    {
+      "id": "c29",
+      "text": "its hunting ring halves, so the same ground that bit does not",
+      "figure": {
+        "record": "its hunting ring halves",
+        "asserted": "threshold",
+        "note": "the ground 100 from the fire bites unraided and does not bite raided; the half radius itself is not sampled"
+      }
+    },
+    {
+      "id": "c30",
+      "text": "and a crate of rations lands in the camp's stash it did not earn on the road"
+    },
+    {
+      "id": "c31",
+      "text": "`reaperVisit` (the Reapers → the Hollow Fires, a larder in the mist): the file walks through and the eaters go to ground — the larder is HUSHED for five minutes and does not hunt at all.",
+      "figure": {
+        "record": "HUSHED for five minutes",
+        "asserted": "exact",
+        "note": "the larder is hushed for exactly 300 s and does not bite even at its fire"
+      }
+    },
+    {
+      "id": "c32",
+      "text": "Both write the RELATIONS ledger on pairs it already held (the raiders and the eaters, the eaters and the file), both mail, both read on the banner sheet as a plate on the larder's row (RAIDED — BURNS LOW · Ns, HUSHED — THE FILE PASSED · Ns)."
+    },
+    {
+      "id": "c33",
+      "text": "TWO LESSONS: the storming, the post fell (41 pages)",
+      "doc": "FEATURES.md",
+      "figure": {
+        "record": "(41 pages)",
+        "asserted": "changed",
+        "note": "the manual has grown since; the check holds a floor of 93 pages (v3.49) and the manual's suite pins 97"
+      }
+    }
+  ],
+  "checks": [
+    {
+      "title": "THE REGISTRIES",
+      "clauses": [
+        "c1",
+        "c9",
+        "c14",
+        "c16",
+        "c19",
+        "c20",
+        "c21",
+        "c22",
+        "c23",
+        "c28",
+        "c31",
+        "c32",
+        "c33"
+      ],
+      "kind": "record"
+    },
+    {
+      "title": "THE STORMING",
+      "clauses": [
+        "c1",
+        "c2",
+        "c8",
+        "c9",
+        "c10",
+        "c11",
+        "c12",
+        "c13",
+        "c16"
+      ],
+      "kind": "record"
+    },
+    {
+      "title": "HELD GROUND",
+      "clauses": [
+        "c3",
+        "c11",
+        "c14",
+        "c15",
+        "c16",
+        "c17",
+        "c18"
+      ],
+      "kind": "record"
+    },
+    {
+      "title": "THE POST STORMED AND LOST",
+      "clauses": [
+        "c4",
+        "c19",
+        "c21",
+        "c22",
+        "c25",
+        "c26"
+      ],
+      "kind": "record"
+    },
+    {
+      "title": "STAND THE POST",
+      "clauses": [
+        "c5",
+        "c20",
+        "c23",
+        "c24"
+      ],
+      "kind": "record"
+    },
+    {
+      "title": "THE GREY BANNERS' WARS",
+      "clauses": [
+        "c6",
+        "c7",
+        "c27",
+        "c28",
+        "c29",
+        "c30",
+        "c31",
+        "c32"
+      ],
+      "kind": "record"
+    },
+    {
+      "title": "THE SAVE",
+      "clauses": [
+        "c7"
+      ],
+      "kind": "record"
+    }
+  ],
+  "design": [
+    {
+      "clause": "c33",
+      "version": "v3.40–v3.51",
+      "what": "the manual has grown with every version since: ninety-seven pages at v3.51"
+    }
+  ],
+  "finish": {
+    "clauses": []
+  }
+}

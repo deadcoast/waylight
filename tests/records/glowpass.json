@@ -1,0 +1,44 @@
+{
+  "suite": "glowpass",
+  "version": "v3.15",
+  "record": {
+    "doc": "DESIGN.md",
+    "where": "v3.15 — LIGHT HAS A BODY: the sources are fixed, not deleted, and the props join the hand",
+    "count": 10,
+    "count_text": "`tests/glowpass.mjs` (10 checks"
+  },
+  "clauses": [
+    { "id": "c1", "text": "the law asserted at source level" },
+    { "id": "c2", "text": "the day-column measured empty and the night shaft measured present AND narrow" },
+    { "id": "c3", "text": "prop sprites sampled at their own paint" },
+    { "id": "c4", "text": "the fire caught changing shape between looks" },
+    { "id": "c5", "text": "every lamp, flame, bloom and cairn-light now draws a banded corona — a near-white emissive core, two solid hue-warmed bands at stepped alpha, and dither only as a one-texel stitch at each seam", "figure": { "record": "two solid hue-warmed bands", "asserted": "exact", "note": "three alpha steps at source — the core and two bands — and on screen at least three hard levels outward from the core" } },
+    { "id": "c6", "text": "Full-coverage checker is reserved for the one thing it is for — the unsolid: wraith bodies and the haze around the Kept keep it under its own name (ghostBody)" },
+    { "id": "c7", "text": "The station pillar is dead; in its place a beacon shaft that belongs to the night: gated to zero by day", "figure": { "record": "gated to zero by day", "asserted": "exact", "note": "at high day the frame with the shaft allowed and the frame with it stopped differ by no pixel" } },
+    { "id": "c8", "text": "at night a narrow column brightest at the flame" },
+    { "id": "c9", "text": "three vertical alpha bands with dithered hems", "figure": { "record": "three vertical alpha bands", "asserted": "exact", "note": "the shaft's three alpha steps and three width steps read at source" } },
+    { "id": "c10", "text": "dithering out at its top" },
+    { "id": "c11", "text": "Lit longhouse bays cast window-spill pools on the yard after dark" },
+    { "id": "c12", "text": "Fires are authored three-frame flames on logs — camps and every beacon cage", "figure": { "record": "three-frame", "asserted": "exact", "note": "three looks a sixth of a second apart catch three shapes, the look a second on the first again" } },
+    { "id": "c13", "text": "authored sprites for the station mast (a timber lattice" },
+    { "id": "c14", "text": "metal and ceramic salvage piles, lumen blooms as two-frame crystal clusters", "figure": { "record": "two-frame", "asserted": "threshold", "note": "the bloom's two frames differ; that it has no third is not read" } },
+    { "id": "c15", "text": "ground crates (planked, banded by the icon law: gold for signed and lost cargo, lumen for cores)" },
+    { "id": "c16", "text": "cairns, the supply drop with its fallen chute, the Peddler's cart" },
+    { "id": "c19", "text": "the road paver with its warning stripe" },
+    { "id": "c17", "text": "and the Kept — who are now the rig itself in a ghost palette, standing where they fell, because they were walkers" },
+    { "id": "c18", "text": "Zero .arc( calls survive in the renderer", "figure": { "record": "Zero .arc( calls", "asserted": "exact", "note": "no .arc(, quadraticCurveTo, createLinearGradient or ellipse in the renderer, one radial (the vignette)" } }
+  ],
+  "checks": [
+    { "title": "THE LAW AT SOURCE", "clauses": ["c1", "c5", "c6", "c9", "c10", "c18"], "kind": "record" },
+    { "title": "THE CORONA ON SCREEN", "clauses": ["c5"], "kind": "record" },
+    { "title": "THE SHAFT BELONGS TO THE NIGHT", "clauses": ["c2", "c7", "c8"], "kind": "record" },
+    { "title": "THE SHAFT'S BODY", "clauses": ["c8", "c10"], "kind": "record" },
+    { "title": "THE WINDOW SPILL", "clauses": ["c11"], "kind": "record" },
+    { "title": "THE FIRE BETWEEN LOOKS", "clauses": ["c4", "c12"], "kind": "record" },
+    { "title": "THE SALVAGE AND THE BLOOMS AT THEIR OWN PAINT", "clauses": ["c3", "c14"], "kind": "record" },
+    { "title": "THE CRATES BY THE ICON LAW", "clauses": ["c3", "c15"], "kind": "record" },
+    { "title": "THE ROADSIDE AND THE KEPT AT THEIR OWN PAINT", "clauses": ["c3", "c16", "c19", "c17"], "kind": "record" },
+    { "title": "THE MAST", "clauses": ["c3", "c13"], "kind": "record" }
+  ],
+  "design": []
+}
